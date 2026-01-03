@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gradient Audio Sync</title>
+
+<style>
+/* ---------- BASE ---------- */
+body {
+	margin: 0;
+	min-height: 100vh;
+	font-family: Arial, sans-serif;
+	color: #fff;
+	background:
+		radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 40%),
+		radial-gradient(circle at 80% 40%, rgba(0,255,0,0.25), transparent 45%),
+		radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 45%),
+		#050505;
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	transition: background 0.1s linear;
+}
+
+/* ---------- GATE ---------- */
+#gate {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,0.9);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+}
+
+#gate button {
+	padding: 16px 28px;
+	font-size: 20px;
+	background: #cc1515;
+	color: #fff;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+/* ---------- CONTENT ---------- */
+#content {
+	padding: 40px;
+	pointer-events: none;
+	filter: blur(6px);
+}
+
+.btn {
+	padding: 10px 18px;
+	font-size: 16px;
+	cursor: pointer;
+	background: #cc1515;
+	color: #fff;
+	border: none;
+	border-radius: 5px;
+	margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- GATE -->
+<div id="gate">
+	<button id="enterBtn">Click to Enter</button>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+	<h1>Kuy</h1>
+	<p>I'm minta</p>
+	<button id="playBtn" class="btn">Click me</button>
+
+	<audio id="bgm" src="Stranger.mp3" loop></audio>
+	<audio id="main" src="the_best_song.mp3" preload="auto"></audio>
+</div>
+
+<script>
+const gate = document.getElementById("gate");
+const enterBtn = document.getElementById("enterBtn");
+const content = document.getElementById("content");
+
+const playBtn = document.getElementById("playBtn");
+const bgm = document.getElementById("bgm");
+const main = document.getElementById("main");
+
+let unlocked = false;
+let playing = false;
+
+/* ---------- ENTER ---------- */
+enterBtn.addEventListener("click", () => {
+	if (unlocked) return;
+	unlocked = true;
+
+	gate.remove();
+	content.style.pointerEvents = "auto";
+	content.style.filter = "none";
+
+	bgm.volume = 0.4;
+	bgm.play().catch(()=>{});
+});
+
+/* ---------- PLAY MAIN ---------- */
+playBtn.addEventListener("click", () => {
+	if (!unlocked || playing) return;
+	playing = true;
+
+	bgm.pause();
+	main.currentTime = 0;
+	main.play().catch(()=> {
+		playing = false;
+	});
+});
+
+/* ---------- AUDIO → GRADIENT SYNC ---------- */
+main.addEventListener("timeupdate", () => {
+	if (!main.duration) return;
+
+	const p = main.currentTime / main.duration;
+
+	const blueX  = 20 + p * 50;
+	const greenX = 80 - p * 50;
+	const redY   = 80 - p * 40;
+
+	document.body.style.background =
+		`radial-gradient(circle at ${blueX}% 30%, rgba(0,0,255,0.35), transparent 40%),
+		 radial-gradient(circle at ${greenX}% 40%, rgba(0,255,0,0.35), transparent 45%),
+		 radial-gradient(circle at 50% ${redY}%, rgba(255,0,0,0.35), transparent 45%),
+		 #050505`;
+});
+
+/* ---------- PARALLAX ---------- */
+document.addEventListener("mousemove", e => {
+	const x = (e.clientX / window.innerWidth - 0.5) * 20;
+	const y = (e.clientY / window.innerHeight - 0.5) * 20;
+
+	document.body.style.backgroundPosition =
+		`${x}px ${y}px, ${-x}px ${y}px, ${x}px ${-y}px`;
+});
+
+/* ---------- END ---------- */
+main.addEventListener("ended", () => {
+	playing = false;
+	bgm.currentTime = 0;
+	bgm.play().catch(()=>{});
+});
+</script>
+
+</body>
+</html>
