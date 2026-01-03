@@ -3,26 +3,40 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gradient Audio Sync</title>
+<title>Minta</title>
 
 <style>
-/* ---------- BASE ---------- */
+
 body {
 	margin: 0;
 	min-height: 100vh;
 	font-family: Arial, sans-serif;
 	color: #fff;
+
 	background:
-		radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 40%),
+		radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 42%),
 		radial-gradient(circle at 80% 40%, rgba(0,255,0,0.25), transparent 45%),
-		radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 45%),
+		radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 48%),
 		#050505;
+
 	background-repeat: no-repeat;
 	background-attachment: fixed;
-	transition: background 0.1s linear;
+	animation: ambientMove 18s ease-in-out infinite;
+	transition: background 0.12s linear;
 }
 
-/* ---------- GATE ---------- */
+@keyframes ambientMove {
+	0% {
+		background-position: 0 0, 0 0, 0 0;
+	}
+	50% {
+		background-position: 30px -20px, -25px 15px, 20px 25px;
+	}
+	100% {
+		background-position: 0 0, 0 0, 0 0;
+	}
+}
+
 #gate {
 	position: fixed;
 	inset: 0;
@@ -34,16 +48,15 @@ body {
 }
 
 #gate button {
-	padding: 16px 28px;
 	font-size: 20px;
+	padding: 16px 30px;
+	border-radius: 6px;
 	background: #cc1515;
 	color: #fff;
 	border: none;
-	border-radius: 6px;
 	cursor: pointer;
 }
 
-/* ---------- CONTENT ---------- */
 #content {
 	padding: 40px;
 	pointer-events: none;
@@ -51,48 +64,68 @@ body {
 }
 
 .btn {
-	padding: 10px 18px;
+	padding: 10px 20px;
 	font-size: 16px;
-	cursor: pointer;
 	background: #cc1515;
 	color: #fff;
 	border: none;
 	border-radius: 5px;
+	cursor: pointer;
 	margin-top: 20px;
+}
+
+#progressWrap {
+	width: 320px;
+	height: 10px;
+	background: #333;
+	border-radius: 5px;
+	margin-top: 18px;
+	overflow: hidden;
+}
+
+#progressBar {
+	width: 0%;
+	height: 100%;
+	background: linear-gradient(90deg, #00ffcc, #00aaff);
 }
 </style>
 </head>
 
 <body>
 
-<!-- GATE -->
 <div id="gate">
 	<button id="enterBtn">Click to Enter</button>
 </div>
 
-<!-- CONTENT -->
 <div id="content">
 	<h1>Kuy</h1>
 	<p>I'm minta</p>
-	<button id="playBtn" class="btn">Click me</button>
+
+	<button id="mainBtn" class="btn">Click me</button>
+
+	<div id="progressWrap">
+		<div id="progressBar"></div>
+	</div>
 
 	<audio id="bgm" src="Stranger.mp3" loop></audio>
-	<audio id="main" src="the_best_song.mp3" preload="auto"></audio>
+	<audio id="mainSound" src="the_best_song.mp3" preload="auto"></audio>
 </div>
 
 <script>
+
 const gate = document.getElementById("gate");
 const enterBtn = document.getElementById("enterBtn");
 const content = document.getElementById("content");
 
-const playBtn = document.getElementById("playBtn");
+const btn = document.getElementById("mainBtn");
 const bgm = document.getElementById("bgm");
-const main = document.getElementById("main");
+const main = document.getElementById("mainSound");
+const bar = document.getElementById("progressBar");
 
 let unlocked = false;
 let playing = false;
+let rafBusy = false;
 
-/* ---------- ENTER ---------- */
 enterBtn.addEventListener("click", () => {
 	if (unlocked) return;
 	unlocked = true;
@@ -105,49 +138,69 @@ enterBtn.addEventListener("click", () => {
 	bgm.play().catch(()=>{});
 });
 
-/* ---------- PLAY MAIN ---------- */
-playBtn.addEventListener("click", () => {
+btn.addEventListener("click", () => {
 	if (!unlocked || playing) return;
+
 	playing = true;
+	btn.disabled = true;
 
 	bgm.pause();
+
+	const a = document.createElement("a");
+	a.href = "MicroBit.zip";
+	a.download = "MicroBit.zip";
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+
 	main.currentTime = 0;
-	main.play().catch(()=> {
+	main.play().catch(() => {
 		playing = false;
+		btn.disabled = false;
 	});
 });
 
-/* ---------- AUDIO → GRADIENT SYNC ---------- */
 main.addEventListener("timeupdate", () => {
-	if (!main.duration) return;
+	if (!main.duration || rafBusy) return;
+	rafBusy = true;
 
-	const p = main.currentTime / main.duration;
+	requestAnimationFrame(() => {
+		const p = main.currentTime / main.duration;
 
-	const blueX  = 20 + p * 50;
-	const greenX = 80 - p * 50;
-	const redY   = 80 - p * 40;
+		bar.style.width = (p * 100) + "%";
 
-	document.body.style.background =
-		`radial-gradient(circle at ${blueX}% 30%, rgba(0,0,255,0.35), transparent 40%),
-		 radial-gradient(circle at ${greenX}% 40%, rgba(0,255,0,0.35), transparent 45%),
-		 radial-gradient(circle at 50% ${redY}%, rgba(255,0,0,0.35), transparent 45%),
-		 #050505`;
+		const blueX  = 20 + Math.sin(p * Math.PI * 2) * 18;
+		const greenX = 80 + Math.cos(p * Math.PI * 2) * 18;
+		const redY   = 75 + Math.sin(p * Math.PI) * 20;
+
+		const glow = 0.22 + Math.sin(p * Math.PI * 4) * 0.12;
+
+		document.body.style.background =
+			`radial-gradient(circle at ${blueX}% 30%, rgba(0,0,255,${glow}), transparent 42%),
+			 radial-gradient(circle at ${greenX}% 40%, rgba(0,255,0,${glow}), transparent 45%),
+			 radial-gradient(circle at 50% ${redY}%, rgba(255,0,0,${glow}), transparent 48%),
+			 #050505`;
+
+		rafBusy = false;
+	});
 });
 
-/* ---------- PARALLAX ---------- */
-document.addEventListener("mousemove", e => {
-	const x = (e.clientX / window.innerWidth - 0.5) * 20;
-	const y = (e.clientY / window.innerHeight - 0.5) * 20;
+if (window.matchMedia("(pointer: fine)").matches) {
+	document.addEventListener("mousemove", e => {
+		const x = (e.clientX / innerWidth - 0.5) * 14;
+		const y = (e.clientY / innerHeight - 0.5) * 14;
 
-	document.body.style.backgroundPosition =
-		`${x}px ${y}px, ${-x}px ${y}px, ${x}px ${-y}px`;
-});
+		document.body.style.backgroundPosition =
+			`${x}px ${y}px, ${-x}px ${y}px, ${x}px ${-y}px`;
+	});
+}
 
-/* ---------- END ---------- */
 main.addEventListener("ended", () => {
-	playing = false;
+	bar.style.width = "0%";
 	bgm.currentTime = 0;
 	bgm.play().catch(()=>{});
+	playing = false;
+	btn.disabled = false;
 });
 </script>
 
