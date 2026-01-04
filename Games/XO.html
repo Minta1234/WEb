@@ -8,12 +8,12 @@
 :root{
   --bg:#050505;
   --neon:#00ffcc;
-  --danger:#ff0044;
+  --danger:#ff0033;
 }
 body{
   margin:0;
   background:var(--bg);
-  color:white;
+  color:#fff;
   font-family:Arial,monospace;
   display:flex;
   justify-content:center;
@@ -22,13 +22,17 @@ body{
 }
 #app{width:360px;text-align:center}
 h1{color:var(--neon)}
+
 input,select,button{
   width:100%;
-  margin:5px 0;
   padding:10px;
+  margin:6px 0;
   font-size:16px;
 }
-button{cursor:pointer}
+
+button{cursor:pointer;background:#111;color:white;border:1px solid var(--neon)}
+button:disabled{opacity:.4;cursor:not-allowed}
+
 #board{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -42,83 +46,90 @@ button{cursor:pointer}
   display:flex;
   align-items:center;
   justify-content:center;
-  cursor:pointer;
 }
-.cell.disabled{pointer-events:none;opacity:.5}
-.win{
-  animation:flash .2s infinite alternate;
-}
+.cell.active{cursor:pointer}
+.cell.win{animation:flash .2s infinite alternate}
+
 @keyframes flash{
   from{background:var(--neon)}
   to{background:var(--danger)}
 }
+
 #msg{
   font-size:28px;
-  height:40px;
-  margin:10px 0;
+  min-height:40px;
 }
-#timer{font-size:20px;color:#ffaa00}
+#timer{font-size:18px;color:#ffaa00}
 .hidden{display:none}
 </style>
 </head>
+
 <body>
 <div id="app">
 <h1>XO Tournament</h1>
 
 <div id="setup">
-<input id="p1" placeholder="Player 1 name" value="P1">
+<input id="p1" placeholder="Player 1" value="P1">
 <input id="p2" placeholder="Player 2 / AI" value="AI">
+
 <select id="mode">
   <option value="pvp">2 Player</option>
   <option value="ai">VS AI</option>
 </select>
+
 <select id="level">
   <option value="easy">AI Easy</option>
   <option value="hard">AI Hard</option>
   <option value="extreme">AI Extreme</option>
 </select>
+
 <button id="start">START</button>
 </div>
 
 <div id="msg"></div>
 <div id="timer"></div>
-
 <div id="board"></div>
 
 <button id="reset" class="hidden">RESET</button>
 
-<audio id="sndWin" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-2059.mp3"></audio>
 <audio id="sndTurn" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
+<audio id="sndWin" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-2059.mp3"></audio>
 <audio id="sndWarn" src="https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-buzzer-991.mp3"></audio>
 </div>
 
 <script>
-const boardEl=document.getElementById("board");
-const msgEl=document.getElementById("msg");
-const timerEl=document.getElementById("timer");
-const resetBtn=document.getElementById("reset");
-let board,turn,names,mode,aiLevel,locked,timer,interval;
+const boardEl = document.getElementById("board");
+const msgEl   = document.getElementById("msg");
+const timerEl = document.getElementById("timer");
 
 const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 
-function start(){
-  names=[p1.value,p2.value];
-  mode=modeSel.value;
-  aiLevel=level.value;
-  locked=true;
-  setup.classList.add("hidden");
-  resetBtn.classList.remove("hidden");
+let board,turn,names,mode,level;
+let gameActive=false;
+let timer,interval;
+
+start.onclick=()=>{
+  names=[p1.value||"P1",p2.value||"AI"];
+  mode=mode.value;
+  level=level.value;
+
+  document.querySelectorAll("#setup input,#setup select,#start")
+    .forEach(e=>e.disabled=true);
+
+  reset.classList.remove("hidden");
+
   board=Array(9).fill("");
   turn=0;
+  gameActive=true;
   draw();
   nextTurn();
-}
+};
 
 function draw(){
   boardEl.innerHTML="";
   board.forEach((v,i)=>{
     const c=document.createElement("div");
-    c.className="cell"+(v?" disabled":"");
+    c.className="cell"+(gameActive&&!v?" active":"");
     c.textContent=v;
     c.onclick=()=>move(i);
     boardEl.appendChild(c);
@@ -126,11 +137,11 @@ function draw(){
 }
 
 function move(i){
-  if(board[i]||!locked) return;
-  board[i]=turn? "O":"X";
+  if(!gameActive||board[i]) return;
+  board[i]=turn?"O":"X";
   sndTurn.play();
   draw();
-  if(checkWin()) return;
+  if(checkEnd()) return;
   turn^=1;
   nextTurn();
 }
@@ -138,7 +149,7 @@ function move(i){
 function nextTurn(){
   msgEl.textContent=names[turn];
   startTimer();
-  if(mode==="ai"&&turn===1) setTimeout(aiMove,500);
+  if(mode==="ai"&&turn===1) setTimeout(aiMove,400);
 }
 
 function startTimer(){
@@ -156,44 +167,46 @@ function startTimer(){
   },1000);
 }
 
-function checkWin(){
+function checkEnd(){
   for(const w of wins){
     if(w.every(i=>board[i]&&board[i]===board[w[0]])){
       w.forEach(i=>boardEl.children[i].classList.add("win"));
       msgEl.textContent=`🏆 ${names[turn]} WINS`;
       sndWin.play();
-      locked=false;
-      clearInterval(interval);
+      endGame();
       return true;
     }
   }
   if(board.every(v=>v)){
     msgEl.textContent="DRAW";
-    locked=false;
-    clearInterval(interval);
+    endGame();
     return true;
   }
   return false;
 }
 
+function endGame(){
+  gameActive=false;
+  clearInterval(interval);
+}
+
 function aiMove(){
-  let i;
-  if(aiLevel==="easy") i=random();
-  else if(aiLevel==="hard") i=smart();
-  else i=minimax(board,true).i;
+  let i = level==="easy" ? rand() :
+          level==="hard" ? smart() :
+          minimax(board,true).i;
   move(i);
 }
 
-function random(){
+function rand(){
   return board.map((v,i)=>v?null:i).filter(v=>v!=null)[Math.random()*9|0];
 }
-function smart(){
-  return random();
-}
+function smart(){return rand();}
+
 function minimax(b,max){
   if(check(b,"O")) return {s:1};
   if(check(b,"X")) return {s:-1};
   if(b.every(v=>v)) return {s:0};
+
   let best={s:max?-99:99};
   b.forEach((v,i)=>{
     if(!v){
@@ -201,16 +214,14 @@ function minimax(b,max){
       let r=minimax(b,!max);
       b[i]="";
       r.i=i;
-      if(max? r.s>best.s:r.s<best.s) best=r;
+      if(max?r.s>best.s:r.s<best.s) best=r;
     }
   });
   return best;
 }
 function check(b,p){return wins.some(w=>w.every(i=>b[i]===p))}
 
-resetBtn.onclick=()=>location.reload();
-start.onclick=start;
+reset.onclick=()=>location.reload();
 </script>
 </body>
 </html>
-
