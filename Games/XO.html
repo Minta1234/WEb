@@ -387,6 +387,37 @@ function endGame(text, winLine){
       boardEl.children[i].classList.add("win");
     });
   }
+  autoReset(5);
+}
+
+function autoReset(seconds){
+  let countdown = seconds;
+  timerEl.style.color = "var(--warn)";
+  timerEl.style.animation = "";
+  timerEl.textContent = `♻️ Resetting in ${countdown}s`;
+
+  const resetInterval = setInterval(()=>{
+    countdown--;
+    if(countdown > 0){
+      timerEl.textContent = `♻️ Resetting in ${countdown}s`;
+    } else {
+      clearInterval(resetInterval);
+      resetGame();
+    }
+  },1000);
+}
+
+function resetGame(){
+  setupEl.classList.remove("hidden");
+  resetBtn.classList.add("hidden");
+  boardEl.classList.add("hidden");
+  msgEl.textContent = "";
+  timerEl.textContent = "";
+  board = Array(9).fill("");
+  turn = 0;
+  gameActive = false;
+  timerEl.style.animation = "";
+  drawBoard();
 }
 
 /* ======================
