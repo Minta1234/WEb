@@ -73,7 +73,7 @@ html, body {
 
 <div id="content">
 	<h1>Hi</h1>
-	<p>I'm Minta</p>
+	<p>I'm Minta.R4M</p>
 	<button id="mainBtn" class="btn">Click me</button>
 	<div id="progressWrap"><div id="progressBar"></div></div>
 	<audio id="bgm" src="/assets/Stranger.mp3" loop></audio>
@@ -100,7 +100,7 @@ function drawMatrix(){
 	for(let i=0;i<drops.length;i++){
 		const t=chars[Math.floor(Math.random()*chars.length)];
 		ctx.fillText(t,i*fontSize,drops[i]*fontSize);
-		drops[i]++;
+		drops[i] += 0.4; 
 		if(drops[i]*fontSize>h && Math.random()>0.975) drops[i]=0;
 	}
 	requestAnimationFrame(drawMatrix);
