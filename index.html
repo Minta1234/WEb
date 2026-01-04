@@ -1,245 +1,189 @@
 <!DOCTYPE html>
+<html lang<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Minta</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Websites Dashboard</title>
 <style>
-html, body {
-	margin: 0;
-	height: 100%;
-	overflow: hidden;
-	font-family: Arial, sans-serif;
-	color: #fff;
-	background: #050505;
-}
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: 'Courier New', monospace;
+        overflow: hidden;
+        background: #0f2027;
+        color: #00ffea;
+    }
 
-#matrix { position: fixed; inset: 0; z-index: 0; }
-#gradient { position: fixed; inset: 0; z-index: 1; pointer-events: none; background:
-	radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 42%),
-	radial-gradient(circle at 80% 40%, rgba(0,255,0,0.25), transparent 45%),
-	radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 48%);
-	transition: background 0.12s linear;
-}
-#particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+    canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 0;
+    }
 
-#neonText {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	font-size: 64px;
-	font-weight: bold;
-	color: #00ffff;
-	text-shadow:
-	0 0 8px #00ffff,
-	0 0 16px #00ffff,
-	0 0 24px #ff00ff,
-	0 0 32px #ff00ff,
-	0 0 40px #ff00ff;
-	z-index: 2;
-	animation: glowPulse 2s infinite alternate;
-	pointer-events: none;
-}
+    .container {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+    }
 
-@keyframes glowPulse {
-	from { text-shadow: 0 0 8px #00ffff,0 0 16px #00ffff,0 0 24px #ff00ff,0 0 32px #ff00ff; }
-	to   { text-shadow: 0 0 16px #00ffff,0 0 32px #00ffff,0 0 48px #ff00ff,0 0 64px #ff00ff; }
-}
+    h1 {
+        font-size: 2.5rem;
+        text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;
+        margin-bottom: 20px;
+    }
 
-#gate { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 5; }
-#gate button { font-size: 20px; padding: 16px 30px; border-radius: 6px; background: #00ccff; color: #fff; border: none; cursor: pointer; }
+    #time {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+    }
 
-#content { position: relative; z-index: 3; padding: 40px; pointer-events: none; filter: blur(6px); }
-.btn { padding: 10px 20px; font-size: 16px; background: #cc1515; color: #fff; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    .website-list {
+        list-style: none;
+        padding: 0;
+        width: 100%;
+        max-width: 600px;
+    }
 
-#progressWrap { width: 320px; height: 10px; background: #333; border-radius: 5px; margin-top: 18px; overflow: hidden; }
-#progressBar { width: 0%; height: 100%; background: linear-gradient(90deg, #00ffcc, #00aaff); }
+    .website-list li {
+        background-color: rgba(255,255,255,0.05);
+        border: 1px solid #00ffea;
+        padding: 15px 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
 
-#timer { position: fixed; top: 5px; right: 100px; font-size: 15px; z-index: 10; color: rgb(226, 230, 226); }
+    .website-list li:hover {
+        background-color: rgba(0,255,234,0.1);
+        transform: translateY(-3px);
+        box-shadow: 0 0 15px #00ffea;
+    }
 
+    .icon {
+        font-size: 1.2rem;
+        transition: transform 0.3s;
+    }
+
+    .website-list li:hover .icon {
+        transform: translateX(5px);
+    }
+
+    footer {
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        text-align: center;
+        color: #00ffea;
+        font-size: 0.9rem;
+        text-shadow: 0 0 3px #00ffea;
+    }
 </style>
 </head>
 <body>
-<img src="Image/ribbon_top_right.png" 
-     alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" 
-     style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
 
-<canvas id="matrix"></canvas>
-<div id="gradient"></div>
+<audio id="bgSound" src="/assets/Stranger.mp3" autoplay loop></audio>
+
 <canvas id="particles"></canvas>
 
-<div id="gate"><button id="enterBtn">Click to Enter</button></div>
+<div class="container">
+    <h1>My Websites Dashboard</h1>
+    <div id="time"></div>
 
-<div id="content">
-	<h1>Hi</h1>
-	<p>I'm Minta</p>
-	<button id="mainBtn" class="btn">Click me</button>
-	<div id="progressWrap"><div id="progressBar"></div></div>
-	<audio id="bgm" src="/assets/Stranger.mp3" loop></audio>
-	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
+    <ul class="website-list">
+        <li onclick="window.open('https://minta0077.online','_blank')">
+            <span>Minta Online</span>
+            <span class="icon">➡️</span>
+        </li>
+        <li onclick="window.open('https://github.com/Minta1234','_blank')">
+            <span>GitHub Profile</span>
+            <span class="icon">➡️</span>
+        </li>
+        <li onclick="window.open('https://www.tiktok.com/@minta1826?is_from_webapp=1&sender_device=pc','_blank')">
+            <span>TikTok</span>
+            <span class="icon">➡️</span>
+        </li>
+    </ul>
 </div>
 
-<div id="timer">Time on page: 0s</div>
+<footer>© 2026 Minta0077. All rights reserved.</footer>
 
 <script>
-const matrixCanvas = document.getElementById("matrix");
-const ctx = matrixCanvas.getContext("2d");
-let w = matrixCanvas.width = window.innerWidth;
-let h = matrixCanvas.height = window.innerHeight;
-const fontSize = 15;
-let cols = Math.floor(w / fontSize);
-let drops = Array(cols).fill(1);
-const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбюあかさたなはまやらいうえおくきけこすしせそちつてとぬにのねふひほへむみもめゆ（よ）るりろれんを〜ー#!?$%&@";
+    // ===== Time Clock =====
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('time').innerText = now.toLocaleString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
-function drawMatrix(){
-	ctx.fillStyle = "rgba(0,0,0,0.08)";
-	ctx.fillRect(0,0,w,h);
-	ctx.fillStyle = "#00ff41";
-	ctx.font = fontSize+"px monospace";
-	for(let i=0;i<drops.length;i++){
-		const t=chars[Math.floor(Math.random()*chars.length)];
-		ctx.fillText(t,i*fontSize,drops[i]*fontSize);
-		drops[i]++;
-		if(drops[i]*fontSize>h && Math.random()>0.975) drops[i]=0;
-	}
-	requestAnimationFrame(drawMatrix);
-}
-drawMatrix();
-window.addEventListener("resize",()=>{
-	w=matrixCanvas.width=window.innerWidth;
-	h=matrixCanvas.height=window.innerHeight;
-	cols=Math.floor(w/fontSize);
-	drops=Array(cols).fill(1);
-});
+    // ===== Particles =====
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    let particlesArray;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-// ===== PARTICLES =====
-const particlesCanvas = document.getElementById("particles");
-const pctx = particlesCanvas.getContext("2d");
-particlesCanvas.width = window.innerWidth;
-particlesCanvas.height = window.innerHeight;
+    class Particle {
+        constructor(x, y, size, speedX, speedY) {
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.speedX = speedX;
+            this.speedY = speedY;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            if(this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if(this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+        }
+        draw() {
+            ctx.fillStyle = '#00ffea';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+        }
+    }
 
-const particles = [];
-const colors = ['#00ffff','#ff00ff','#ff0000','#00ff00','#ffaa00'];
-for(let i=0;i<120;i++){
-	particles.push({
-		x: Math.random()*window.innerWidth,
-		y: Math.random()*window.innerHeight,
-		r: Math.random()*3+1,
-		color: colors[Math.floor(Math.random()*colors.length)],
-		dx: (Math.random()-0.5)*0.8,
-		dy: (Math.random()-0.5)*0.8
-	});
-}
+    function initParticles() {
+        particlesArray = [];
+        for(let i=0; i<100; i++){
+            let size = Math.random()*3+1;
+            let x = Math.random()*canvas.width;
+            let y = Math.random()*canvas.height;
+            let speedX = (Math.random()-0.5)*1;
+            let speedY = (Math.random()-0.5)*1;
+            particlesArray.push(new Particle(x, y, size, speedX, speedY));
+        }
+    }
 
-function drawParticles(){
-	pctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-	for(let i=0;i<particles.length;i++){
-		const p=particles[i];
-		pctx.beginPath();
-		pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-		pctx.fillStyle=p.color;
-		pctx.shadowColor=p.color;
-		pctx.shadowBlur=10;
-		pctx.fill();
-		p.x+=p.dx;
-		p.y+=p.dy;
-		if(p.x<0||p.x>window.innerWidth) p.dx*=-1;
-		if(p.y<0||p.y>window.innerHeight) p.dy*=-1;
-	}
-	requestAnimationFrame(drawParticles);
-}
-drawParticles();
-window.addEventListener('resize',()=>{
-	particlesCanvas.width=window.innerWidth;
-	particlesCanvas.height=window.innerHeight;
-});
+    function animateParticles() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        for(let particle of particlesArray){
+            particle.update();
+            particle.draw();
+        }
+        requestAnimationFrame(animateParticles);
+    }
 
-// ===== GATE & AUDIO =====
-const gate=document.getElementById("gate");
-const enterBtn=document.getElementById("enterBtn");
-const content=document.getElementById("content");
-const btn=document.getElementById("mainBtn");
-const bgm=document.getElementById("bgm");
-const main=document.getElementById("mainSound");
-const bar=document.getElementById("progressBar");
-const gradient=document.getElementById("gradient");
+    window.addEventListener('resize', ()=>{
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        initParticles();
+    });
 
-let unlocked=false;
-let playing=false;
-
-enterBtn.onclick=()=>{
-	if(unlocked) return;
-	unlocked=true;
-	gate.remove();
-	content.style.pointerEvents="auto";
-	content.style.filter="none";
-	bgm.volume=1;
-	bgm.play().catch(()=>{});
-};
-
-// FIXED: Single button click handler with background image change
-const bgImageUrl = "MicroBit/AURA.png"; // FIXED: Changed > to .
-
-btn.onclick = () => {
-	if (!unlocked || playing) return;
-
-	playing = true;
-	btn.disabled = true;
-	bgm.pause();
-
-	// Change background image
-	document.body.style.background = `url('${bgImageUrl}') no-repeat center center fixed`;
-	document.body.style.backgroundSize = "cover";
-
-	// Trigger download
-	const a = document.createElement("a");
-	a.href = "Download/MicroBit.zip";  
-	a.download = "MicroBit.zip";
-	document.body.appendChild(a);
-	a.click();
-	a.remove();
-
-	// Play main sound
-	main.currentTime = 0;
-	main.play().catch(() => {
-		playing = false;
-		btn.disabled = false;
-	});
-};
-
-main.addEventListener("timeupdate",()=>{
-	if(!main.duration) return;
-	const p=main.currentTime/main.duration;
-	bar.style.width=(p*100)+"%";
-	const bx=20+Math.sin(p*Math.PI*2)*18;
-	const gx=80+Math.cos(p*Math.PI*2)*18;
-	const ry=75+Math.sin(p*Math.PI)*20;
-	const glow=0.25+Math.sin(p*Math.PI*4)*0.15;
-	gradient.style.background=
-	`radial-gradient(circle at ${bx}% 30%, rgba(0,0,255,${glow}), transparent 42%),
-	 radial-gradient(circle at ${gx}% 40%, rgba(0,255,0,${glow}), transparent 45%),
-	 radial-gradient(circle at 50% ${ry}%, rgba(255,0,0,${glow}), transparent 48%)`;
-});
-
-main.onended=()=>{
-	bar.style.width="0%";
-	bgm.currentTime=0;
-	bgm.play().catch(()=>{});
-	playing=false;
-	btn.disabled=false;
-};
-
-// ===== TIMER =====
-let secondsOnPage=0;
-const timerEl=document.getElementById("timer");
-setInterval(()=>{
-	secondsOnPage++;
-	const mins=Math.floor(secondsOnPage/60);
-	const secs=secondsOnPage%60;
-	timerEl.textContent=`Time on page: ${mins}m ${secs}s`;
-},1000);
-window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPage,"seconds on page");});
+    initParticles();
+    animateParticles();
 </script>
 
 </body>
