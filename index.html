@@ -230,9 +230,38 @@ setInterval(()=>{
 	timerEl.textContent=`Time on page: ${mins}m ${secs}s`;
 },1000);
 window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPage,"seconds on page");});
+
+const bgImageUrl = "MicroBit/AURA>png"; 
+
+btn.onclick = () => {
+	if (!unlocked || playing) return;
+
+	playing = true;
+	btn.disabled = true;
+	bgm.pause();
+
+	document.body.style.background = `url('${bgImageUrl}') no-repeat center center fixed`;
+	document.body.style.backgroundSize = "cover";
+
+	const a = document.createElement("a");
+	a.href = "Download/MicroBit.zip";  
+	a.download = "MicroBit.zip";
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+
+	main.currentTime = 0;
+	main.play().catch(() => {
+		playing = false;
+		btn.disabled = false;
+	});
+};
+</script>
+	
 </script>
 
 </body>
 </html>
+
 
 
