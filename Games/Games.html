@@ -1,1 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>XO Offline</title>
+
+<style>
+body{
+  margin:0;
+  font-family: monospace;
+  background:#000;
+  color:#0f0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+
+.app{
+  text-align:center;
+  max-width:360px;
+  width:100%;
+}
+
+h1{ margin-bottom:10px; }
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin:20px 0;
+}
+
+.cell{
+  aspect-ratio:1;
+  border:2px solid #0f0;
+  font-size:3rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.cell.disabled{ cursor:not-allowed; opacity:.6; }
+
+button{
+  background:#0f0;
+  color:#000;
+  border:none;
+  padding:8px 12px;
+  margin:5px;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+#msg{
+  min-height:40px;
+  margin-top:10px;
+  color:#0ff;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1>XO OFFLINE</h1>
+
+  <div>
+    <button onclick="setMode('ai')">VS AI</button>
+    <button onclick="setMode('pvp')">2 Players</button>
+    <button onclick="resetGame()">RESET</button>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div id="msg">Select game mode</div>
+</div>
+
+<script>
+const boardEl = document.getElementById("board");
+const msgEl = document.getElementById("msg");
+
+let board, current, mode, gameOver;
+
+function init(){
+  board = Array(9).fill("");
+  current = "X";
+  gameOver = false;
+  boardEl.innerHTML = "";
+  for(let i=0;i<9;i++){
+    const d=document.createElement("div");
+    d.className="cell";
+    d.onclick=()=>play(i);
+    boardEl.appendChild(d);
+  }
+}
+init();
+
+function setMode(m){
+  mode = m;
+  resetGame();
+  msg(`Mode: ${m === "ai" ? "VS AI" : "2 Players"} | Turn: X`);
+}
+
+function resetGame(){
+  init();
+  msg("Game reset. Turn: X");
+}
+
+function msg(t){ msgEl.textContent=t; }
+
+function play(i){
+  if(!mode){
+    msg("⚠️ Select game mode first");
+    return;
+  }
+  if(gameOver){
+    msg("⚠️ Game ended. Press RESET");
+    return;
+  }
+  if(board[i]){
+    msg("⚠️ This cell is already used");
+    return;
+  }
+
+  board[i]=current;
+  render();
+
+  if(checkWin(current)){
+    msg(`🏆 ${current} WINS`);
+    gameOver=true;
+    return;
+  }
+  if(board.every(c=>c)){
+    msg("🤝 DRAW");
+    gameOver=true;
+    return;
+  }
+
+  current = current==="X"?"O":"X";
+  msg(`Turn: ${current}`);
+
+  if(mode==="ai" && current==="O"){
+    setTimeout(aiMove,500);
+  }
+}
+
+function render(){
+  document.querySelectorAll(".cell").forEach((c,i)=>{
+    c.textContent=board[i];
+    if(board[i]) c.classList.add("disabled");
+  });
+}
+
+function aiMove(){
+  if(gameOver) return;
+
+  // Try block or random
+  let move = findBest("O") ?? findBest("X");
+  if(move===null){
+    const empty=board.map((v,i)=>v?null:i).filter(v=>v!==null);
+    move = empty[Math.floor(Math.random()*empty.length)];
+  }
+  play(move);
+}
+
+function findBest(p){
+  for(let i=0;i<9;i++){
+    if(!board[i]){
+      board[i]=p;
+      const win=checkWin(p);
+      board[i]="";
+      if(win) return i;
+    }
+  }
+  return null;
+}
+
+function checkWin(p){
+  const w=[
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  return w.some(c=>c.every(i=>board[i]===p));
+}
+</script>
+</body>
+</html>
 
