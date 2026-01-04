@@ -105,94 +105,139 @@ li:hover{
 <audio id="sfxClick" src="assets/click.wav" preload="auto"></audio>
 
 <script>
-/* ========== AUDIO CORE ========== */
-const AUDIO={
-  enabled:true,
-  bgm:document.getElementById("bgm"),
-  enter:document.getElementById("sfxEnter"),
-  click:document.getElementById("sfxClick")
-};
-AUDIO.bgm.volume=0.4;
-AUDIO.enter.volume=0.8;
-AUDIO.click.volume=0.8;
+/* ===============================
+   AUDIO SYSTEM (ENTER-GATED)
+   =============================== */
 
-/* ========== ENTER ========== */
-enterBtn.addEventListener("click",()=>{
-  AUDIO.enter.currentTime=0;
-  AUDIO.enter.play().catch(()=>{});
+const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
 
-  landing.style.display="none";
-  app.style.display="flex";
-
-  if(AUDIO.enabled){
-    AUDIO.bgm.currentTime=0;
-    AUDIO.bgm.play().catch(()=>{});
-  }
-});
-
-/* ========== SOUND TOGGLE ========== */
-soundToggle.onclick=()=>{
-  AUDIO.enabled=!AUDIO.enabled;
-  soundToggle.textContent=AUDIO.enabled?"🔊":"🔇";
-  AUDIO.enabled?AUDIO.bgm.play().catch(()=>{}):AUDIO.bgm.pause();
+const AUDIO = {
+  enabled: true,
+  bgm: document.getElementById("bgm"),
+  enter: document.getElementById("sfxEnter"),
+  click: document.getElementById("sfxClick"),
+  unlocked: false
 };
 
-/* ========== LOOP SAFETY ========== */
-AUDIO.bgm.addEventListener("ended",()=>{
-  if(AUDIO.enabled){
-    AUDIO.bgm.currentTime=0;
-    AUDIO.bgm.play().catch(()=>{});
-  }
-});
+AUDIO.bgm.volume = 0.4;
+AUDIO.enter.volume = 0.8;
+AUDIO.click.volume = 0.8;
 
-/* ========== RESUME AFTER TAB BACK ========== */
-document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden && AUDIO.enabled){
-    AUDIO.bgm.play().catch(()=>{});
+/* ===== UNLOCK AUDIO (CRITICAL) ===== */
+async function unlockAudio() {
+  if (AUDIO.unlocked) return;
+  try {
+    await AudioCTX.resume();
+    AUDIO.unlocked = true;
+    console.log("Audio unlocked");
+  } catch (e) {
+    console.warn("Audio unlock failed", e);
   }
-});
-
-/* ========== LINKS ========== */
-function openLink(url){
-  if(AUDIO.enabled){
-    AUDIO.click.currentTime=0;
-    AUDIO.click.play().catch(()=>{});
-  }
-  setTimeout(()=>window.open(url,"_blank"),120);
 }
 
-/* ========== CLOCK ========== */
-function tick(){
-  time.textContent=new Date().toLocaleString("en-US",{
-    weekday:"long",
-    hour:"2-digit",
-    minute:"2-digit",
-    second:"2-digit"
+/* ===== SAFE PLAY ===== */
+function playSound(audio) {
+  if (!AUDIO.enabled || !AUDIO.unlocked) return;
+  audio.currentTime = 0;
+  audio.play().catch(()=>{});
+}
+
+/* ===============================
+   ENTER BUTTON
+   =============================== */
+enterBtn.addEventListener("click", async () => {
+  await unlockAudio();
+
+  playSound(AUDIO.enter);
+
+  landing.style.display = "none";
+  app.style.display = "flex";
+
+  if (AUDIO.enabled && AUDIO.bgm.paused) {
+    AUDIO.bgm.currentTime = 0;
+    AUDIO.bgm.play().catch(()=>{});
+  }
+});
+
+/* ===============================
+   SOUND TOGGLE
+   =============================== */
+soundToggle.onclick = async () => {
+  AUDIO.enabled = !AUDIO.enabled;
+  soundToggle.textContent = AUDIO.enabled ? "🔊" : "🔇";
+
+  await unlockAudio();
+
+  if (AUDIO.enabled) {
+    if (AUDIO.bgm.paused) {
+      AUDIO.bgm.play().catch(()=>{});
+    }
+  } else {
+    AUDIO.bgm.pause();
+  }
+};
+
+/* ===============================
+   VISIBILITY FIX
+   =============================== */
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && AUDIO.enabled && AUDIO.unlocked) {
+    if (AUDIO.bgm.paused) {
+      AUDIO.bgm.play().catch(()=>{});
+    }
+  }
+});
+
+/* ===============================
+   LINKS
+   =============================== */
+function openLink(url) {
+  playSound(AUDIO.click);
+  setTimeout(() => window.open(url, "_blank"), 120);
+}
+
+/* ===============================
+   CLOCK
+   =============================== */
+function tick() {
+  time.textContent = new Date().toLocaleString("en-US", {
+    weekday: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
   });
 }
-setInterval(tick,1000);tick();
+setInterval(tick, 1000);
+tick();
 
-/* ========== PARTICLES ========== */
-const c=bg,ctx=c.getContext("2d");
-function resize(){c.width=innerWidth;c.height=innerHeight}
-resize();addEventListener("resize",resize);
+/* ===============================
+   PARTICLES (UNCHANGED)
+   =============================== */
+const c = bg, ctx = c.getContext("2d");
+function resize() {
+  c.width = innerWidth;
+  c.height = innerHeight;
+}
+resize();
+addEventListener("resize", resize);
 
-const P=[...Array(120)].map(()=>({
-  x:Math.random()*c.width,
-  y:Math.random()*c.height,
-  vx:(Math.random()-.5)*.6,
-  vy:(Math.random()-.5)*.6
+const P = [...Array(120)].map(() => ({
+  x: Math.random() * c.width,
+  y: Math.random() * c.height,
+  vx: (Math.random() - .5) * .6,
+  vy: (Math.random() - .5) * .6
 }));
 
-(function anim(){
-  ctx.clearRect(0,0,c.width,c.height);
-  P.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>c.width)p.vx*=-1;
-    if(p.y<0||p.y>c.height)p.vy*=-1;
-    ctx.fillStyle="rgba(0,255,231,.7)";
+(function anim() {
+  ctx.clearRect(0, 0, c.width, c.height);
+  P.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    if (p.x < 0 || p.x > c.width) p.vx *= -1;
+    if (p.y < 0 || p.y > c.height) p.vy *= -1;
+    ctx.fillStyle = "rgba(0,255,231,.7)";
     ctx.beginPath();
-    ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
+    ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
     ctx.fill();
   });
   requestAnimationFrame(anim);
@@ -201,3 +246,4 @@ const P=[...Array(120)].map(()=>({
 
 </body>
 </html>
+
