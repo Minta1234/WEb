@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minta Dashboard</title>
 
@@ -17,14 +16,9 @@ html,body{
   color:#00ffe7;
   overflow:hidden;
 }
-canvas{
-  position:fixed;
-  inset:0;
-  z-index:0;
-}
+canvas{position:fixed;inset:0;z-index:0}
 #landing,#app{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   display:flex;
   flex-direction:column;
   justify-content:center;
@@ -77,7 +71,10 @@ li:hover{
 </head>
 
 <body>
-<img src="/Image/ribbon_top_right.png" alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
+
+<img src="/Image/ribbon_top_right.png"
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
+
 <canvas id="bg"></canvas>
 
 <div id="landing">
@@ -90,11 +87,11 @@ li:hover{
   <div id="time"></div>
 
   <ul>
-    <li onclick="openLink('https://minta0077.online/minta0077.html')">Minta Online <span>➡</span></li>
-    <li onclick="openLink('https://github.com/Minta1234')">GitHub <span>➡</span></li>
-    <li onclick="openLink('https://www.tiktok.com/@minta1826')">TikTok <span>➡</span></li>
-    <li onclick="openLink('https://minta0077.online/Games/XO.html')">XO Game <span>➡</span></li>
-    <li onclick="openLink('https://minta0077.online/Games/Chess.html')">Chess <span>➡</span></li>
+    <li onclick="openLink('https://minta0077.online/minta0077.html')">Minta Online ➡</li>
+    <li onclick="openLink('https://github.com/Minta1234')">GitHub ➡</li>
+    <li onclick="openLink('https://www.tiktok.com/@minta1826')">TikTok ➡</li>
+    <li onclick="openLink('https://minta0077.online/Games/XO.html')">XO Game ➡</li>
+    <li onclick="openLink('https://minta0077.online/Games/Chess.html')">Chess ➡</li>
   </ul>
 
   <footer style="margin-top:40px;opacity:.6">© 2026 Minta0077</footer>
@@ -103,50 +100,59 @@ li:hover{
 <button id="soundToggle">🔊</button>
 
 <!-- AUDIO -->
-<audio id="bgm" src="assets/the_best_song.mp3" preload="auto" loop></audio>
+<audio id="bgm" src="assets/the_best_song.mp3" preload="auto" loop playsinline></audio>
 <audio id="sfxEnter" src="assets/enter.wav" preload="auto"></audio>
-<audio id="sfxClick" src="assets/click.wav"></audio>
+<audio id="sfxClick" src="assets/click.wav" preload="auto"></audio>
 
 <script>
-/* ================= AUDIO CORE ================= */
-const AUDIO = {
-  enabled: true,
-  bgm: document.getElementById("bgm"),
-  enter: document.getElementById("sfxEnter"),
-  click: document.getElementById("sfxClick")
+/* ========== AUDIO CORE ========== */
+const AUDIO={
+  enabled:true,
+  bgm:document.getElementById("bgm"),
+  enter:document.getElementById("sfxEnter"),
+  click:document.getElementById("sfxClick")
 };
-AUDIO.bgm.volume = 0.4;
-AUDIO.enter.volume = 0.8;
-AUDIO.click.volume = 0.8;
+AUDIO.bgm.volume=0.4;
+AUDIO.enter.volume=0.8;
+AUDIO.click.volume=0.8;
 
-/* ================= ENTER ================= */
-document.getElementById("enterBtn").addEventListener("click", () => {
-
-  // ปลดล็อกเสียง (สำคัญ)
-  AUDIO.enter.currentTime = 0;
+/* ========== ENTER ========== */
+enterBtn.addEventListener("click",()=>{
+  AUDIO.enter.currentTime=0;
   AUDIO.enter.play().catch(()=>{});
 
-  // เปิดหน้า Dashboard
-  document.getElementById("landing").style.display = "none";
-  document.getElementById("app").style.display = "flex";
+  landing.style.display="none";
+  app.style.display="flex";
 
-  // เล่น BGM ใน user gesture
-  if (AUDIO.enabled) {
-    AUDIO.bgm.currentTime = 0;
+  if(AUDIO.enabled){
+    AUDIO.bgm.currentTime=0;
     AUDIO.bgm.play().catch(()=>{});
   }
 });
 
-/* ================= SOUND TOGGLE ================= */
-document.getElementById("soundToggle").onclick = () => {
-  AUDIO.enabled = !AUDIO.enabled;
-  document.getElementById("soundToggle").textContent =
-    AUDIO.enabled ? "🔊" : "🔇";
-
-  AUDIO.enabled ? AUDIO.bgm.play().catch(()=>{}) : AUDIO.bgm.pause();
+/* ========== SOUND TOGGLE ========== */
+soundToggle.onclick=()=>{
+  AUDIO.enabled=!AUDIO.enabled;
+  soundToggle.textContent=AUDIO.enabled?"🔊":"🔇";
+  AUDIO.enabled?AUDIO.bgm.play().catch(()=>{}):AUDIO.bgm.pause();
 };
 
-/* ================= LINKS ================= */
+/* ========== LOOP SAFETY ========== */
+AUDIO.bgm.addEventListener("ended",()=>{
+  if(AUDIO.enabled){
+    AUDIO.bgm.currentTime=0;
+    AUDIO.bgm.play().catch(()=>{});
+  }
+});
+
+/* ========== RESUME AFTER TAB BACK ========== */
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden && AUDIO.enabled){
+    AUDIO.bgm.play().catch(()=>{});
+  }
+});
+
+/* ========== LINKS ========== */
 function openLink(url){
   if(AUDIO.enabled){
     AUDIO.click.currentTime=0;
@@ -155,16 +161,19 @@ function openLink(url){
   setTimeout(()=>window.open(url,"_blank"),120);
 }
 
-/* ================= CLOCK ================= */
+/* ========== CLOCK ========== */
 function tick(){
-  document.getElementById("time").textContent =
-    new Date().toLocaleString("en-US",{weekday:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  time.textContent=new Date().toLocaleString("en-US",{
+    weekday:"long",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit"
+  });
 }
 setInterval(tick,1000);tick();
 
-/* ================= PARTICLES ================= */
-const c=document.getElementById("bg");
-const ctx=c.getContext("2d");
+/* ========== PARTICLES ========== */
+const c=bg,ctx=c.getContext("2d");
 function resize(){c.width=innerWidth;c.height=innerHeight}
 resize();addEventListener("resize",resize);
 
@@ -189,6 +198,6 @@ const P=[...Array(120)].map(()=>({
   requestAnimationFrame(anim);
 })();
 </script>
+
 </body>
 </html>
-
