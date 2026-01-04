@@ -22,94 +22,171 @@ body{
   justify-content:center;
   align-items:center;
   min-height:100vh;
+  padding:20px;
 }
 #app{
-  width:360px;
+  width:100%;
+  max-width:400px;
   background:var(--panel);
-  padding:16px;
+  padding:clamp(16px, 4vw, 24px);
   border-radius:12px;
+  box-shadow:0 8px 32px rgba(0,255,204,0.2);
 }
 h1{
-  margin:0 0 10px;
+  margin:0 0 16px;
   color:var(--neon);
   text-align:center;
+  font-size:clamp(1.5rem, 5vw, 2rem);
+  text-shadow:0 0 10px var(--neon);
 }
 input,select,button{
   width:100%;
-  margin:6px 0;
-  padding:10px;
-  font-size:16px;
+  margin:8px 0;
+  padding:12px;
+  font-size:clamp(14px, 3vw, 16px);
+  border-radius:8px;
+  border:2px solid #222;
+  background:#111;
+  color:#fff;
+  transition:all 0.3s;
 }
-button{cursor:pointer}
+input:focus,select:focus{
+  outline:none;
+  border-color:var(--neon);
+  box-shadow:0 0 10px rgba(0,255,204,0.3);
+}
+button{
+  cursor:pointer;
+  background:var(--neon);
+  color:#000;
+  font-weight:bold;
+  border:none;
+}
+button:hover{
+  background:#00ddaa;
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,255,204,0.4);
+}
+button:active{
+  transform:translateY(0);
+}
 #board{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin:14px 0;
+  gap:clamp(6px, 2vw, 10px);
+  margin:16px 0;
 }
 .cell{
-  height:96px;
-  font-size:48px;
+  aspect-ratio:1;
+  min-height:80px;
+  font-size:clamp(40px, 10vw, 56px);
   background:#111;
   display:flex;
   align-items:center;
   justify-content:center;
   border-radius:8px;
   user-select:none;
+  transition:all 0.2s;
+  font-weight:bold;
+  border:2px solid #222;
 }
-.cell.active{cursor:pointer}
-.cell.disabled{pointer-events:none;opacity:.45}
+.cell.active{
+  cursor:pointer;
+  border-color:#333;
+}
+.cell.active:hover{
+  background:#1a1a1a;
+  border-color:var(--neon);
+  transform:scale(1.05);
+}
+.cell.disabled{
+  pointer-events:none;
+  opacity:.6;
+}
+.cell:has(.x-mark){
+  color:var(--neon);
+  text-shadow:0 0 10px var(--neon);
+}
+.cell:has(.o-mark){
+  color:var(--danger);
+  text-shadow:0 0 10px var(--danger);
+}
 .win{
-  animation:flash .2s infinite alternate;
+  animation:flash .4s ease-in-out infinite alternate;
 }
 @keyframes flash{
-  from{background:var(--neon)}
-  to{background:var(--danger)}
+  from{
+    background:var(--neon);
+    transform:scale(1.1);
+    box-shadow:0 0 20px var(--neon);
+  }
+  to{
+    background:var(--danger);
+    transform:scale(1.15);
+    box-shadow:0 0 20px var(--danger);
+  }
 }
 #msg{
-  height:48px;
-  font-size:28px;
+  min-height:48px;
+  font-size:clamp(20px, 5vw, 28px);
   text-align:center;
-  margin:8px 0;
+  margin:12px 0;
+  color:var(--neon);
+  font-weight:bold;
+  text-shadow:0 0 8px var(--neon);
 }
 #timer{
   text-align:center;
-  font-size:18px;
+  font-size:clamp(16px, 4vw, 20px);
   color:var(--warn);
+  font-weight:bold;
+  min-height:28px;
 }
-.hidden{display:none}
+.hidden{display:none!important}
+#levelContainer{
+  display:none;
+}
+#levelContainer.show{
+  display:block;
+}
+@media (max-width: 480px) {
+  #app{
+    padding:12px;
+  }
+  .cell{
+    min-height:70px;
+  }
+}
 </style>
 </head>
 <body>
 <div id="app">
 
-<h1>XO Tournament</h1>
+<h1>⭕ XO Tournament ❌</h1>
 
 <div id="setup">
-  <input id="p1" placeholder="Player 1" value="P1">
-  <input id="p2" placeholder="Player 2 / AI" value="AI">
+  <input id="p1" placeholder="Player 1 Name" value="Player 1" maxlength="20">
+  <input id="p2" placeholder="Player 2 Name" value="Player 2" maxlength="20">
   <select id="mode">
-    <option value="pvp">2 Player (1 Device)</option>
-    <option value="ai">VS AI</option>
+    <option value="pvp">👥 2 Players (1 Device)</option>
+    <option value="ai">🤖 VS AI</option>
   </select>
-  <select id="level">
-    <option value="easy">AI Easy</option>
-    <option value="hard">AI Hard</option>
-    <option value="extreme">AI Extreme</option>
-  </select>
-  <button id="start">START</button>
+  <div id="levelContainer">
+    <select id="level">
+      <option value="easy">😊 AI Easy</option>
+      <option value="hard">😎 AI Hard</option>
+      <option value="extreme">😈 AI Extreme (Unbeatable)</option>
+    </select>
+  </div>
+  <button id="start">START GAME</button>
 </div>
 
 <div id="msg"></div>
 <div id="timer"></div>
 
-<div id="board"></div>
+<div id="board" class="hidden"></div>
 
-<button id="reset" class="hidden">RESET</button>
-
-<audio id="sndWin" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-2059.mp3"></audio>
-<audio id="sndTurn" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
-<audio id="sndWarn" src="https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-buzzer-991.mp3"></audio>
+<button id="reset" class="hidden">NEW GAME</button>
 
 </div>
 
@@ -121,6 +198,9 @@ const boardEl = document.getElementById("board");
 const msgEl   = document.getElementById("msg");
 const timerEl = document.getElementById("timer");
 const resetBtn= document.getElementById("reset");
+const setupEl = document.getElementById("setup");
+const modeSelect = document.getElementById("mode");
+const levelContainer = document.getElementById("levelContainer");
 
 let board = [];
 let turn = 0;            // 0 = X, 1 = O
@@ -144,17 +224,41 @@ const wins = [
    INIT / START
 ====================== */
 document.getElementById("start").onclick = startGame;
-resetBtn.onclick = ()=>location.reload();
+resetBtn.onclick = ()=>{
+  setupEl.classList.remove("hidden");
+  resetBtn.classList.add("hidden");
+  boardEl.classList.add("hidden");
+  msgEl.textContent = "";
+  timerEl.textContent = "";
+  gameActive = false;
+  clearInterval(timerInt);
+};
+
+// Show/hide AI level selector based on mode
+modeSelect.onchange = ()=>{
+  if(modeSelect.value === "ai"){
+    levelContainer.classList.add("show");
+    document.getElementById("p2").value = "AI";
+  } else {
+    levelContainer.classList.remove("show");
+    document.getElementById("p2").value = "Player 2";
+  }
+};
 
 function startGame(){
+  const p1Input = document.getElementById("p1").value.trim();
+  const p2Input = document.getElementById("p2").value.trim();
+  
   names = [
-    document.getElementById("p1").value || "P1",
-    document.getElementById("p2").value || "AI"
+    p1Input || "Player 1",
+    mode === "ai" ? "AI" : (p2Input || "Player 2")
   ];
-  mode = document.getElementById("mode").value;
+  
+  mode = modeSelect.value;
   aiLevel = document.getElementById("level").value;
 
-  document.getElementById("setup").classList.add("hidden");
+  setupEl.classList.add("hidden");
+  boardEl.classList.remove("hidden");
   resetBtn.classList.remove("hidden");
 
   board = Array(9).fill("");
@@ -175,7 +279,19 @@ function drawBoard(){
     c.className = "cell";
     if(gameActive && !v) c.classList.add("active");
     if(v) c.classList.add("disabled");
-    c.textContent = v;
+    
+    if(v === "X"){
+      const span = document.createElement("span");
+      span.className = "x-mark";
+      span.textContent = "❌";
+      c.appendChild(span);
+    } else if(v === "O"){
+      const span = document.createElement("span");
+      span.className = "o-mark";
+      span.textContent = "⭕";
+      c.appendChild(span);
+    }
+    
     c.onclick = ()=>handleMove(i);
     boardEl.appendChild(c);
   });
@@ -196,7 +312,6 @@ function handleMove(i){
   if(board[i]) return;
 
   board[i] = turn ? "O" : "X";
-  document.getElementById("sndTurn").play();
   drawBoard();
 
   if(checkEnd()) return;
@@ -207,26 +322,35 @@ function handleMove(i){
 
 function nextTurn(){
   clearInterval(timerInt);
-  msgEl.textContent = names[turn];
+  const symbol = turn ? "⭕" : "❌";
+  msgEl.textContent = `${names[turn]}'s Turn ${symbol}`;
   startTimer();
 
   if(mode==="ai" && turn===1){
     lockBoard();
-    setTimeout(aiMove,400);
+    setTimeout(aiMove, 600);
   }
 }
 
 function startTimer(){
   timer = TURN_TIME;
-  timerEl.textContent = `⏱ ${timer}`;
+  timerEl.textContent = `⏱ Time: ${timer}s`;
   timerInt = setInterval(()=>{
     timer--;
-    timerEl.textContent = `⏱ ${timer}`;
+    timerEl.textContent = `⏱ Time: ${timer}s`;
+    if(timer <= 3 && timer > 0){
+      timerEl.style.color = "var(--danger)";
+      timerEl.style.animation = "flash 0.5s infinite";
+    }
     if(timer<=0){
       clearInterval(timerInt);
-      document.getElementById("sndWarn").play();
-      turn ^= 1;
-      nextTurn();
+      timerEl.textContent = "⏱ Time's Up!";
+      timerEl.style.animation = "";
+      setTimeout(()=>{
+        turn ^= 1;
+        nextTurn();
+        timerEl.style.color = "var(--warn)";
+      }, 1000);
     }
   },1000);
 }
@@ -237,12 +361,11 @@ function startTimer(){
 function checkEnd(){
   const w = getWinner(board);
   if(w){
-    endGame(`${names[turn]} WINS`, w);
-    document.getElementById("sndWin").play();
+    endGame(`🎉 ${names[turn]} WINS! 🎉`, w);
     return true;
   }
   if(board.every(v=>v)){
-    endGame("DRAW");
+    endGame("🤝 DRAW! 🤝");
     return true;
   }
   return false;
@@ -271,28 +394,42 @@ function aiMove(){
   else if(aiLevel==="hard") move = smartMove(board);
   else move = minimax(board, true).i;
 
-  handleMove(move);
+  if(move !== undefined && move !== null){
+    handleMove(move);
+  }
 }
 
 function randomMove(b){
   const e = b.map((v,i)=>v?null:i).filter(v=>v!==null);
-  return e[Math.random()*e.length|0];
+  return e.length > 0 ? e[Math.floor(Math.random()*e.length)] : null;
 }
 
 function smartMove(b){
-  // block or win
-  for(const p of ["O","X"]){
-    for(let i=0;i<9;i++){
-      if(!b[i]){
-        b[i]=p;
-        if(getWinner(b)){
-          b[i]="";
-          return i;
-        }
+  // Try to win first
+  for(let i=0;i<9;i++){
+    if(!b[i]){
+      b[i]="O";
+      if(getWinner(b)){
         b[i]="";
+        return i;
       }
+      b[i]="";
     }
   }
+  // Block opponent
+  for(let i=0;i<9;i++){
+    if(!b[i]){
+      b[i]="X";
+      if(getWinner(b)){
+        b[i]="";
+        return i;
+      }
+      b[i]="";
+    }
+  }
+  // Take center if available
+  if(!b[4]) return 4;
+  
   return randomMove(b);
 }
 
@@ -302,7 +439,7 @@ function minimax(b,max){
   if(w==="X") return {s:-1};
   if(b.every(v=>v)) return {s:0};
 
-  let best = {s: max?-99:99};
+  let best = {s: max?-99:99, i:null};
   b.forEach((v,i)=>{
     if(!v){
       b[i] = max?"O":"X";
