@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="/favicon.ico" sizes="any">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minta Dashboard</title>
+<link rel="icon" href="/favicon.ico">
 
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -99,145 +99,98 @@ li:hover{
 
 <button id="soundToggle">🔊</button>
 
-<!-- AUDIO -->
+<!-- BACKGROUND SOUND ONLY -->
 <audio id="bgm" src="assets/the_best_song.mp3" preload="auto" loop playsinline></audio>
-<audio id="sfxEnter" src="assets/enter.wav" preload="auto"></audio>
-<audio id="sfxClick" src="assets/click.wav" preload="auto"></audio>
 
 <script>
 /* ===============================
-   AUDIO SYSTEM (ENTER-GATED)
+   BACKGROUND SOUND CORE
    =============================== */
 
 const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
+const BGM = document.getElementById("bgm");
 
-const AUDIO = {
-  enabled: true,
-  bgm: document.getElementById("bgm"),
-  enter: document.getElementById("sfxEnter"),
-  click: document.getElementById("sfxClick"),
-  unlocked: false
-};
+let audioUnlocked = false;
+let soundEnabled = true;
 
-AUDIO.bgm.volume = 0.4;
-AUDIO.enter.volume = 0.8;
-AUDIO.click.volume = 0.8;
+BGM.volume = 0.4;
 
-/* ===== UNLOCK AUDIO (CRITICAL) ===== */
-async function unlockAudio() {
-  if (AUDIO.unlocked) return;
-  try {
+/* ===== UNLOCK AUDIO ===== */
+async function unlockAudio(){
+  if(audioUnlocked) return;
+  try{
     await AudioCTX.resume();
-    AUDIO.unlocked = true;
-    console.log("Audio unlocked");
-  } catch (e) {
-    console.warn("Audio unlock failed", e);
-  }
+    audioUnlocked = true;
+  }catch{}
 }
 
-/* ===== SAFE PLAY ===== */
-function playSound(audio) {
-  if (!AUDIO.enabled || !AUDIO.unlocked) return;
-  audio.currentTime = 0;
-  audio.play().catch(()=>{});
-}
-
-/* ===============================
-   ENTER BUTTON
-   =============================== */
-enterBtn.addEventListener("click", async () => {
+/* ===== ENTER ===== */
+enterBtn.onclick = async ()=>{
   await unlockAudio();
 
-  playSound(AUDIO.enter);
+  landing.style.display="none";
+  app.style.display="flex";
 
-  landing.style.display = "none";
-  app.style.display = "flex";
-
-  if (AUDIO.enabled && AUDIO.bgm.paused) {
-    AUDIO.bgm.currentTime = 0;
-    AUDIO.bgm.play().catch(()=>{});
-  }
-});
-
-/* ===============================
-   SOUND TOGGLE
-   =============================== */
-soundToggle.onclick = async () => {
-  AUDIO.enabled = !AUDIO.enabled;
-  soundToggle.textContent = AUDIO.enabled ? "🔊" : "🔇";
-
-  await unlockAudio();
-
-  if (AUDIO.enabled) {
-    if (AUDIO.bgm.paused) {
-      AUDIO.bgm.play().catch(()=>{});
-    }
-  } else {
-    AUDIO.bgm.pause();
+  if(soundEnabled && BGM.paused){
+    BGM.currentTime = 0;
+    BGM.play().catch(()=>{});
   }
 };
 
-/* ===============================
-   VISIBILITY FIX
-   =============================== */
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && AUDIO.enabled && AUDIO.unlocked) {
-    if (AUDIO.bgm.paused) {
-      AUDIO.bgm.play().catch(()=>{});
-    }
+/* ===== TOGGLE ===== */
+soundToggle.onclick = async ()=>{
+  soundEnabled = !soundEnabled;
+  soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
+
+  await unlockAudio();
+
+  soundEnabled ? BGM.play().catch(()=>{}) : BGM.pause();
+};
+
+/* ===== TAB BACK ===== */
+document.addEventListener("visibilitychange",()=>{
+  if(!document.hidden && soundEnabled && audioUnlocked){
+    if(BGM.paused) BGM.play().catch(()=>{});
   }
 });
 
-/* ===============================
-   LINKS
-   =============================== */
-function openLink(url) {
-  playSound(AUDIO.click);
-  setTimeout(() => window.open(url, "_blank"), 120);
+/* ===== LINKS ===== */
+function openLink(url){
+  window.open(url,"_blank");
 }
 
-/* ===============================
-   CLOCK
-   =============================== */
-function tick() {
-  time.textContent = new Date().toLocaleString("en-US", {
-    weekday: "long",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
+/* ===== CLOCK ===== */
+function tick(){
+  time.textContent = new Date().toLocaleString("en-US",{
+    weekday:"long",
+    hour:"2-digit",
+    minute:"2-digit",
+    second:"2-digit"
   });
 }
-setInterval(tick, 1000);
-tick();
+setInterval(tick,1000);tick();
 
-/* ===============================
-   PARTICLES (UNCHANGED)
-   =============================== */
-const c = bg, ctx = c.getContext("2d");
-function resize() {
-  c.width = innerWidth;
-  c.height = innerHeight;
-}
-resize();
-addEventListener("resize", resize);
+/* ===== PARTICLES ===== */
+const c=bg,ctx=c.getContext("2d");
+function resize(){c.width=innerWidth;c.height=innerHeight}
+resize();addEventListener("resize",resize);
 
-const P = [...Array(120)].map(() => ({
-  x: Math.random() * c.width,
-  y: Math.random() * c.height,
-  vx: (Math.random() - .5) * .6,
-  vy: (Math.random() - .5) * .6
+const P=[...Array(120)].map(()=>({
+  x:Math.random()*c.width,
+  y:Math.random()*c.height,
+  vx:(Math.random()-.5)*.6,
+  vy:(Math.random()-.5)*.6
 }));
 
-(function anim() {
-  ctx.clearRect(0, 0, c.width, c.height);
-  P.forEach(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    if (p.x < 0 || p.x > c.width) p.vx *= -1;
-    if (p.y < 0 || p.y > c.height) p.vy *= -1;
-    ctx.fillStyle = "rgba(0,255,231,.7)";
+(function anim(){
+  ctx.clearRect(0,0,c.width,c.height);
+  P.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>c.width)p.vx*=-1;
+    if(p.y<0||p.y>c.height)p.vy*=-1;
+    ctx.fillStyle="rgba(0,255,231,.7)";
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+    ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
     ctx.fill();
   });
   requestAnimationFrame(anim);
@@ -246,4 +199,3 @@ const P = [...Array(120)].map(() => ({
 
 </body>
 </html>
-
