@@ -1,191 +1,747 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Chess Tournament</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<!-- Chess libs -->
-<link rel="stylesheet"
- href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-<script src="https://unpkg.com/chess.js@1.0.0/chess.min.js"></script>
-<script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chess Game</title>
 <style>
-body{
-  margin:0;
-  background:#050505;
-  color:#fff;
-  font-family:Arial,system-ui;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
-}
-#app{width:360px;text-align:center}
-h1{color:#00ffcc}
-#board{margin:12px auto}
-select,button{
-  width:100%;
-  padding:10px;
-  margin:6px 0;
-  font-size:16px;
-}
-#msg{
-  font-size:22px;
-  height:40px;
-  margin:8px 0;
-}
-#timer{
-  display:flex;
-  justify-content:space-between;
-  font-size:16px;
-}
-.lock{pointer-events:none;opacity:.6}
+  :root {
+    --primary-color: #222;
+    --accent-color: #66f;
+    --background-color: #111;
+    --light-color: #fff;
+    --font-family: 'Arial', sans-serif;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--light-color);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    user-select: none;
+  }
+  #header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.5em;
+    background-color: var(--primary-color);
+  }
+  #playerNames {
+    display: flex;
+    flex: 1;
+    justify-content: space-around;
+    margin: 0.5em 0;
+  }
+  #playerNames button {
+    background: none;
+    border: 1px solid var(--light-color);
+    border-radius: 4px;
+    padding: 0.2em 0.5em;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--light-color);
+  }
+  #controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5em;
+  }
+  button {
+    background-color: var(--accent-color);
+    border: none;
+    border-radius: 4px;
+    padding: 0.5em 1em;
+    font-size: 1em;
+    cursor: pointer;
+    color: var(--light-color);
+  }
+  button:hover {
+    background-color: #88f;
+  }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #status {
+    text-align: center;
+    font-size: 2em;
+    margin: 0.5em 0;
+    min-height: 2.5em;
+  }
+  #boardContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5em;
+  }
+  #chessBoard {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    aspect-ratio: 1/1;
+    max-width: 90vmin;
+    width: 100%;
+    border: 2px solid var(--light-color);
+  }
+  .cell {
+    width: 100%;
+    aspect-ratio: 1/1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10vmin/8);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+  }
+  .cell:hover {
+    transform: scale(1.05);
+  }
+  .cell.white {
+    background-color: #eee;
+  }
+  .cell.black {
+    background-color: #555;
+  }
+  .cell.highlight {
+    box-shadow: inset 0 0 0 3px #0f0;
+  }
+  .piece-white {
+    color: #fff;
+    text-shadow: 0 0 3px #000, 0 0 5px #00f;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.8));
+  }
+  .piece-black {
+    color: #000;
+    text-shadow: 0 0 3px #f00, 0 0 5px #f00;
+    filter: drop-shadow(2px 2px 2px rgba(255,0,0,0.5));
+  }
+  #bottomPanel {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    padding: 0.5em;
+  }
+  #countdown {
+    font-size: 1.5em;
+  }
+  #modalOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  #modal {
+    background: #222;
+    padding: 1.5em;
+    border-radius: 8px;
+    max-width: 90%;
+    width: 350px;
+    text-align: center;
+    border: 2px solid var(--accent-color);
+  }
+  #modal h3 {
+    margin-top: 0;
+    color: var(--accent-color);
+  }
+  #modal input {
+    width: 100%;
+    margin: 0.5em 0;
+    padding: 0.5em;
+    font-size: 1em;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    background: #333;
+    color: #fff;
+  }
+  #modal button {
+    margin: 0.5em;
+    padding: 0.5em 1.5em;
+    font-size: 1em;
+  }
+  .mode-btn {
+    width: 100%;
+    margin: 0.5em 0;
+    padding: 1em;
+    font-size: 1.1em;
+    background: var(--accent-color);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .mode-btn:hover {
+    background: #88f;
+    border-color: #fff;
+  }
+  #modeSelection, #nameInput {
+    display: none;
+  }
 </style>
 </head>
 <body>
-
-<div id="app">
-<h1>♟ Chess</h1>
-
-<select id="mode">
-  <option value="pvp">2 Player (1 Device)</option>
-  <option value="ai">VS AI</option>
-</select>
-
-<select id="level">
-  <option value="easy">AI Easy</option>
-  <option value="hard">AI Hard</option>
-</select>
-
-<button id="start">START</button>
-
-<div id="msg"></div>
-
-<div id="timer">
-  <div>♔ White: <span id="tw">300</span>s</div>
-  <div>♚ Black: <span id="tb">300</span>s</div>
+<div id="header">
+  <div id="playerNames">
+    <button id="player1Btn">Player 1: <span id="player1Name">Player 1</span></button>
+    <button id="player2Btn">Player 2: <span id="player2Name">Player 2</span></button>
+  </div>
+  <div id="controls">
+    <button id="startBtn">Start Game</button>
+    <button id="resetBtn" disabled>Reset</button>
+    <button id="soundToggle">Sound: On</button>
+  </div>
+</div>
+<div id="status">Click "Start Game" to begin</div>
+<div id="boardContainer">
+  <div id="chessBoard"></div>
+</div>
+<div id="bottomPanel">
+  <div id="countdown">Time: 10</div>
 </div>
 
-<div id="board"></div>
-
-<button id="reset" class="hidden">RESET</button>
+<div id="modalOverlay" style="display:none;">
+  <div id="modal">
+    <div id="modeSelection">
+      <h3>Select Game Mode</h3>
+      <button class="mode-btn" id="friendModeBtn">🎮 Play with Friend</button>
+      <button class="mode-btn" id="aiModeBtn">🤖 Play vs AI</button>
+    </div>
+    <div id="nameInput">
+      <h3>Player Names</h3>
+      <input type="text" id="player1Input" placeholder="Player 1 Name" />
+      <input type="text" id="player2Input" placeholder="Player 2 Name" />
+      <button id="saveNamesBtn">Start Game</button>
+      <button id="backBtn">Back</button>
+    </div>
+  </div>
 </div>
 
 <script>
-let board, game;
-let mode="pvp", level="easy";
-let active=true;
-let tWhite=300, tBlack=300, timerInt;
+const initialBoardFEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+const pieceUnicode = {
+  'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟',
+  'R':'♖','N':'♘','B':'♗','Q':'♕','K':'♔','P':'♙'
+};
 
-const msg = document.getElementById("msg");
-const tw = document.getElementById("tw");
-const tb = document.getElementById("tb");
+let board = [];
+let selectedCell = null;
+let turn = 'w';
+let gameActive = false;
+let moveHistory = [];
+let lastMove = null;
+let gameResult = null;
+let timerInterval = null;
+let countdown = 10;
+let playerNames = {w: 'Player 1', b: 'Player 2'};
+let currentPlayer = 'w';
+let gameStarted = false;
+let soundEnabled = true;
+let gameLocked = false;
+let vsAI = false;
 
-document.getElementById("start").onclick = start;
-document.getElementById("reset").onclick = ()=>location.reload();
+const statusEl = document.getElementById('status');
+const countdownEl = document.getElementById('countdown');
+const chessBoardEl = document.getElementById('chessBoard');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const soundToggleBtn = document.getElementById('soundToggle');
+const player1Btn = document.getElementById('player1Btn');
+const player2Btn = document.getElementById('player2Btn');
+const player1NameSpan = document.getElementById('player1Name');
+const player2NameSpan = document.getElementById('player2Name');
+const modalOverlay = document.getElementById('modalOverlay');
+const player1Input = document.getElementById('player1Input');
+const player2Input = document.getElementById('player2Input');
+const saveNamesBtn = document.getElementById('saveNamesBtn');
+const modeSelection = document.getElementById('modeSelection');
+const nameInput = document.getElementById('nameInput');
+const friendModeBtn = document.getElementById('friendModeBtn');
+const aiModeBtn = document.getElementById('aiModeBtn');
+const backBtn = document.getElementById('backBtn');
 
-function start(){
-  mode = document.getElementById("mode").value;
-  level = document.getElementById("level").value;
-  document.getElementById("start").remove();
-  game = new Chess();
-  board = Chessboard('board',{
-    draggable:true,
-    position:'start',
-    onDragStart:onDrag,
-    onDrop:onDrop,
-    onSnapEnd:()=>board.position(game.fen())
-  });
-  active=true;
+// Modal functions
+function showModal() {
+  modeSelection.style.display = 'block';
+  nameInput.style.display = 'none';
+  modalOverlay.style.display = 'flex';
+}
+
+function hideModal() {
+  modalOverlay.style.display = 'none';
+}
+
+friendModeBtn.addEventListener('click', () => {
+  vsAI = false;
+  modeSelection.style.display = 'none';
+  nameInput.style.display = 'block';
+  player2Input.placeholder = 'Player 2 Name';
+  player2Input.disabled = false;
+  player2Input.value = '';
+});
+
+aiModeBtn.addEventListener('click', () => {
+  vsAI = true;
+  modeSelection.style.display = 'none';
+  nameInput.style.display = 'block';
+  player2Input.value = 'AI';
+  player2Input.placeholder = 'AI (Computer)';
+  player2Input.disabled = true;
+});
+
+backBtn.addEventListener('click', () => {
+  modeSelection.style.display = 'block';
+  nameInput.style.display = 'none';
+});
+
+saveNamesBtn.addEventListener('click', () => {
+  const p1 = player1Input.value.trim() || 'Player 1';
+  const p2 = vsAI ? 'AI' : (player2Input.value.trim() || 'Player 2');
+  playerNames.w = p1;
+  playerNames.b = p2;
+  player1NameSpan.textContent = p1;
+  player2NameSpan.textContent = p2;
+  hideModal();
+  gameStarted = true;
+  startGame();
+});
+
+player1Btn.addEventListener('click', () => {
+  if (!gameActive) {
+    showModal();
+    player1Input.value = playerNames.w;
+  }
+});
+
+player2Btn.addEventListener('click', () => {
+  if (!gameActive && !vsAI) {
+    showModal();
+    player2Input.value = playerNames.b;
+  }
+});
+
+// Sound
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  soundToggleBtn.textContent = 'Sound: ' + (soundEnabled ? 'On' : 'Off');
+}
+soundToggleBtn.addEventListener('click', toggleSound);
+
+// Game functions
+function startGame() {
+  resetBoard();
+  gameActive = true;
+  gameLocked = false;
+  gameResult = null;
+  turn = 'w';
+  currentPlayer = 'w';
+  moveHistory = [];
+  lastMove = null;
+  countdown = 10;
+  updateStatus();
+  resetBtn.disabled = false;
+  startBtn.disabled = true;
   startTimer();
-  updateMsg();
 }
 
-function onDrag(source,piece){
-  if(!active) return false;
-  if(game.game_over()) return false;
-  if(game.turn()==='w' && piece.startsWith('b')) return false;
-  if(game.turn()==='b' && piece.startsWith('w')) return false;
+function resetBoard() {
+  board = [];
+  const rows = initialBoardFEN.split(' ');
+  const fenRow = rows[0];
+  const ranks = fenRow.split('/');
+  for (let r = 0; r < 8; r++) {
+    let row = [];
+    for (let c = 0; c < ranks[r].length; c++) {
+      const ch = ranks[r][c];
+      if (ch >= '1' && ch <= '8') {
+        for (let i=0; i<parseInt(ch); i++) row.push('');
+      } else {
+        row.push(ch);
+      }
+    }
+    board.push(row);
+  }
+  renderBoard();
 }
 
-function onDrop(source,target){
-  const move = game.move({from:source,to:target,promotion:'q'});
-  if(move===null) return 'snapback';
-  updateMsg();
-  if(checkEnd()) return;
-  if(mode==="ai" && game.turn()==='b'){
-    setTimeout(aiMove,400);
+function renderBoard() {
+  chessBoardEl.innerHTML = '';
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + ((r+c)%2===0?'white':'black');
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      const piece = board[r][c];
+      if (piece) {
+        const span = document.createElement('span');
+        span.textContent = pieceUnicode[piece] || '';
+        span.className = piece === piece.toUpperCase() ? 'piece-white' : 'piece-black';
+        cell.appendChild(span);
+      }
+      cell.addEventListener('click', onCellClick);
+      chessBoardEl.appendChild(cell);
+    }
   }
 }
 
-function aiMove(){
-  if(!active) return;
-  const moves = game.moves({verbose:true});
-  let move;
-  if(level==="easy"){
-    move = moves[Math.random()*moves.length|0];
-  }else{
-    move = moves.reduce((best,m)=>{
-      game.move(m);
-      const score = game.in_checkmate()?100:game.in_check()?5:0;
-      game.undo();
-      return score>(best.s||-999)?{m, s:score}:best;
-    },{}).m;
+function onCellClick(e) {
+  if (!gameActive || gameLocked) return;
+  const r = parseInt(e.currentTarget.dataset.row);
+  const c = parseInt(e.currentTarget.dataset.col);
+  const piece = board[r][c];
+  
+  if (selectedCell) {
+    if (selectedCell.r === r && selectedCell.c === c) {
+      selectedCell = null;
+      clearHighlights();
+      return;
+    }
+    if (isLegalMove(selectedCell.r, selectedCell.c, r, c, turn)) {
+      makeMove(selectedCell.r, selectedCell.c, r, c);
+      selectedCell = null;
+      clearHighlights();
+      switchTurn();
+    } else if (piece && isOwnPiece(piece, turn)) {
+      selectedCell = {r,c};
+      showHighlights(r,c);
+    } else {
+      selectedCell = null;
+      clearHighlights();
+    }
+  } else {
+    if (piece && isOwnPiece(piece, turn)) {
+      selectedCell = {r,c};
+      showHighlights(r,c);
+    }
   }
-  game.move(move);
-  board.position(game.fen());
-  updateMsg();
-  checkEnd();
 }
 
-function updateMsg(){
-  if(game.in_check()){
-    msg.textContent="⚠ CHECK";
-  }else{
-    msg.textContent=game.turn()==='w'?"White Turn":"Black Turn";
+function showHighlights(r, c) {
+  clearHighlights();
+  const moves = getLegalMoves(r,c);
+  for (const move of moves) {
+    const sel = document.querySelector(`.cell[data-row="${move.r}"][data-col="${move.c}"]`);
+    if (sel) sel.classList.add('highlight');
   }
 }
 
-function checkEnd(){
-  if(game.in_checkmate()){
-    msg.textContent="🏆 CHECKMATE";
+function clearHighlights() {
+  document.querySelectorAll('.cell').forEach(c => c.classList.remove('highlight'));
+}
+
+function isOwnPiece(piece, color) {
+  if (!piece) return false;
+  const isWhite = piece === piece.toUpperCase();
+  return (isWhite && color==='w') || (!isWhite && color==='b');
+}
+
+function makeMove(r1,c1,r2,c2) {
+  lastMove = {r1,c1,r2,c2};
+  board[r2][c2] = board[r1][c1];
+  board[r1][c1] = '';
+  moveHistory.push({from: {r:r1,c:c1}, to: {r:r2,c:c2}, piece: board[r2][c2]});
+  highlightMove(r2,c2);
+  checkForCheckOrMate();
+  renderBoard();
+}
+
+function highlightMove(r,c) {
+  const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+  if (cell) {
+    cell.style.boxShadow = '0 0 15px 3px #0f0';
+    setTimeout(() => { cell.style.boxShadow=''; }, 1000);
+  }
+}
+
+function switchTurn() {
+  turn = turn==='w'?'b':'w';
+  currentPlayer = turn;
+  updateStatus();
+  resetCountdown();
+  startTimer();
+  
+  if (gameActive && isCheckmateOrDraw()) {
     endGame();
-    return true;
+    return;
   }
-  if(game.in_draw()){
-    msg.textContent="DRAW";
-    endGame();
-    return true;
+  
+  if (gameActive && turn==='b' && vsAI) {
+    setTimeout(aiMove, 500);
+  }
+}
+
+function updateStatus() {
+  if (gameResult==='checkmate') {
+    statusEl.textContent = (turn==='w' ? playerNames.b : playerNames.w) + ' Wins by Checkmate!';
+  } else if (gameResult==='draw') {
+    statusEl.textContent = 'Draw - Stalemate!';
+  } else if (isInCheck(turn)) {
+    statusEl.textContent = 'Check! ' + (turn==='w' ? playerNames.w : playerNames.b) + "'s turn";
+  } else {
+    statusEl.textContent = (turn==='w' ? playerNames.w : playerNames.b) + "'s turn";
+  }
+}
+
+function startTimer() {
+  countdown = 10;
+  countdownEl.textContent = 'Time: ' + countdown;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    countdown--;
+    countdownEl.textContent = 'Time: ' + countdown;
+    if (countdown <=0) {
+      clearInterval(timerInterval);
+      autoForfeit();
+    }
+  }, 1000);
+}
+
+function resetCountdown() {
+  clearInterval(timerInterval);
+  countdown = 10;
+  countdownEl.textContent = 'Time: ' + countdown;
+}
+
+function autoForfeit() {
+  gameResult = 'timeout';
+  gameActive = false;
+  gameLocked = true;
+  if (turn==='w') {
+    statusEl.textContent = playerNames.b + ' wins by timeout!';
+  } else {
+    statusEl.textContent = playerNames.w + ' wins by timeout!';
+  }
+  endGame();
+}
+
+function endGame() {
+  gameLocked = true;
+  clearInterval(timerInterval);
+  disableBoard();
+  startBtn.disabled = false;
+  resetBtn.disabled = false;
+}
+
+function disableBoard() {
+  document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='none');
+}
+
+function isInCheck(color) {
+  const kingPos = findKing(color);
+  if (!kingPos) return false;
+  const opponent = color==='w'?'b':'w';
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      if (board[r][c] && isOwnPiece(board[r][c], opponent)) {
+        const moves = getLegalMoves(r,c, false);
+        for (const m of moves) {
+          if (m.r===kingPos.r && m.c===kingPos.c) return true;
+        }
+      }
+    }
   }
   return false;
 }
 
-function startTimer(){
-  timerInt=setInterval(()=>{
-    if(!active) return;
-    if(game.turn()==='w'){
-      tWhite--; tw.textContent=tWhite;
-      if(tWhite<=0) timeout();
-    }else{
-      tBlack--; tb.textContent=tBlack;
-      if(tBlack<=0) timeout();
+function findKing(color) {
+  const kingChar = color==='w'?'K':'k';
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      if (board[r][c]===kingChar) return {r,c};
     }
-  },1000);
+  }
+  return null;
 }
 
-function timeout(){
-  msg.textContent="⏱ TIME OUT";
-  endGame();
+function isLegalMove(r1,c1,r2,c2) {
+  const piece = board[r1][c1];
+  if (!piece) return false;
+  if (turn==='w' && piece!==piece.toUpperCase()) return false;
+  if (turn==='b' && piece!==piece.toLowerCase()) return false;
+  const legalMoves = getLegalMoves(r1,c1);
+  return legalMoves.some(m => m.r===r2 && m.c===c2);
 }
 
-function endGame(){
-  active=false;
-  clearInterval(timerInt);
-  document.getElementById("board").classList.add("lock");
+function getLegalMoves(r,c, filterCheck=true) {
+  const piece = board[r][c];
+  if (!piece) return [];
+  const moves = [];
+  const isWhite = piece===piece.toUpperCase();
+  const color = isWhite?'w':'b';
+
+  if (piece.toLowerCase() === 'p') {
+    const dir = isWhite ? -1 : 1;
+    if (isOnBoard(r+dir,c) && !board[r+dir][c]) {
+      moves.push({r:r+dir,c:c});
+      if ((isWhite && r===6) || (!isWhite && r===1)) {
+        if (!board[r+2*dir][c]) {
+          moves.push({r:r+2*dir,c});
+        }
+      }
+    }
+    for (const dc of [-1,1]) {
+      const rr = r+dir;
+      const cc = c+dc;
+      if (isOnBoard(rr,cc) && board[rr][cc] && isOpponentPiece(board[rr][cc],isWhite)) {
+        moves.push({r:rr,c:cc});
+      }
+    }
+  } else if (piece.toLowerCase()==='n') {
+    const knightMoves = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+    for (const d of knightMoves) {
+      const rr = r + d[0];
+      const cc = c + d[1];
+      if (isOnBoard(rr,cc) && !isOwnPiece(board[rr][cc],color)) {
+        moves.push({r:rr,c:cc});
+      }
+    }
+  } else if (['b','r','q'].includes(piece.toLowerCase())) {
+    const dirList = [];
+    if (['b','q'].includes(piece.toLowerCase())) {
+      dirList.push([-1,-1],[-1,1],[1,-1],[1,1]);
+    }
+    if (['r','q'].includes(piece.toLowerCase())) {
+      dirList.push([-1,0],[1,0],[0,-1],[0,1]);
+    }
+    for (const d of dirList) {
+      let rr = r + d[0];
+      let cc = c + d[1];
+      while (isOnBoard(rr,cc)) {
+        if (board[rr][cc]) {
+          if (isOpponentPiece(board[rr][cc], isWhite)) {
+            moves.push({r:rr,c:cc});
+          }
+          break;
+        } else {
+          moves.push({r:rr,c:cc});
+        }
+        rr += d[0];
+        cc += d[1];
+      }
+    }
+  } else if (piece.toLowerCase()==='k') {
+    const kingMoves = [[-1,-1],[-1,1],[1,-1],[1,1],[-1,0],[1,0],[0,-1],[0,1]];
+    for (const d of kingMoves) {
+      const rr = r + d[0];
+      const cc = c + d[1];
+      if (isOnBoard(rr,cc) && !isOwnPiece(board[rr][cc],color)) {
+        moves.push({r:rr,c:cc});
+      }
+    }
+  }
+
+  if (filterCheck) {
+    return moves.filter(move => {
+      const backup = board[r][c];
+      const backupDest = board[move.r][move.c];
+      board[move.r][move.c] = backup;
+      board[r][c] = '';
+      const inCheck = isInCheck(color);
+      board[r][c] = backup;
+      board[move.r][move.c] = backupDest;
+      return !inCheck;
+    });
+  }
+  return moves;
 }
+
+function isOnBoard(r,c) {
+  return r>=0 && r<8 && c>=0 && c<8;
+}
+
+function isOpponentPiece(piece, isWhite) {
+  if (!piece) return false;
+  return (isWhite && piece===piece.toLowerCase()) || (!isWhite && piece===piece.toUpperCase());
+}
+
+function isCheckmateOrDraw() {
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      if (board[r][c] && isOwnPiece(board[r][c], turn)) {
+        const moves = getLegalMoves(r,c);
+        if (moves.length > 0) return false;
+      }
+    }
+  }
+  if (isInCheck(turn)) {
+    gameResult = 'checkmate';
+    return true;
+  } else {
+    gameResult = 'draw';
+    return true;
+  }
+}
+
+function checkForCheckOrMate() {
+  if (isInCheck(turn==='w'?'b':'w')) {
+    const nextTurn = turn==='w'?'b':'w';
+    let hasLegalMove = false;
+    for (let r=0; r<8; r++) {
+      for (let c=0; c<8; c++) {
+        if (board[r][c] && isOwnPiece(board[r][c], nextTurn)) {
+          if (getLegalMoves(r,c).length > 0) {
+            hasLegalMove = true;
+            break;
+          }
+        }
+      }
+      if (hasLegalMove) break;
+    }
+    if (!hasLegalMove) {
+      gameResult = 'checkmate';
+    }
+  }
+}
+
+function aiMove() {
+  if (!gameActive || gameLocked || turn==='w') return;
+  const allMoves = [];
+  for (let r=0; r<8; r++) {
+    for (let c=0; c<8; c++) {
+      if (board[r][c] && isOwnPiece(board[r][c], 'b')) {
+        const moves = getLegalMoves(r,c);
+        for (const m of moves) {
+          allMoves.push({r1:r,c1:c, r2:m.r,c2:m.c});
+        }
+      }
+    }
+  }
+  if (allMoves.length===0) {
+    endGame();
+    return;
+  }
+  const m = allMoves[Math.floor(Math.random()*allMoves.length)];
+  makeMove(m.r1,m.c1,m.r2,m.c2);
+  switchTurn();
+}
+
+startBtn.addEventListener('click', () => {
+  showModal();
+});
+
+resetBtn.addEventListener('click', () => {
+  resetBoard();
+  gameActive=true;
+  gameLocked=false;
+  gameResult = null;
+  startGame();
+});
+
+function init() {
+  resetBoard();
+  document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='auto');
+}
+
+init();
 </script>
-
 </body>
 </html>
