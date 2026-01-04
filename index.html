@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Websites Dashboard</title>
 <style>
-    /* Reset */
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     html, body {
@@ -26,7 +26,7 @@
         z-index: 0;
     }
 
-    /* Landing Page */
+  
     #landing, .container {
         position: absolute;
         top: 0;
@@ -64,9 +64,8 @@
         transform: scale(1.05);
     }
 
-    /* Dashboard */
     .container {
-        display: none; /* hidden initially */
+        display: none; 
         flex-direction: column;
         align-items: center;
         overflow-y: auto;
@@ -129,7 +128,6 @@
         flex-shrink: 0;
     }
 
-    /* Scrollbar for mobile */
     .container::-webkit-scrollbar {
         width: 6px;
     }
@@ -138,7 +136,6 @@
         border-radius: 3px;
     }
 
-    /* Sound toggle button */
     #soundToggle {
         position: fixed;
         bottom: 20px;
@@ -165,7 +162,7 @@
 <img src="Image/ribbon_top_right.png" 
      alt="Black mourning ribbon" 
      style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
-<!-- Landing page -->
+
 <div id="landing">
     <h1>Welcome to My Websites</h1>
     <button id="enterBtn">ENTER</button>
@@ -174,7 +171,6 @@
 <audio id="bgSound" src="/assets/Stranger.mp3" loop></audio>
 <canvas id="particles"></canvas>
 
-<!-- Main Dashboard -->
 <div class="container">
     <h1 class="container-title">My Websites Dashboard</h1>
     <div id="time"></div>
@@ -196,12 +192,11 @@
 
     <footer>© 2026 Minta0077. All rights reserved.</footer>
 
-    <!-- Sound toggle button -->
     <button id="soundToggle">🔊</button>
 </div>
 
 <script>
-    // ===== Enter Button =====
+    
     const enterBtn = document.getElementById('enterBtn');
     const landing = document.getElementById('landing');
     const container = document.querySelector('.container');
@@ -211,10 +206,9 @@
     enterBtn.addEventListener('click', ()=>{
         landing.style.display = 'none';
         container.style.display = 'flex';
-        bgSound.play().catch(()=>{}); // play music after click
+        bgSound.play().catch(()=>{}); 
     });
 
-    // ===== Sound Toggle =====
     let isPlaying = true;
     soundToggle.addEventListener('click', ()=>{
         if(isPlaying){
@@ -228,7 +222,6 @@
         }
     });
 
-    // ===== Time Clock =====
     function updateTime() {
         const now = new Date();
         document.getElementById('time').innerText = now.toLocaleString();
@@ -236,7 +229,6 @@
     setInterval(updateTime, 1000);
     updateTime();
 
-    // ===== Particles =====
     const canvas = document.getElementById('particles');
     const ctx = canvas.getContext('2d');
     let particlesArray;
@@ -299,3 +291,4 @@
 
 </body>
 </html>
+
