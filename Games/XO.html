@@ -6,18 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root{
-  --bg:#050505;
-  --panel:#0d0d0d;
+  --bg:#0a0a0a;
+  --panel:#141414;
   --neon:#00ffcc;
-  --danger:#ff0044;
-  --warn:#ffaa00;
+  --danger:#ff0055;
+  --warn:#ffbb00;
+  --text:#ffffff;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;margin:0;padding:0}
 body{
-  margin:0;
-  background:var(--bg);
-  color:#fff;
-  font-family:system-ui,Arial,monospace;
+  background:linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  color:var(--text);
+  font-family:'Segoe UI',system-ui,sans-serif;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -26,381 +26,608 @@ body{
 }
 #app{
   width:100%;
-  max-width:400px;
+  max-width:420px;
   background:var(--panel);
-  padding:clamp(16px, 4vw, 24px);
-  border-radius:12px;
-  box-shadow:0 8px 32px rgba(0,255,204,0.2);
+  padding:28px;
+  border-radius:16px;
+  box-shadow:0 12px 40px rgba(0,255,204,0.15), 0 0 80px rgba(0,255,204,0.05);
+  border:1px solid rgba(0,255,204,0.1);
 }
 h1{
-  margin:0 0 16px;
+  margin:0 0 24px;
   color:var(--neon);
   text-align:center;
-  font-size:clamp(1.5rem, 5vw, 2rem);
-  text-shadow:0 0 10px var(--neon);
+  font-size:2.2rem;
+  text-shadow:0 0 20px var(--neon);
+  letter-spacing:2px;
 }
-input,select,button{
+.setup-group{
+  margin-bottom:12px;
+}
+label{
+  display:block;
+  margin-bottom:6px;
+  color:rgba(255,255,255,0.7);
+  font-size:14px;
+  font-weight:500;
+}
+input,select{
   width:100%;
-  margin:8px 0;
-  padding:12px;
-  font-size:clamp(14px, 3vw, 16px);
-  border-radius:8px;
-  border:2px solid #222;
-  background:#111;
-  color:#fff;
-  transition:all 0.3s;
+  padding:14px;
+  font-size:16px;
+  border-radius:10px;
+  border:2px solid #2a2a2a;
+  background:#0f0f0f;
+  color:var(--text);
+  transition:all 0.3s ease;
 }
 input:focus,select:focus{
   outline:none;
   border-color:var(--neon);
-  box-shadow:0 0 10px rgba(0,255,204,0.3);
+  box-shadow:0 0 15px rgba(0,255,204,0.3);
 }
 button{
-  cursor:pointer;
-  background:var(--neon);
-  color:#000;
+  width:100%;
+  margin-top:16px;
+  padding:16px;
+  font-size:18px;
   font-weight:bold;
+  border-radius:10px;
   border:none;
+  background:linear-gradient(135deg, var(--neon) 0%, #00ddaa 100%);
+  color:#000;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  text-transform:uppercase;
+  letter-spacing:1px;
 }
 button:hover{
-  background:#00ddaa;
-  transform:translateY(-2px);
-  box-shadow:0 4px 12px rgba(0,255,204,0.4);
+  transform:translateY(-3px);
+  box-shadow:0 8px 20px rgba(0,255,204,0.4);
 }
 button:active{
   transform:translateY(0);
 }
+#gameArea{
+  display:none;
+}
+#gameArea.active{
+  display:block;
+}
+#statusBar{
+  background:#0f0f0f;
+  padding:16px;
+  border-radius:10px;
+  margin-bottom:20px;
+  text-align:center;
+  border:2px solid #2a2a2a;
+}
+#currentPlayer{
+  font-size:24px;
+  font-weight:bold;
+  color:var(--neon);
+  margin-bottom:8px;
+  text-shadow:0 0 10px var(--neon);
+}
+#timerDisplay{
+  font-size:18px;
+  color:var(--warn);
+  font-weight:600;
+}
 #board{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:clamp(6px, 2vw, 10px);
-  margin:16px 0;
+  gap:12px;
+  margin-bottom:20px;
 }
 .cell{
   aspect-ratio:1;
-  min-height:80px;
-  font-size:clamp(40px, 10vw, 56px);
-  background:#111;
+  min-height:90px;
+  background:linear-gradient(135deg, #1a1a1a 0%, #0f0f0f 100%);
+  border:3px solid #2a2a2a;
+  border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
-  border-radius:8px;
-  user-select:none;
-  transition:all 0.2s;
+  font-size:48px;
   font-weight:bold;
-  border:2px solid #222;
-}
-.cell.active{
   cursor:pointer;
-  border-color:#333;
+  transition:all 0.2s ease;
+  user-select:none;
 }
-.cell.active:hover{
-  background:#1a1a1a;
+.cell:hover{
+  background:linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
   border-color:var(--neon);
   transform:scale(1.05);
 }
+.cell.x{
+  color:var(--neon);
+  text-shadow:0 0 15px var(--neon);
+  animation:pulse 0.3s ease;
+}
+.cell.o{
+  color:var(--danger);
+  text-shadow:0 0 15px var(--danger);
+  animation:pulse 0.3s ease;
+}
+.cell.winner{
+  animation:winnerGlow 0.6s ease-in-out infinite alternate;
+}
 .cell.disabled{
   pointer-events:none;
-  opacity:.6;
+  opacity:0.6;
 }
-.cell:has(.x-mark){
-  color:var(--neon);
-  text-shadow:0 0 10px var(--neon);
+@keyframes pulse{
+  0%{transform:scale(0.5);opacity:0}
+  50%{transform:scale(1.1)}
+  100%{transform:scale(1);opacity:1}
 }
-.cell:has(.o-mark){
-  color:var(--danger);
-  text-shadow:0 0 10px var(--danger);
-}
-.win{
-  animation:flash .4s ease-in-out infinite alternate;
-}
-@keyframes flash{
-  from{
-    background:var(--neon);
-    transform:scale(1.1);
+@keyframes winnerGlow{
+  0%{
+    background:linear-gradient(135deg, var(--neon) 0%, #00ddaa 100%);
+    transform:scale(1);
     box-shadow:0 0 20px var(--neon);
   }
-  to{
-    background:var(--danger);
-    transform:scale(1.15);
-    box-shadow:0 0 20px var(--danger);
+  100%{
+    background:linear-gradient(135deg, #00ddaa 0%, var(--neon) 100%);
+    transform:scale(1.1);
+    box-shadow:0 0 30px var(--neon);
   }
 }
-#msg{
-  min-height:48px;
-  font-size:clamp(20px, 5vw, 28px);
-  text-align:center;
-  margin:12px 0;
-  color:var(--neon);
-  font-weight:bold;
-  text-shadow:0 0 8px var(--neon);
+#controls{
+  display:flex;
+  gap:12px;
 }
-#timer{
-  text-align:center;
-  font-size:clamp(16px, 4vw, 20px);
-  color:var(--warn);
-  font-weight:bold;
-  min-height:28px;
+#controls button{
+  margin-top:0;
+  flex:1;
+}
+#replayBtn{
+  background:linear-gradient(135deg, var(--neon) 0%, #00ddaa 100%);
+  color:#000;
+}
+#replayBtn:hover{
+  background:linear-gradient(135deg, #00ddaa 0%, var(--neon) 100%);
+}
+#resetBtn{
+  background:linear-gradient(135deg, #555 0%, #333 100%);
+  color:var(--text);
+}
+#resetBtn:hover{
+  background:linear-gradient(135deg, #666 0%, #444 100%);
 }
 .hidden{display:none!important}
-#levelContainer{
-  display:none;
-}
-#levelContainer.show{
-  display:block;
-}
+#aiLevelGroup{display:none}
+#aiLevelGroup.show{display:block}
 @media (max-width: 480px) {
-  #app{padding:12px;}
-  .cell{min-height:70px;}
+  #app{padding:20px}
+  h1{font-size:1.8rem}
+  .cell{min-height:75px;font-size:40px}
 }
 </style>
 </head>
 <body>
 <div id="app">
-
-<h1>⭕ XO Tournament ❌</h1>
-
-<div id="setup">
-  <input id="p1" placeholder="Player 1 Name" value="Player 1" maxlength="20">
-  <input id="p2" placeholder="Player 2 Name" value="Player 2" maxlength="20">
-  <select id="mode">
-    <option value="pvp">👥 2 Players (1 Device)</option>
-    <option value="ai">🤖 VS AI</option>
-  </select>
-  <div id="levelContainer">
-    <select id="level">
-      <option value="easy">😊 AI Easy</option>
-      <option value="hard">😎 AI Hard</option>
-      <option value="extreme">😈 AI Extreme (Unbeatable)</option>
-    </select>
+  <h1>⚡ XO TOURNAMENT ⚡</h1>
+  
+  <div id="setupArea">
+    <div class="setup-group">
+      <label>Player 1 Name</label>
+      <input id="player1Name" type="text" placeholder="Enter name" value="Player 1" maxlength="20">
+    </div>
+    
+    <div class="setup-group">
+      <label>Player 2 Name</label>
+      <input id="player2Name" type="text" placeholder="Enter name" value="Player 2" maxlength="20">
+    </div>
+    
+    <div class="setup-group">
+      <label>Game Mode</label>
+      <select id="gameMode">
+        <option value="pvp">👥 Player vs Player</option>
+        <option value="ai">🤖 Player vs AI</option>
+      </select>
+    </div>
+    
+    <div class="setup-group" id="aiLevelGroup">
+      <label>AI Difficulty</label>
+      <select id="aiLevel">
+        <option value="easy">😊 Easy</option>
+        <option value="medium">😎 Medium</option>
+        <option value="impossible">😈 Impossible</option>
+      </select>
+    </div>
+    
+    <button id="startBtn">Start Game</button>
   </div>
-  <button id="start">START GAME</button>
-</div>
-
-<div id="msg"></div>
-<div id="timer"></div>
-
-<div id="board" class="hidden"></div>
-
-<button id="reset" class="hidden">NEW GAME</button>
-
+  
+  <div id="gameArea">
+    <div id="statusBar">
+      <div id="currentPlayer"></div>
+      <div id="timerDisplay"></div>
+    </div>
+    
+    <div id="board"></div>
+    
+    <div id="controls">
+      <button id="replayBtn">Replay</button>
+      <button id="resetBtn">New Setup</button>
+    </div>
+  </div>
 </div>
 
 <script>
-/* ======================
-   CORE STATE
-====================== */
-const boardEl = document.getElementById("board");
-const msgEl   = document.getElementById("msg");
-const timerEl = document.getElementById("timer");
-const resetBtn= document.getElementById("reset");
-const setupEl = document.getElementById("setup");
-const modeSelect = document.getElementById("mode");
-const levelContainer = document.getElementById("levelContainer");
-
-let board = [];
-let turn = 0; // 0 = X, 1 = O
-let names = [];
-let mode = "pvp";
-let aiLevel = "easy";
-let gameActive = false;
-
-let timer = 0;
-let timerInt = null;
-
-const TURN_TIME = 10;
-const wins = [
-  [0,1,2],[3,4,5],[6,7,8],
-  [0,3,6],[1,4,7],[2,5,8],
-  [0,4,8],[2,4,6]
-];
-
-/* ======================
-   INIT / START
-====================== */
-document.getElementById("start").onclick = startGame;
-resetBtn.onclick = resetGame;
-
-// Show/hide AI level selector
-modeSelect.onchange = ()=>{
-  if(modeSelect.value==="ai"){
-    levelContainer.classList.add("show");
-    document.getElementById("p2").value = "AI";
-  } else {
-    levelContainer.classList.remove("show");
-    document.getElementById("p2").value = "Player 2";
-  }
+// Game State
+let gameState = {
+  board: Array(9).fill(null),
+  currentPlayer: 'X',
+  player1Name: 'Player 1',
+  player2Name: 'Player 2',
+  gameMode: 'pvp',
+  aiLevel: 'easy',
+  isGameActive: false,
+  timeLeft: 10,
+  timerInterval: null,
+  autoResetTimer: null
 };
 
-function startGame(){
-  const p1 = document.getElementById("p1").value.trim()||"Player 1";
-  const p2 = document.getElementById("p2").value.trim()||"Player 2";
-  mode = modeSelect.value;
-  aiLevel = document.getElementById("level").value;
+const TURN_TIME = 10;
+const AUTO_RESET_TIME = 7;
 
-  names = mode==="ai"? [p1,"AI"] : [p1,p2];
+const winPatterns = [
+  [0,1,2], [3,4,5], [6,7,8], // rows
+  [0,3,6], [1,4,7], [2,5,8], // columns
+  [0,4,8], [2,4,6] // diagonals
+];
 
-  setupEl.classList.add("hidden");
-  boardEl.classList.remove("hidden");
-  resetBtn.classList.remove("hidden");
+// DOM Elements
+const setupArea = document.getElementById('setupArea');
+const gameArea = document.getElementById('gameArea');
+const board = document.getElementById('board');
+const currentPlayerDiv = document.getElementById('currentPlayer');
+const timerDisplay = document.getElementById('timerDisplay');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const replayBtn = document.getElementById('replayBtn');
+const gameModeSelect = document.getElementById('gameMode');
+const aiLevelGroup = document.getElementById('aiLevelGroup');
 
-  board = Array(9).fill("");
-  turn = 0;
-  gameActive = true;
-  drawBoard();
-  nextTurn();
-}
+// Event Listeners
+startBtn.onclick = startGame;
+resetBtn.onclick = resetToSetup;
+replayBtn.onclick = replayGame;
+gameModeSelect.onchange = toggleAIOptions;
 
-/* ======================
-   UI
-====================== */
-function drawBoard(){
-  boardEl.innerHTML="";
-  board.forEach((v,i)=>{
-    const c = document.createElement("div");
-    c.className="cell";
-    if(gameActive && !v) c.classList.add("active");
-    if(v) c.classList.add("disabled");
-    if(v==="X"){const s=document.createElement("span");s.className="x-mark";s.textContent="❌";c.appendChild(s);}
-    if(v==="O"){const s=document.createElement("span");s.className="o-mark";s.textContent="⭕";c.appendChild(s);}
-    c.onclick = ()=>handleMove(i);
-    boardEl.appendChild(c);
-  });
-}
-
-function lockBoard(){
-  [...boardEl.children].forEach(c=>{c.classList.remove("active");c.classList.add("disabled");});
-}
-
-/* ======================
-   GAME FLOW
-====================== */
-function handleMove(i){
-  if(!gameActive || board[i]) return;
-  board[i] = turn?"O":"X";
-  drawBoard();
-  if(checkEnd()) return;
-  turn ^=1;
-  nextTurn();
-}
-
-function nextTurn(){
-  clearInterval(timerInt);
-  msgEl.textContent=`${names[turn]}'s Turn ${turn?"⭕":"❌"}`;
-  startTimer();
-  if(mode==="ai" && turn===1){
-    lockBoard();
-    setTimeout(aiMove,600);
+function toggleAIOptions() {
+  if (gameModeSelect.value === 'ai') {
+    aiLevelGroup.classList.add('show');
+    document.getElementById('player2Name').value = 'AI';
+  } else {
+    aiLevelGroup.classList.remove('show');
+    document.getElementById('player2Name').value = 'Player 2';
   }
 }
 
-function startTimer(){
-  timer = TURN_TIME;
-  timerEl.style.color="var(--warn)";
-  timerEl.style.animation="";
-  timerEl.textContent=`⏱ Time: ${timer}s`;
-  timerInt = setInterval(()=>{
-    timer--;
-    if(timer>0) timerEl.textContent=`⏱ Time: ${timer}s`;
-    if(timer<=3 && timer>0){timerEl.style.color="var(--danger)"; timerEl.style.animation="flash 0.5s infinite";}
-    if(timer<=0){
-      clearInterval(timerInt);
-      timerEl.textContent="⏱ Time's Up!";
-      timerEl.style.animation="";
-      setTimeout(()=>{turn^=1; nextTurn();},1000);
+function startGame() {
+  gameState.player1Name = document.getElementById('player1Name').value.trim() || 'Player 1';
+  gameState.player2Name = document.getElementById('player2Name').value.trim() || 'Player 2';
+  gameState.gameMode = gameModeSelect.value;
+  gameState.aiLevel = document.getElementById('aiLevel').value;
+  
+  if (gameState.gameMode === 'ai') {
+    gameState.player2Name = 'AI';
+  }
+  
+  gameState.board = Array(9).fill(null);
+  gameState.currentPlayer = 'X';
+  gameState.isGameActive = true;
+  
+  setupArea.classList.add('hidden');
+  gameArea.classList.add('active');
+  
+  renderBoard();
+  updateStatus();
+  startTimer();
+}
+
+function renderBoard() {
+  board.innerHTML = '';
+  for (let i = 0; i < 9; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i;
+    
+    if (gameState.board[i]) {
+      cell.textContent = gameState.board[i] === 'X' ? '❌' : '⭕';
+      cell.classList.add(gameState.board[i].toLowerCase());
+      cell.classList.add('disabled');
+    } else if (gameState.isGameActive) {
+      cell.onclick = () => handleCellClick(i);
     }
-  },1000);
+    
+    board.appendChild(cell);
+  }
 }
 
-/* ======================
-   END CHECK
-====================== */
-function checkEnd(){
-  const w=getWinner(board);
-  if(w){endGame(`🎉 ${names[turn]} WINS! 🎉`, w); return true;}
-  if(board.every(v=>v)){endGame("🤝 DRAW! 🤝"); return true;}
-  return false;
+function handleCellClick(index) {
+  if (!gameState.isGameActive || gameState.board[index]) return;
+  
+  makeMove(index);
 }
 
-function endGame(text, winLine){
-  gameActive=false;
-  clearInterval(timerInt);
-  msgEl.textContent=text;
-  lockBoard();
-  if(winLine) winLine.forEach(i=>boardEl.children[i].classList.add("win"));
-  autoReset(5);
+function makeMove(index) {
+  gameState.board[index] = gameState.currentPlayer;
+  renderBoard();
+  
+  const winner = checkWinner();
+  if (winner) {
+    endGame(winner);
+    return;
+  }
+  
+  if (gameState.board.every(cell => cell !== null)) {
+    endGame('draw');
+    return;
+  }
+  
+  gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
+  updateStatus();
+  resetTimer();
+  
+  if (gameState.gameMode === 'ai' && gameState.currentPlayer === 'O' && gameState.isGameActive) {
+    disableBoard();
+    setTimeout(makeAIMove, 800);
+  }
 }
 
-/* ======================
-   AUTO RESET
-====================== */
-function autoReset(seconds){
-  let countdown=seconds;
-  timerEl.style.color="var(--warn)";
-  timerEl.style.animation="";
-  timerEl.textContent=`♻️ Resetting in ${countdown}s`;
-  const resetInterval=setInterval(()=>{
-    countdown--;
-    if(countdown>0) timerEl.textContent=`♻️ Resetting in ${countdown}s`;
-    else{clearInterval(resetInterval); resetGame();}
-  },1000);
-}
-
-function resetGame(){
-  setupEl.classList.remove("hidden");
-  resetBtn.classList.add("hidden");
-  boardEl.classList.add("hidden");
-  msgEl.textContent="";
-  timerEl.textContent="";
-  board=Array(9).fill("");
-  turn=0;
-  gameActive=false;
-  drawBoard();
-}
-
-/* ======================
-   AI
-====================== */
-function aiMove(){
-  if(!gameActive) return;
+function makeAIMove() {
+  if (!gameState.isGameActive) return;
+  
   let move;
-  if(aiLevel==="easy") move=randomMove(board);
-  else if(aiLevel==="hard") move=smartMove(board);
-  else move=minimax(board,true).i;
-  if(move!=null) handleMove(move);
+  switch (gameState.aiLevel) {
+    case 'easy':
+      move = getRandomMove();
+      break;
+    case 'medium':
+      move = getMediumMove();
+      break;
+    case 'impossible':
+      move = getBestMove();
+      break;
+  }
+  
+  if (move !== null) {
+    makeMove(move);
+  }
 }
 
-function randomMove(b){const e=b.map((v,i)=>v?null:i).filter(v=>v!==null); return e.length>0?e[Math.floor(Math.random()*e.length)]:null;}
-function smartMove(b){
-  for(let i=0;i<9;i++){if(!b[i]){b[i]="O"; if(getWinner(b)){b[i]=""; return i;} b[i]="";}}
-  for(let i=0;i<9;i++){if(!b[i]){b[i]="X"; if(getWinner(b)){b[i]=""; return i;} b[i]="";}}
-  if(!b[4]) return 4;
-  return randomMove(b);
+function getRandomMove() {
+  const emptyCells = gameState.board.map((cell, i) => cell === null ? i : null).filter(i => i !== null);
+  return emptyCells[Math.floor(Math.random() * emptyCells.length)];
 }
-function minimax(b,max){
-  const w=getWinner(b);
-  if(w==="O") return {s:1};
-  if(w==="X") return {s:-1};
-  if(b.every(v=>v)) return {s:0};
-  let best={s:max?-99:99,i:null};
-  b.forEach((v,i)=>{
-    if(!v){
-      b[i]=max?"O":"X";
-      const r=minimax(b,!max);
-      b[i]="";
-      r.i=i;
-      if(max?r.s>best.s:r.s<best.s) best=r;
+
+function getMediumMove() {
+  // Try to win
+  for (let i = 0; i < 9; i++) {
+    if (!gameState.board[i]) {
+      gameState.board[i] = 'O';
+      if (checkWinner() === 'O') {
+        gameState.board[i] = null;
+        return i;
+      }
+      gameState.board[i] = null;
     }
-  });
-  return best;
+  }
+  
+  // Block player
+  for (let i = 0; i < 9; i++) {
+    if (!gameState.board[i]) {
+      gameState.board[i] = 'X';
+      if (checkWinner() === 'X') {
+        gameState.board[i] = null;
+        return i;
+      }
+      gameState.board[i] = null;
+    }
+  }
+  
+  // Take center or random
+  if (!gameState.board[4]) return 4;
+  return getRandomMove();
 }
 
-/* ======================
-   UTILS
-====================== */
-function getWinner(b){
-  for(const w of wins) if(w.every(i=>b[i]&&b[i]===b[w[0]])) return b[w[0]];
+function getBestMove() {
+  let bestScore = -Infinity;
+  let bestMove = null;
+  
+  for (let i = 0; i < 9; i++) {
+    if (!gameState.board[i]) {
+      gameState.board[i] = 'O';
+      const score = minimax(gameState.board, 0, false);
+      gameState.board[i] = null;
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = i;
+      }
+    }
+  }
+  
+  return bestMove;
+}
+
+function minimax(board, depth, isMaximizing) {
+  const winner = checkWinner();
+  if (winner === 'O') return 10 - depth;
+  if (winner === 'X') return depth - 10;
+  if (board.every(cell => cell !== null)) return 0;
+  
+  if (isMaximizing) {
+    let bestScore = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = 'O';
+        const score = minimax(board, depth + 1, false);
+        board[i] = null;
+        bestScore = Math.max(score, bestScore);
+      }
+    }
+    return bestScore;
+  } else {
+    let bestScore = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = 'X';
+        const score = minimax(board, depth + 1, true);
+        board[i] = null;
+        bestScore = Math.min(score, bestScore);
+      }
+    }
+    return bestScore;
+  }
+}
+
+function checkWinner() {
+  for (const pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    if (gameState.board[a] && 
+        gameState.board[a] === gameState.board[b] && 
+        gameState.board[a] === gameState.board[c]) {
+      return gameState.board[a];
+    }
+  }
   return null;
+}
+
+function endGame(result) {
+  gameState.isGameActive = false;
+  clearInterval(gameState.timerInterval);
+  
+  if (result === 'draw') {
+    currentPlayerDiv.textContent = '🤝 It\'s a Draw! 🤝';
+    currentPlayerDiv.style.color = 'var(--warn)';
+  } else {
+    const winnerName = result === 'X' ? gameState.player1Name : gameState.player2Name;
+    currentPlayerDiv.textContent = `🎉 ${winnerName} Wins! 🎉`;
+    currentPlayerDiv.style.color = result === 'X' ? 'var(--neon)' : 'var(--danger)';
+    highlightWinningCells();
+  }
+  
+  disableBoard();
+  startAutoReset();
+}
+
+function highlightWinningCells() {
+  for (const pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    if (gameState.board[a] && 
+        gameState.board[a] === gameState.board[b] && 
+        gameState.board[a] === gameState.board[c]) {
+      const cells = board.children;
+      cells[a].classList.add('winner');
+      cells[b].classList.add('winner');
+      cells[c].classList.add('winner');
+      break;
+    }
+  }
+}
+
+function disableBoard() {
+  const cells = board.children;
+  for (let cell of cells) {
+    cell.classList.add('disabled');
+    cell.onclick = null;
+  }
+}
+
+function updateStatus() {
+  const playerName = gameState.currentPlayer === 'X' ? gameState.player1Name : gameState.player2Name;
+  const symbol = gameState.currentPlayer === 'X' ? '❌' : '⭕';
+  currentPlayerDiv.textContent = `${playerName}'s Turn ${symbol}`;
+  currentPlayerDiv.style.color = gameState.currentPlayer === 'X' ? 'var(--neon)' : 'var(--danger)';
+}
+
+function startTimer() {
+  gameState.timeLeft = TURN_TIME;
+  updateTimerDisplay();
+  
+  gameState.timerInterval = setInterval(() => {
+    gameState.timeLeft--;
+    updateTimerDisplay();
+    
+    if (gameState.timeLeft <= 0) {
+      clearInterval(gameState.timerInterval);
+      if (gameState.isGameActive) {
+        // Switch turn on timeout
+        gameState.currentPlayer = gameState.currentPlayer === 'X' ? 'O' : 'X';
+        updateStatus();
+        startTimer();
+        
+        if (gameState.gameMode === 'ai' && gameState.currentPlayer === 'O') {
+          disableBoard();
+          setTimeout(makeAIMove, 800);
+        }
+      }
+    }
+  }, 1000);
+}
+
+function resetTimer() {
+  clearInterval(gameState.timerInterval);
+  startTimer();
+}
+
+function updateTimerDisplay() {
+  timerDisplay.textContent = `⏱️ Time: ${gameState.timeLeft}s`;
+  if (gameState.timeLeft <= 3) {
+    timerDisplay.style.color = 'var(--danger)';
+  } else {
+    timerDisplay.style.color = 'var(--warn)';
+  }
+}
+
+function startAutoReset() {
+  let countdown = AUTO_RESET_TIME;
+  timerDisplay.textContent = `♻️ Replaying in ${countdown}s`;
+  timerDisplay.style.color = 'var(--warn)';
+  
+  gameState.autoResetTimer = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      timerDisplay.textContent = `♻️ Replaying in ${countdown}s`;
+    } else {
+      clearInterval(gameState.autoResetTimer);
+      replayGame();
+    }
+  }, 1000);
+}
+
+function replayGame() {
+  clearInterval(gameState.timerInterval);
+  clearInterval(gameState.autoResetTimer);
+  
+  gameState.board = Array(9).fill(null);
+  gameState.currentPlayer = 'X';
+  gameState.isGameActive = true;
+  
+  renderBoard();
+  updateStatus();
+  startTimer();
+}
+
+function resetToSetup() {
+  clearInterval(gameState.timerInterval);
+  clearInterval(gameState.autoResetTimer);
+  
+  gameArea.classList.remove('active');
+  setupArea.classList.remove('hidden');
+  
+  gameState.board = Array(9).fill(null);
+  gameState.currentPlayer = 'X';
+  gameState.isGameActive = false;
+  
+  currentPlayerDiv.textContent = '';
+  timerDisplay.textContent = '';
 }
 </script>
 </body>
