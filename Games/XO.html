@@ -161,10 +161,11 @@ button:active{
 }
 </style>
 </head>
-<body><img src="/Image/ribbon_top_right.png" 
-     alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" 
+<body>
+<img src="/Image/ribbon_top_right.png" 
+     alt="Black mourning ribbon for websites, top right corner" 
      style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
-  
+
 <div id="app">
 
 <h1>⭕ XO Tournament ❌</h1>
@@ -229,15 +230,7 @@ const wins = [
    INIT / START
 ====================== */
 document.getElementById("start").onclick = startGame;
-resetBtn.onclick = ()=>{
-  setupEl.classList.remove("hidden");
-  resetBtn.classList.add("hidden");
-  boardEl.classList.add("hidden");
-  msgEl.textContent = "";
-  timerEl.textContent = "";
-  gameActive = false;
-  clearInterval(timerInt);
-};
+resetBtn.onclick = resetGame;
 
 // Show/hide AI level selector based on mode
 modeSelect.onchange = ()=>{
@@ -256,7 +249,7 @@ function startGame(){
   
   names = [
     p1Input || "Player 1",
-    mode === "ai" ? "AI" : (p2Input || "Player 2")
+    modeSelect.value==="ai" ? "AI" : (p2Input || "Player 2")
   ];
   
   mode = modeSelect.value;
@@ -339,6 +332,8 @@ function nextTurn(){
 
 function startTimer(){
   timer = TURN_TIME;
+  timerEl.style.color = "var(--warn)";
+  timerEl.style.animation = "";
   timerEl.textContent = `⏱ Time: ${timer}s`;
   timerInt = setInterval(()=>{
     timer--;
@@ -354,7 +349,6 @@ function startTimer(){
       setTimeout(()=>{
         turn ^= 1;
         nextTurn();
-        timerEl.style.color = "var(--warn)";
       }, 1000);
     }
   },1000);
@@ -380,16 +374,19 @@ function endGame(text, winLine){
   gameActive = false;
   clearInterval(timerInt);
   msgEl.textContent = text;
-  timerEl.textContent = "";
   lockBoard();
   if(winLine){
     winLine.forEach(i=>{
       boardEl.children[i].classList.add("win");
     });
   }
+  // เริ่มนับถอยหลังออโต้รีเซ็ต 5 วินาที
   autoReset(5);
 }
 
+/* ======================
+   AUTO RESET
+====================== */
 function autoReset(seconds){
   let countdown = seconds;
   timerEl.style.color = "var(--warn)";
