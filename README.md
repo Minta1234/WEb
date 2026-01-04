@@ -18,8 +18,6 @@ Welcome to my project! Click the badges below or expand the description for stat
 
 ### 📊 GitHub Stats
 
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=Minta1234&layout=compact&theme=radical)
-
 ![Last Commit](https://img.shields.io/github/last-commit/Minta1234/WEb)
 
 ---
