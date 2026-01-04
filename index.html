@@ -178,21 +178,26 @@ enterBtn.onclick=()=>{
 	bgm.play().catch(()=>{});
 };
 
-btn.onclick=()=>{
-	if(!unlocked||playing) return;
-	playing=true;
-	btn.disabled=true;
+btn.onclick = () => {
+	if (!unlocked || playing) return;
+
+	playing = true;
+	btn.disabled = true;
 	bgm.pause();
-	const a=document.createElement("a");
-	a.href="/Download/MicroBit.zip";
-	a.download="MicroBit.zip";
+
+	const a = document.createElement("a");
+	a.href = "MicroBit.zip";  
+	a.download = "MicroBit.zip";
 	document.body.appendChild(a);
 	a.click();
 	a.remove();
-	main.currentTime=0;
-	main.play().catch(()=>{playing=false;btn.disabled=false;});
-};
 
+	main.currentTime = 0;
+	main.play().catch(() => {
+		playing = false;
+		btn.disabled = false;
+	});
+};
 main.addEventListener("timeupdate",()=>{
 	if(!main.duration) return;
 	const p=main.currentTime/main.duration;
@@ -229,3 +234,4 @@ window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPa
 
 </body>
 </html>
+
