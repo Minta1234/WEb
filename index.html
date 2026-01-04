@@ -100,7 +100,13 @@ li:hover{
 <button id="soundToggle">🔊</button>
 
 <!-- BACKGROUND SOUND ONLY -->
-<audio id="bgm" src="assets/the_best_song.mp3" preload="auto" loop playsinline></audio>
+<audio id="bgm"
+  src="assets/the_best_song.mp3"
+  preload="auto"
+  loop
+  playsinline
+  crossorigin="anonymous">
+</audio>
 
 <script>
 /* ===============================
@@ -124,6 +130,30 @@ async function unlockAudio(){
   }catch{}
 }
 
+/* ===== AUTO RESUME IF PAUSED ===== */
+BGM.addEventListener("pause",()=>{
+  if(soundEnabled && !document.hidden && audioUnlocked){
+    BGM.play().catch(()=>{});
+  }
+});
+
+/* ===== KEEP ALIVE CHECK ===== */
+setInterval(()=>{
+  if(!soundEnabled || !audioUnlocked) return;
+
+  if(AudioCTX.state === "suspended"){
+    AudioCTX.resume().catch(()=>{});
+  }
+
+  if(BGM.paused && !document.hidden){
+    BGM.play().catch(()=>{});
+  }
+},1000);
+
+/* ===== MOBILE UNLOCK ===== */
+document.addEventListener("touchstart", unlockAudio, { once:true });
+document.addEventListener("click", unlockAudio, { once:true });
+
 /* ===== ENTER ===== */
 enterBtn.onclick = async ()=>{
   await unlockAudio();
@@ -143,7 +173,6 @@ soundToggle.onclick = async ()=>{
   soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
 
   await unlockAudio();
-
   soundEnabled ? BGM.play().catch(()=>{}) : BGM.pause();
 };
 
@@ -168,7 +197,8 @@ function tick(){
     second:"2-digit"
   });
 }
-setInterval(tick,1000);tick();
+setInterval(tick,1000);
+tick();
 
 /* ===== PARTICLES ===== */
 const c=bg,ctx=c.getContext("2d");
@@ -199,3 +229,4 @@ const P=[...Array(120)].map(()=>({
 
 </body>
 </html>
+
