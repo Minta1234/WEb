@@ -1,2 +1,2 @@
 # WEb
-![Scan ME](assets/QR.png)
+![Scan ME](Download/QR.png)
