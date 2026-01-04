@@ -178,6 +178,9 @@ enterBtn.onclick=()=>{
 	bgm.play().catch(()=>{});
 };
 
+// FIXED: Single button click handler with background image change
+const bgImageUrl = "MicroBit/AURA.png"; // FIXED: Changed > to .
+
 btn.onclick = () => {
 	if (!unlocked || playing) return;
 
@@ -186,7 +189,7 @@ btn.onclick = () => {
 	bgm.pause();
 
 	// Change background image
-	document.body.style.background = `url('/MicroBit/AURA.png') no-repeat center center fixed`;
+	document.body.style.background = `url('${bgImageUrl}') no-repeat center center fixed`;
 	document.body.style.backgroundSize = "cover";
 
 	// Trigger download
@@ -241,3 +244,4 @@ window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPa
 
 </body>
 </html>
+
