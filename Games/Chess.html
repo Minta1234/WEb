@@ -250,7 +250,7 @@
   </div>
   <div id="controls">
     <button id="startBtn">Start Game</button>
-    <button id="stopBtn" disabled>Stop Game</button>
+    <button id="pauseBtn" disabled>⏸️ Pause</button>
     <button id="resetBtn" disabled>Reset</button>
     <button id="soundToggle">Sound: On</button>
   </div>
@@ -309,13 +309,14 @@ let soundEnabled = true;
 let gameLocked = false;
 let vsAI = false;
 let aiDifficulty = 'easy';
+let gamePaused = false;
 
 const statusEl = document.getElementById('status');
 const countdownEl = document.getElementById('countdown');
 const chessBoardEl = document.getElementById('chessBoard');
 const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
 const resetBtn = document.getElementById('resetBtn');
+const pauseBtn = document.getElementById('pauseBtn');
 const soundToggleBtn = document.getElementById('soundToggle');
 const player1Btn = document.getElementById('player1Btn');
 const player2Btn = document.getElementById('player2Btn');
@@ -432,6 +433,7 @@ function startGame() {
   resetBoard();
   gameActive = true;
   gameLocked = false;
+  gamePaused = false;
   gameResult = null;
   turn = 'w';
   currentPlayer = 'w';
@@ -440,10 +442,11 @@ function startGame() {
   countdown = 10;
   updateStatus();
   resetBtn.disabled = false;
-  stopBtn.disabled = false;
+  pauseBtn.disabled = false;
+  pauseBtn.textContent = '⏸️ Pause';
   startBtn.disabled = true;
-  enableBoard();
   startTimer();
+  document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='auto');
 }
 
 function resetBoard() {
@@ -488,7 +491,7 @@ function renderBoard() {
 }
 
 function onCellClick(e) {
-  if (!gameActive || gameLocked) return;
+  if (!gameActive || gameLocked || gamePaused) return;
   const r = parseInt(e.currentTarget.dataset.row);
   const c = parseInt(e.currentTarget.dataset.col);
   const piece = board[r][c];
@@ -574,6 +577,10 @@ function switchTurn() {
 }
 
 function updateStatus() {
+  if (gamePaused) {
+    statusEl.textContent = '⏸️ GAME PAUSED';
+    return;
+  }
   if (gameResult==='checkmate') {
     statusEl.textContent = (turn==='w' ? playerNames.b : playerNames.w) + ' Wins by Checkmate!';
   } else if (gameResult==='draw') {
@@ -586,10 +593,12 @@ function updateStatus() {
 }
 
 function startTimer() {
+  if (gamePaused) return;
   countdown = 10;
   countdownEl.textContent = 'Time: ' + countdown;
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
+    if (gamePaused) return;
     countdown--;
     countdownEl.textContent = 'Time: ' + countdown;
     if (countdown <=0) {
@@ -619,31 +628,17 @@ function autoForfeit() {
 
 function endGame() {
   gameLocked = true;
-  gameActive = false;
+  gamePaused = false;
   clearInterval(timerInterval);
   disableBoard();
   startBtn.disabled = false;
-  stopBtn.disabled = true;
   resetBtn.disabled = false;
-}
-
-function stopGame() {
-  gameActive = false;
-  gameLocked = true;
-  clearInterval(timerInterval);
-  disableBoard();
-  statusEl.textContent = 'Game Stopped';
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
-  resetBtn.disabled = false;
+  pauseBtn.disabled = true;
+  pauseBtn.textContent = '⏸️ Pause';
 }
 
 function disableBoard() {
   document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='none');
-}
-
-function enableBoard() {
-  document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='auto');
 }
 
 function isInCheck(color) {
@@ -814,7 +809,7 @@ function checkForCheckOrMate() {
 }
 
 function aiMove() {
-  if (!gameActive || gameLocked || turn==='w') return;
+  if (!gameActive || gameLocked || turn==='w' || gamePaused) return;
   
   if (aiDifficulty === 'easy') {
     // Easy AI: Random move
@@ -935,21 +930,39 @@ startBtn.addEventListener('click', () => {
   showModal();
 });
 
-stopBtn.addEventListener('click', () => {
-  stopGame();
+pauseBtn.addEventListener('click', () => {
+  if (!gameActive) return;
+  
+  gamePaused = !gamePaused;
+  
+  if (gamePaused) {
+    pauseBtn.textContent = '▶️ Resume';
+    clearInterval(timerInterval);
+    updateStatus();
+    document.querySelectorAll('.cell').forEach(c => c.style.opacity='0.5');
+  } else {
+    pauseBtn.textContent = '⏸️ Pause';
+    updateStatus();
+    startTimer();
+    document.querySelectorAll('.cell').forEach(c => c.style.opacity='1');
+  }
 });
 
 resetBtn.addEventListener('click', () => {
   resetBoard();
   gameActive=true;
   gameLocked=false;
+  gamePaused=false;
   gameResult = null;
+  pauseBtn.disabled = false;
+  pauseBtn.textContent = '⏸️ Pause';
   startGame();
 });
 
 function init() {
   resetBoard();
-  enableBoard();
+  document.querySelectorAll('.cell').forEach(c => c.style.pointerEvents='auto');
+  pauseBtn.disabled = true;
 }
 
 init();
