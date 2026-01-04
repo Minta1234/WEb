@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Minta Dashboard</title>
 
@@ -25,41 +27,31 @@ canvas{
   inset:0;
   display:flex;
   flex-direction:column;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   z-index:1;
-  text-align:center;
 }
-#app{display:none;overflow-y:auto;padding:20px}
-
+#app{display:none;padding:20px;overflow-y:auto}
 h1{
   font-size:clamp(2rem,5vw,3.5rem);
-  text-shadow:0 0 10px #00ffe7,0 0 30px #00ffe7;
   margin-bottom:30px;
+  text-shadow:0 0 15px #00ffe7;
 }
-
 button{
   background:transparent;
   border:2px solid #00ffe7;
   color:#00ffe7;
-  padding:14px 34px;
+  padding:14px 36px;
   font-size:1.1rem;
   border-radius:12px;
   cursor:pointer;
-  transition:.25s;
 }
 button:hover{
   background:#00ffe7;
   color:#000;
   box-shadow:0 0 25px #00ffe7;
-  transform:scale(1.05);
 }
-
-ul{
-  list-style:none;
-  width:100%;
-  max-width:620px;
-}
+ul{list-style:none;width:100%;max-width:600px}
 li{
   margin:14px 0;
   padding:18px 24px;
@@ -68,19 +60,13 @@ li{
   background:rgba(0,255,231,.08);
   display:flex;
   justify-content:space-between;
-  align-items:center;
   cursor:pointer;
-  transition:.25s;
 }
 li:hover{
-  background:rgba(0,255,231,.18);
-  box-shadow:0 0 25px rgba(0,255,231,.5);
-  transform:translateY(-4px);
+  background:rgba(0,255,231,.2);
+  box-shadow:0 0 20px rgba(0,255,231,.6);
 }
-
-#time{margin-bottom:25px;font-size:1rem;opacity:.85}
-footer{margin-top:40px;font-size:.85rem;opacity:.7}
-
+#time{margin-bottom:20px;opacity:.85}
 #soundToggle{
   position:fixed;
   bottom:20px;
@@ -91,12 +77,12 @@ footer{margin-top:40px;font-size:.85rem;opacity:.7}
 </head>
 
 <body>
-
+<img src="/Image/ribbon_top_right.png" alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
 <canvas id="bg"></canvas>
 
 <div id="landing">
   <h1>WELCOME</h1>
-  <button id="enter">ENTER</button>
+  <button id="enterBtn">ENTER</button>
 </div>
 
 <div id="app">
@@ -104,97 +90,104 @@ footer{margin-top:40px;font-size:.85rem;opacity:.7}
   <div id="time"></div>
 
   <ul>
-    <li onclick="go('https://minta0077.online/minta0077.html')">Minta Online <span>➡</span></li>
-    <li onclick="go('https://github.com/Minta1234')">GitHub <span>➡</span></li>
-    <li onclick="go('https://www.tiktok.com/@minta1826')">TikTok <span>➡</span></li>
-    <li onclick="go('https://minta0077.online/Games/XO.html')">XO Game <span>➡</span></li>
-    <li onclick="go('https://minta0077.online/Games/Chess.html')">Chess <span>➡</span></li>
+    <li onclick="openLink('https://minta0077.online/minta0077.html')">Minta Online <span>➡</span></li>
+    <li onclick="openLink('https://github.com/Minta1234')">GitHub <span>➡</span></li>
+    <li onclick="openLink('https://www.tiktok.com/@minta1826')">TikTok <span>➡</span></li>
+    <li onclick="openLink('https://minta0077.online/Games/XO.html')">XO Game <span>➡</span></li>
+    <li onclick="openLink('https://minta0077.online/Games/Chess.html')">Chess <span>➡</span></li>
   </ul>
 
-  <footer>© 2026 Minta0077</footer>
+  <footer style="margin-top:40px;opacity:.6">© 2026 Minta0077</footer>
 </div>
 
 <button id="soundToggle">🔊</button>
 
-<!-- AUDIO (OFFLINE READY) -->
-<audio id="bgm" loop>
-  <source src="assets/the_best_song.mp3" type="audio/mpeg">
-</audio>
-<audio id="sfxClick">
-  <source src="assets/click.wav" type="audio/wav">
-</audio>
-<audio id="sfxEnter">
-  <source src="assets/enter.wav" type="audio/wav">
-</audio>
+<!-- AUDIO -->
+<audio id="bgm" src="assets/the_best_song.mp3" loop></audio>
+<audio id="sfxEnter" src="assets/enter.wav"></audio>
+<audio id="sfxClick" src="assets/click.wav"></audio>
 
 <script>
-/* ===== SOUND SYSTEM ===== */
-const AUDIO={
-  enabled:true,
-  bgm:document.getElementById("bgm"),
-  click:document.getElementById("sfxClick"),
-  enter:document.getElementById("sfxEnter")
+/* ================= AUDIO CORE ================= */
+const AUDIO = {
+  enabled: true,
+  bgm: document.getElementById("bgm"),
+  enter: document.getElementById("sfxEnter"),
+  click: document.getElementById("sfxClick")
 };
-AUDIO.bgm.volume=.4;
-AUDIO.click.volume=.8;
-AUDIO.enter.volume=.8;
+AUDIO.bgm.volume = 0.4;
+AUDIO.enter.volume = 0.8;
+AUDIO.click.volume = 0.8;
 
-function play(a){
-  if(!AUDIO.enabled)return;
-  a.currentTime=0;
-  a.play().catch(()=>{});
-}
-function toggleSound(){
-  AUDIO.enabled=!AUDIO.enabled;
-  document.getElementById("soundToggle").textContent=AUDIO.enabled?"🔊":"🔇";
-  AUDIO.enabled?AUDIO.bgm.play():AUDIO.bgm.pause();
-}
+/* ================= ENTER ================= */
+document.getElementById("enterBtn").addEventListener("click", () => {
 
-/* ===== UI ===== */
-const enterBtn=document.getElementById("enter");
-const landing=document.getElementById("landing");
-const app=document.getElementById("app");
+  // ปลดล็อกเสียง (สำคัญ)
+  AUDIO.enter.currentTime = 0;
+  AUDIO.enter.play().catch(()=>{});
 
-enterBtn.onclick=()=>{
-  play(AUDIO.enter);
-  landing.style.display="none";
-  app.style.display="flex";
-  AUDIO.bgm.play().catch(()=>{});
+  // เปิดหน้า Dashboard
+  document.getElementById("landing").style.display = "none";
+  document.getElementById("app").style.display = "flex";
+
+  // เล่น BGM ใน user gesture
+  if (AUDIO.enabled) {
+    AUDIO.bgm.currentTime = 0;
+    AUDIO.bgm.play().catch(()=>{});
+  }
+});
+
+/* ================= SOUND TOGGLE ================= */
+document.getElementById("soundToggle").onclick = () => {
+  AUDIO.enabled = !AUDIO.enabled;
+  document.getElementById("soundToggle").textContent =
+    AUDIO.enabled ? "🔊" : "🔇";
+
+  AUDIO.enabled ? AUDIO.bgm.play().catch(()=>{}) : AUDIO.bgm.pause();
 };
 
-document.getElementById("soundToggle").onclick=toggleSound;
-
-function go(url){
-  play(AUDIO.click);
+/* ================= LINKS ================= */
+function openLink(url){
+  if(AUDIO.enabled){
+    AUDIO.click.currentTime=0;
+    AUDIO.click.play().catch(()=>{});
+  }
   setTimeout(()=>window.open(url,"_blank"),120);
 }
 
-/* ===== CLOCK ===== */
-function updateTime(){
-  document.getElementById("time").textContent=
+/* ================= CLOCK ================= */
+function tick(){
+  document.getElementById("time").textContent =
     new Date().toLocaleString("en-US",{weekday:"long",hour:"2-digit",minute:"2-digit",second:"2-digit"});
 }
-setInterval(updateTime,1000);updateTime();
+setInterval(tick,1000);tick();
 
-/* ===== PARTICLES ===== */
-const c=document.getElementById("bg"),x=c.getContext("2d");
-let P=[];
+/* ================= PARTICLES ================= */
+const c=document.getElementById("bg");
+const ctx=c.getContext("2d");
 function resize(){c.width=innerWidth;c.height=innerHeight}
 resize();addEventListener("resize",resize);
 
-for(let i=0;i<100;i++)P.push({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.6,vy:(Math.random()-.5)*.6});
-function anim(){
-  x.clearRect(0,0,c.width,c.height);
+const P=[...Array(120)].map(()=>({
+  x:Math.random()*c.width,
+  y:Math.random()*c.height,
+  vx:(Math.random()-.5)*.6,
+  vy:(Math.random()-.5)*.6
+}));
+
+(function anim(){
+  ctx.clearRect(0,0,c.width,c.height);
   P.forEach(p=>{
     p.x+=p.vx;p.y+=p.vy;
     if(p.x<0||p.x>c.width)p.vx*=-1;
     if(p.y<0||p.y>c.height)p.vy*=-1;
-    x.fillStyle="rgba(0,255,231,.7)";
-    x.beginPath();x.arc(p.x,p.y,1.6,0,Math.PI*2);x.fill();
+    ctx.fillStyle="rgba(0,255,231,.7)";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
+    ctx.fill();
   });
   requestAnimationFrame(anim);
-}
-anim();
+})();
 </script>
 </body>
 </html>
