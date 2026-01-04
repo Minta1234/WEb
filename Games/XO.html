@@ -7,221 +7,323 @@
 <style>
 :root{
   --bg:#050505;
+  --panel:#0d0d0d;
   --neon:#00ffcc;
-  --danger:#ff0033;
+  --danger:#ff0044;
+  --warn:#ffaa00;
 }
+*{box-sizing:border-box}
 body{
   margin:0;
   background:var(--bg);
   color:#fff;
-  font-family:Arial,monospace;
+  font-family:system-ui,Arial,monospace;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  min-height:100vh;
 }
-#app{width:360px;text-align:center}
-h1{color:var(--neon)}
-
+#app{
+  width:360px;
+  background:var(--panel);
+  padding:16px;
+  border-radius:12px;
+}
+h1{
+  margin:0 0 10px;
+  color:var(--neon);
+  text-align:center;
+}
 input,select,button{
   width:100%;
-  padding:10px;
   margin:6px 0;
+  padding:10px;
   font-size:16px;
 }
-
-button{cursor:pointer;background:#111;color:white;border:1px solid var(--neon)}
-button:disabled{opacity:.4;cursor:not-allowed}
-
+button{cursor:pointer}
 #board{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:8px;
-  margin:15px 0;
+  margin:14px 0;
 }
 .cell{
-  height:100px;
+  height:96px;
   font-size:48px;
   background:#111;
   display:flex;
   align-items:center;
   justify-content:center;
+  border-radius:8px;
+  user-select:none;
 }
 .cell.active{cursor:pointer}
-.cell.win{animation:flash .2s infinite alternate}
-
+.cell.disabled{pointer-events:none;opacity:.45}
+.win{
+  animation:flash .2s infinite alternate;
+}
 @keyframes flash{
   from{background:var(--neon)}
   to{background:var(--danger)}
 }
-
 #msg{
+  height:48px;
   font-size:28px;
-  min-height:40px;
+  text-align:center;
+  margin:8px 0;
 }
-#timer{font-size:18px;color:#ffaa00}
+#timer{
+  text-align:center;
+  font-size:18px;
+  color:var(--warn);
+}
 .hidden{display:none}
 </style>
 </head>
-
 <body>
 <div id="app">
+
 <h1>XO Tournament</h1>
 
 <div id="setup">
-<input id="p1" placeholder="Player 1" value="P1">
-<input id="p2" placeholder="Player 2 / AI" value="AI">
-
-<select id="mode">
-  <option value="pvp">2 Player</option>
-  <option value="ai">VS AI</option>
-</select>
-
-<select id="level">
-  <option value="easy">AI Easy</option>
-  <option value="hard">AI Hard</option>
-  <option value="extreme">AI Extreme</option>
-</select>
-
-<button id="start">START</button>
+  <input id="p1" placeholder="Player 1" value="P1">
+  <input id="p2" placeholder="Player 2 / AI" value="AI">
+  <select id="mode">
+    <option value="pvp">2 Player (1 Device)</option>
+    <option value="ai">VS AI</option>
+  </select>
+  <select id="level">
+    <option value="easy">AI Easy</option>
+    <option value="hard">AI Hard</option>
+    <option value="extreme">AI Extreme</option>
+  </select>
+  <button id="start">START</button>
 </div>
 
 <div id="msg"></div>
 <div id="timer"></div>
+
 <div id="board"></div>
 
 <button id="reset" class="hidden">RESET</button>
 
-<audio id="sndTurn" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
 <audio id="sndWin" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-complete-2059.mp3"></audio>
+<audio id="sndTurn" src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3"></audio>
 <audio id="sndWarn" src="https://assets.mixkit.co/sfx/preview/mixkit-warning-alarm-buzzer-991.mp3"></audio>
+
 </div>
 
 <script>
+/* ======================
+   CORE STATE
+====================== */
 const boardEl = document.getElementById("board");
 const msgEl   = document.getElementById("msg");
 const timerEl = document.getElementById("timer");
+const resetBtn= document.getElementById("reset");
 
-const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+let board = [];
+let turn = 0;            // 0 = X, 1 = O
+let names = [];
+let mode = "pvp";
+let aiLevel = "easy";
+let gameActive = false;
 
-let board,turn,names,mode,level;
-let gameActive=false;
-let timer,interval;
+let timer = 0;
+let timerInt = null;
 
-start.onclick=()=>{
-  names=[p1.value||"P1",p2.value||"AI"];
-  mode=mode.value;
-  level=level.value;
+const TURN_TIME = 10;
 
-  document.querySelectorAll("#setup input,#setup select,#start")
-    .forEach(e=>e.disabled=true);
+const wins = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
 
-  reset.classList.remove("hidden");
+/* ======================
+   INIT / START
+====================== */
+document.getElementById("start").onclick = startGame;
+resetBtn.onclick = ()=>location.reload();
 
-  board=Array(9).fill("");
-  turn=0;
-  gameActive=true;
-  draw();
+function startGame(){
+  names = [
+    document.getElementById("p1").value || "P1",
+    document.getElementById("p2").value || "AI"
+  ];
+  mode = document.getElementById("mode").value;
+  aiLevel = document.getElementById("level").value;
+
+  document.getElementById("setup").classList.add("hidden");
+  resetBtn.classList.remove("hidden");
+
+  board = Array(9).fill("");
+  turn = 0;
+  gameActive = true;
+
+  drawBoard();
   nextTurn();
-};
+}
 
-function draw(){
-  boardEl.innerHTML="";
+/* ======================
+   UI
+====================== */
+function drawBoard(){
+  boardEl.innerHTML = "";
   board.forEach((v,i)=>{
-    const c=document.createElement("div");
-    c.className="cell"+(gameActive&&!v?" active":"");
-    c.textContent=v;
-    c.onclick=()=>move(i);
+    const c = document.createElement("div");
+    c.className = "cell";
+    if(gameActive && !v) c.classList.add("active");
+    if(v) c.classList.add("disabled");
+    c.textContent = v;
+    c.onclick = ()=>handleMove(i);
     boardEl.appendChild(c);
   });
 }
 
-function move(i){
-  if(!gameActive||board[i]) return;
-  board[i]=turn?"O":"X";
-  sndTurn.play();
-  draw();
+function lockBoard(){
+  [...boardEl.children].forEach(c=>{
+    c.classList.remove("active");
+    c.classList.add("disabled");
+  });
+}
+
+/* ======================
+   GAME FLOW
+====================== */
+function handleMove(i){
+  if(!gameActive) return;
+  if(board[i]) return;
+
+  board[i] = turn ? "O" : "X";
+  document.getElementById("sndTurn").play();
+  drawBoard();
+
   if(checkEnd()) return;
-  turn^=1;
+
+  turn ^= 1;
   nextTurn();
 }
 
 function nextTurn(){
-  msgEl.textContent=names[turn];
+  clearInterval(timerInt);
+  msgEl.textContent = names[turn];
   startTimer();
-  if(mode==="ai"&&turn===1) setTimeout(aiMove,400);
+
+  if(mode==="ai" && turn===1){
+    lockBoard();
+    setTimeout(aiMove,400);
+  }
 }
 
 function startTimer(){
-  clearInterval(interval);
-  timer=10;
-  timerEl.textContent=`⏱ ${timer}`;
-  interval=setInterval(()=>{
+  timer = TURN_TIME;
+  timerEl.textContent = `⏱ ${timer}`;
+  timerInt = setInterval(()=>{
     timer--;
-    timerEl.textContent=`⏱ ${timer}`;
+    timerEl.textContent = `⏱ ${timer}`;
     if(timer<=0){
-      sndWarn.play();
-      turn^=1;
+      clearInterval(timerInt);
+      document.getElementById("sndWarn").play();
+      turn ^= 1;
       nextTurn();
     }
   },1000);
 }
 
+/* ======================
+   END CHECK
+====================== */
 function checkEnd(){
-  for(const w of wins){
-    if(w.every(i=>board[i]&&board[i]===board[w[0]])){
-      w.forEach(i=>boardEl.children[i].classList.add("win"));
-      msgEl.textContent=`🏆 ${names[turn]} WINS`;
-      sndWin.play();
-      endGame();
-      return true;
-    }
+  const w = getWinner(board);
+  if(w){
+    endGame(`${names[turn]} WINS`, w);
+    document.getElementById("sndWin").play();
+    return true;
   }
   if(board.every(v=>v)){
-    msgEl.textContent="DRAW";
-    endGame();
+    endGame("DRAW");
     return true;
   }
   return false;
 }
 
-function endGame(){
-  gameActive=false;
-  clearInterval(interval);
+function endGame(text, winLine){
+  gameActive = false;
+  clearInterval(timerInt);
+  msgEl.textContent = text;
+  timerEl.textContent = "";
+  lockBoard();
+  if(winLine){
+    winLine.forEach(i=>{
+      boardEl.children[i].classList.add("win");
+    });
+  }
 }
 
+/* ======================
+   AI
+====================== */
 function aiMove(){
-  let i = level==="easy" ? rand() :
-          level==="hard" ? smart() :
-          minimax(board,true).i;
-  move(i);
+  if(!gameActive) return;
+  let move;
+  if(aiLevel==="easy") move = randomMove(board);
+  else if(aiLevel==="hard") move = smartMove(board);
+  else move = minimax(board, true).i;
+
+  handleMove(move);
 }
 
-function rand(){
-  return board.map((v,i)=>v?null:i).filter(v=>v!=null)[Math.random()*9|0];
+function randomMove(b){
+  const e = b.map((v,i)=>v?null:i).filter(v=>v!==null);
+  return e[Math.random()*e.length|0];
 }
-function smart(){return rand();}
+
+function smartMove(b){
+  // block or win
+  for(const p of ["O","X"]){
+    for(let i=0;i<9;i++){
+      if(!b[i]){
+        b[i]=p;
+        if(getWinner(b)){
+          b[i]="";
+          return i;
+        }
+        b[i]="";
+      }
+    }
+  }
+  return randomMove(b);
+}
 
 function minimax(b,max){
-  if(check(b,"O")) return {s:1};
-  if(check(b,"X")) return {s:-1};
+  const w = getWinner(b);
+  if(w==="O") return {s:1};
+  if(w==="X") return {s:-1};
   if(b.every(v=>v)) return {s:0};
 
-  let best={s:max?-99:99};
+  let best = {s: max?-99:99};
   b.forEach((v,i)=>{
     if(!v){
-      b[i]=max?"O":"X";
-      let r=minimax(b,!max);
-      b[i]="";
-      r.i=i;
-      if(max?r.s>best.s:r.s<best.s) best=r;
+      b[i] = max?"O":"X";
+      const r = minimax(b,!max);
+      b[i] = "";
+      r.i = i;
+      if(max ? r.s>best.s : r.s<best.s) best = r;
     }
   });
   return best;
 }
-function check(b,p){return wins.some(w=>w.every(i=>b[i]===p))}
 
-reset.onclick=()=>location.reload();
+/* ======================
+   UTILS
+====================== */
+function getWinner(b){
+  for(const w of wins){
+    if(w.every(i=>b[i] && b[i]===b[w[0]])) return b[w[0]];
+  }
+  return null;
+}
 </script>
 </body>
 </html>
