@@ -138,11 +138,32 @@
         border-radius: 3px;
     }
 
+    /* Sound toggle button */
+    #soundToggle {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        padding: 10px 15px;
+        font-size: 1rem;
+        color: #00ffea;
+        border: 2px solid #00ffea;
+        background: rgba(0,0,0,0.2);
+        border-radius: 6px;
+        cursor: pointer;
+        z-index: 1000;
+        transition: all 0.3s;
+    }
+
+    #soundToggle:hover {
+        background: rgba(0,255,234,0.1);
+        transform: scale(1.05);
+    }
+
 </style>
 </head>
 <body>
 <img src="Image/ribbon_top_right.png" 
-     alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" 
+     alt="Black mourning ribbon" 
      style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
 <!-- Landing page -->
 <div id="landing">
@@ -174,6 +195,9 @@
     </ul>
 
     <footer>© 2026 Minta0077. All rights reserved.</footer>
+
+    <!-- Sound toggle button -->
+    <button id="soundToggle">🔊</button>
 </div>
 
 <script>
@@ -182,11 +206,26 @@
     const landing = document.getElementById('landing');
     const container = document.querySelector('.container');
     const bgSound = document.getElementById('bgSound');
+    const soundToggle = document.getElementById('soundToggle');
 
     enterBtn.addEventListener('click', ()=>{
         landing.style.display = 'none';
         container.style.display = 'flex';
-        bgSound.play().catch(()=>{}); // handle autoplay issues on mobile
+        bgSound.play().catch(()=>{}); // play music after click
+    });
+
+    // ===== Sound Toggle =====
+    let isPlaying = true;
+    soundToggle.addEventListener('click', ()=>{
+        if(isPlaying){
+            bgSound.pause();
+            soundToggle.innerText = '🔇';
+            isPlaying = false;
+        } else {
+            bgSound.play().catch(()=>{});
+            soundToggle.innerText = '🔊';
+            isPlaying = true;
+        }
     });
 
     // ===== Time Clock =====
@@ -228,7 +267,8 @@
 
     function initParticles() {
         particlesArray = [];
-        for(let i=0; i<100; i++){
+        let particleCount = window.innerWidth < 600 ? 50 : 100;
+        for(let i=0; i<particleCount; i++){
             let size = Math.random()*3+1;
             let x = Math.random()*canvas.width;
             let y = Math.random()*canvas.height;
