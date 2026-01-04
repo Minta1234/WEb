@@ -22,10 +22,6 @@ Welcome to my project! Click the badges below or expand the description for stat
 
 ![Last Commit](https://img.shields.io/github/last-commit/Minta1234/WEb)
 
-![GitHub Followers](https://img.shields.io/github/followers/Minta1234?style=social)
-
-![Visitor Count](https://profile-counter.glitch.me/Minta1234/count.svg)
-
 ---
 
 ### ✅ Features / Highlights
