@@ -60,7 +60,11 @@ li:hover{
   background:rgba(0,255,231,.2);
   box-shadow:0 0 20px rgba(0,255,231,.6);
 }
-#time{margin-bottom:20px;opacity:.85}
+#time{margin-bottom:6px;opacity:.85}
+#ping{margin-bottom:14px;font-size:0.9rem;opacity:.85}
+.ping-good{color:#00ff7f}
+.ping-mid{color:#ffe600}
+.ping-bad{color:#ff4d4d}
 #soundToggle{
   position:fixed;
   bottom:20px;
@@ -85,6 +89,7 @@ li:hover{
 <div id="app">
   <h1>DASHBOARD</h1>
   <div id="time"></div>
+  <div id="ping">PING: -- ms</div>
 
   <ul>
     <li onclick="openLink('https://minta0077.online/minta0077.html')">Minta Online ➡</li>
@@ -112,13 +117,10 @@ li:hover{
 /* ===============================
    BACKGROUND SOUND CORE
    =============================== */
-
 const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
 const BGM = document.getElementById("bgm");
-
 let audioUnlocked = false;
 let soundEnabled = true;
-
 BGM.volume = 0.4;
 
 /* ===== UNLOCK AUDIO ===== */
@@ -140,11 +142,9 @@ BGM.addEventListener("pause",()=>{
 /* ===== KEEP ALIVE CHECK ===== */
 setInterval(()=>{
   if(!soundEnabled || !audioUnlocked) return;
-
   if(AudioCTX.state === "suspended"){
     AudioCTX.resume().catch(()=>{});
   }
-
   if(BGM.paused && !document.hidden){
     BGM.play().catch(()=>{});
   }
@@ -157,10 +157,8 @@ document.addEventListener("click", unlockAudio, { once:true });
 /* ===== ENTER ===== */
 enterBtn.onclick = async ()=>{
   await unlockAudio();
-
   landing.style.display="none";
   app.style.display="flex";
-
   if(soundEnabled && BGM.paused){
     BGM.currentTime = 0;
     BGM.play().catch(()=>{});
@@ -171,7 +169,6 @@ enterBtn.onclick = async ()=>{
 soundToggle.onclick = async ()=>{
   soundEnabled = !soundEnabled;
   soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
-
   await unlockAudio();
   soundEnabled ? BGM.play().catch(()=>{}) : BGM.pause();
 };
@@ -199,6 +196,29 @@ function tick(){
 }
 setInterval(tick,1000);
 tick();
+
+/* ===== PING MONITOR ===== */
+const pingEl = document.getElementById("ping");
+const PING_TARGET = location.origin;
+const PING_INTERVAL = 5000;
+
+async function checkPing(){
+  const start = performance.now();
+  try{
+    await fetch(PING_TARGET, { method:"HEAD", cache:"no-store" });
+    const ms = Math.round(performance.now() - start);
+    pingEl.textContent = `PING: ${ms} ms`;
+    pingEl.className = "";
+    if(ms < 80) pingEl.classList.add("ping-good");
+    else if(ms < 200) pingEl.classList.add("ping-mid");
+    else pingEl.classList.add("ping-bad");
+  }catch{
+    pingEl.textContent = "PING: timeout";
+    pingEl.className = "ping-bad";
+  }
+}
+setInterval(checkPing, PING_INTERVAL);
+checkPing();
 
 /* ===== PARTICLES ===== */
 const c=bg,ctx=c.getContext("2d");
@@ -229,4 +249,3 @@ const P=[...Array(120)].map(()=>({
 
 </body>
 </html>
-
