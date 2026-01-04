@@ -6,7 +6,7 @@
 
 ## 🔥 Overview
 
-Welcome to my project! Click the badges below or expand the description for stats, QR code, and more.
+Welcome to my project! Click the badges below or expand the description
 
 <details>
 <summary>📖 Click to See Description & Stats</summary>
@@ -23,11 +23,8 @@ Welcome to my project! Click the badges below or expand the description for stat
 ---
 
 ### ✅ Features / Highlights
-- :rocket: Easy navigation to website  
-- :zap: Interactive badges  
-- :sparkles: QR Code direct link  
-- :bar_chart: GitHub stats live  
-- :star: Followers count updated automatically  
+- :rocket: Website For prank Your Friend!    
+- :sparkles: QR Code direct link    
 
 </details>
 
@@ -36,4 +33,4 @@ Welcome to my project! Click the badges below or expand the description for stat
 ### 💡 Tip
 
 - Click on the badges to visit the website directly.  
-- Expand the section above to see stats and QR code.
+- Scan QR Code 
