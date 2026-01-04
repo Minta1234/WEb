@@ -2,190 +2,223 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>XO Offline</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XO Offline Pro</title>
 
 <style>
+:root{
+  --neon:#00ffcc;
+  --bg:#000;
+}
+*{box-sizing:border-box}
 body{
   margin:0;
-  font-family: monospace;
-  background:#000;
-  color:#0f0;
+  background:var(--bg);
+  color:var(--neon);
+  font-family:monospace;
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
 }
-
-.app{
-  text-align:center;
-  max-width:360px;
+.app{max-width:360px;width:100%;text-align:center}
+h1{margin:6px 0;text-shadow:0 0 10px var(--neon)}
+input,select,button{
   width:100%;
+  margin:4px 0;
+  padding:6px;
+  font-weight:bold;
 }
-
-h1{ margin-bottom:10px; }
-
+button{cursor:pointer}
+#msg{
+  height:70px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  text-shadow:0 0 12px var(--neon);
+}
 .board{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:6px;
-  margin:20px 0;
+  margin:10px 0;
 }
-
 .cell{
   aspect-ratio:1;
-  border:2px solid #0f0;
+  border:2px solid var(--neon);
   font-size:3rem;
   display:flex;
-  align-items:center;
   justify-content:center;
+  align-items:center;
   cursor:pointer;
 }
-
-.cell.disabled{ cursor:not-allowed; opacity:.6; }
-
-button{
-  background:#0f0;
-  color:#000;
-  border:none;
-  padding:8px 12px;
-  margin:5px;
-  font-weight:bold;
-  cursor:pointer;
+.cell.win{
+  animation:blink .6s infinite;
 }
-
-#msg{
-  min-height:40px;
-  margin-top:10px;
-  color:#0ff;
+@keyframes blink{
+  0%{background:#000}
+  50%{background:#00ffcc;color:#000}
+  100%{background:#000}
 }
 </style>
 </head>
 
 <body>
 <div class="app">
-  <h1>XO OFFLINE</h1>
 
-  <div>
-    <button onclick="setMode('ai')">VS AI</button>
-    <button onclick="setMode('pvp')">2 Players</button>
-    <button onclick="resetGame()">RESET</button>
-  </div>
+<h1>XO OFFLINE</h1>
 
-  <div class="board" id="board"></div>
+<input id="p1" placeholder="Player 1 name" value="Player 1">
+<input id="p2" placeholder="Player 2 / AI name" value="AI">
 
-  <div id="msg">Select game mode</div>
+<select id="mode">
+  <option value="">Select Mode</option>
+  <option value="pvp">2 Players</option>
+  <option value="ai">VS AI</option>
+</select>
+
+<select id="aiLevel">
+  <option value="easy">AI Easy</option>
+  <option value="hard">AI Hard</option>
+  <option value="extreme">AI Extreme</option>
+</select>
+
+<button onclick="start()">START</button>
+<button onclick="reset()">RESET</button>
+
+<div id="msg">READY</div>
+<div class="board" id="board"></div>
+
 </div>
 
 <script>
-const boardEl = document.getElementById("board");
-const msgEl = document.getElementById("msg");
+/* ================= CORE ================= */
+const boardEl=document.getElementById("board");
+const msgEl=document.getElementById("msg");
+const sfx={
+  click:new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAA=="),
+  win:new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAA=="),
+  draw:new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YRAAAA==")
+};
 
-let board, current, mode, gameOver;
+let board,turn,gameOver,mode,aiLevel,names;
 
-function init(){
-  board = Array(9).fill("");
-  current = "X";
-  gameOver = false;
-  boardEl.innerHTML = "";
+function start(){
+  names={
+    X:p1.value||"Player 1",
+    O:modeSel.value==="ai"?(p2.value||"AI"):(p2.value||"Player 2")
+  };
+  mode=modeSel.value;
+  aiLevel=aiSel.value;
+  reset();
+}
+const modeSel=document.getElementById("mode");
+const aiSel=document.getElementById("aiLevel");
+
+function reset(){
+  board=Array(9).fill("");
+  turn="X";
+  gameOver=false;
+  boardEl.innerHTML="";
   for(let i=0;i<9;i++){
     const d=document.createElement("div");
     d.className="cell";
     d.onclick=()=>play(i);
     boardEl.appendChild(d);
   }
-}
-init();
-
-function setMode(m){
-  mode = m;
-  resetGame();
-  msg(`Mode: ${m === "ai" ? "VS AI" : "2 Players"} | Turn: X`);
+  msg(`${names?.X||"Player 1"} TURN`);
 }
 
-function resetGame(){
-  init();
-  msg("Game reset. Turn: X");
-}
+function msg(t){msgEl.textContent=t}
 
-function msg(t){ msgEl.textContent=t; }
-
+/* ================= GAME ================= */
 function play(i){
-  if(!mode){
-    msg("⚠️ Select game mode first");
-    return;
-  }
-  if(gameOver){
-    msg("⚠️ Game ended. Press RESET");
-    return;
-  }
-  if(board[i]){
-    msg("⚠️ This cell is already used");
-    return;
-  }
-
-  board[i]=current;
+  if(gameOver||!mode||board[i]) return warn();
+  board[i]=turn;
+  sfx.click.play();
   render();
 
-  if(checkWin(current)){
-    msg(`🏆 ${current} WINS`);
+  const winLine=checkWin(board,turn);
+  if(winLine){
+    winLine.forEach(i=>boardEl.children[i].classList.add("win"));
+    sfx.win.play();
+    msg(`🏆 ${names[turn]} WIN`);
     gameOver=true;
     return;
   }
-  if(board.every(c=>c)){
+
+  if(board.every(v=>v)){
+    sfx.draw.play();
     msg("🤝 DRAW");
     gameOver=true;
     return;
   }
 
-  current = current==="X"?"O":"X";
-  msg(`Turn: ${current}`);
+  turn=turn==="X"?"O":"X";
+  msg(`${names[turn]} TURN`);
 
-  if(mode==="ai" && current==="O"){
-    setTimeout(aiMove,500);
+  if(mode==="ai"&&turn==="O"){
+    setTimeout(aiMove,400);
   }
 }
 
+function warn(){msg("⚠ INVALID MOVE")}
+
 function render(){
-  document.querySelectorAll(".cell").forEach((c,i)=>{
-    c.textContent=board[i];
-    if(board[i]) c.classList.add("disabled");
-  });
+  [...boardEl.children].forEach((c,i)=>c.textContent=board[i]);
 }
 
+/* ================= AI ================= */
 function aiMove(){
-  if(gameOver) return;
-
-  // Try block or random
-  let move = findBest("O") ?? findBest("X");
-  if(move===null){
-    const empty=board.map((v,i)=>v?null:i).filter(v=>v!==null);
-    move = empty[Math.floor(Math.random()*empty.length)];
+  let move;
+  if(aiLevel==="easy"){
+    move=randomMove();
+  }else if(aiLevel==="hard"){
+    move=minimax(board,0,true,3).index;
+  }else{
+    move=minimax(board,0,true).index;
   }
   play(move);
 }
 
-function findBest(p){
-  for(let i=0;i<9;i++){
-    if(!board[i]){
-      board[i]=p;
-      const win=checkWin(p);
-      board[i]="";
-      if(win) return i;
+function randomMove(){
+  const e=board.map((v,i)=>v?null:i).filter(v=>v!==null);
+  return e[Math.floor(Math.random()*e.length)];
+}
+
+function minimax(newBoard,depth,isMax,limit=Infinity){
+  const score=evalBoard(newBoard);
+  if(score!==null||depth>=limit) return {score};
+
+  let best={score:isMax?-Infinity:Infinity};
+  newBoard.forEach((v,i)=>{
+    if(!v){
+      newBoard[i]=isMax?"O":"X";
+      const r=minimax(newBoard,depth+1,!isMax,limit);
+      newBoard[i]="";
+      r.index=i;
+      if(isMax? r.score>best.score : r.score<best.score)
+        best=r;
     }
-  }
+  });
+  return best;
+}
+
+function evalBoard(b){
+  if(checkWin(b,"O")) return 10;
+  if(checkWin(b,"X")) return -10;
+  if(b.every(v=>v)) return 0;
   return null;
 }
 
-function checkWin(p){
-  const w=[
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  return w.some(c=>c.every(i=>board[i]===p));
+/* ================= WIN CHECK ================= */
+function checkWin(b,p){
+  const w=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+  for(const a of w)
+    if(a.every(i=>b[i]===p)) return a;
+  return null;
 }
 </script>
 </body>
 </html>
-
