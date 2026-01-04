@@ -3,22 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <title>MInta Websites Dashboard</title>
 <style>
-    
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
     html, body {
         width: 100%;
         height: 100%;
         font-family: 'Courier New', monospace;
         overflow: hidden;
-        background: #0f2027;
+        background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
         color: #00ffea;
     }
-
     canvas {
         position: absolute;
         top: 0;
@@ -27,8 +22,6 @@
         height: 100%;
         z-index: 0;
     }
-
-  
     #landing, .container {
         position: absolute;
         top: 0;
@@ -43,140 +36,152 @@
         padding: 20px;
         text-align: center;
     }
-
     #landing h1 {
-        font-size: clamp(2rem, 5vw, 3rem);
-        margin-bottom: 20px;
-        text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        margin-bottom: 30px;
+        text-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea, 0 0 30px #00ffea;
+        animation: glow 2s ease-in-out infinite alternate;
     }
-
+    @keyframes glow {
+        from { text-shadow: 0 0 10px #00ffea, 0 0 20px #00ffea, 0 0 30px #00ffea; }
+        to { text-shadow: 0 0 20px #00ffea, 0 0 30px #00ffea, 0 0 40px #00ffea; }
+    }
     #enterBtn {
-        padding: clamp(10px, 2vw, 20px) clamp(20px, 5vw, 40px);
+        padding: clamp(12px, 2vw, 20px) clamp(25px, 5vw, 45px);
         font-size: clamp(1rem, 2vw, 1.5rem);
         color: #00ffea;
         border: 2px solid #00ffea;
-        background: transparent;
+        background: rgba(0, 255, 234, 0.05);
         cursor: pointer;
-        border-radius: 8px;
+        border-radius: 10px;
         transition: all 0.3s ease;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+        letter-spacing: 2px;
     }
-
     #enterBtn:hover {
-        background-color: rgba(0,255,234,0.1);
-        transform: scale(1.05);
+        background-color: rgba(0,255,234,0.2);
+        transform: scale(1.1);
+        box-shadow: 0 0 20px #00ffea;
     }
-
     .container {
-        display: none; 
-        flex-direction: column;
-        align-items: center;
+        display: none;
         overflow-y: auto;
+        overflow-x: hidden;
     }
-
     h1.container-title {
-        font-size: clamp(2rem, 5vw, 2.5rem);
+        font-size: clamp(1.8rem, 5vw, 2.5rem);
         text-shadow: 0 0 5px #00ffea, 0 0 10px #00ffea;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+        margin-top: 20px;
     }
-
     #time {
-        font-size: clamp(1rem, 2vw, 1.2rem);
-        margin-bottom: 20px;
+        font-size: clamp(0.9rem, 2vw, 1.2rem);
+        margin-bottom: 25px;
+        opacity: 0.9;
     }
-
     .website-list {
         list-style: none;
         width: 100%;
         max-width: 600px;
-        padding: 0;
+        padding: 0 10px;
+        margin-bottom: 20px;
     }
-
     .website-list li {
-        background-color: rgba(255,255,255,0.05);
-        border: 1px solid #00ffea;
-        padding: clamp(10px, 2vw, 15px) clamp(15px, 4vw, 20px);
+        background: linear-gradient(135deg, rgba(0,255,234,0.1) 0%, rgba(0,255,234,0.05) 100%);
+        border: 2px solid rgba(0,255,234,0.3);
+        padding: clamp(12px, 2vw, 18px) clamp(15px, 4vw, 25px);
         margin-bottom: 15px;
-        border-radius: 8px;
+        border-radius: 12px;
         cursor: pointer;
         display: flex;
         justify-content: space-between;
         align-items: center;
         transition: all 0.3s ease;
         word-wrap: break-word;
+        backdrop-filter: blur(5px);
     }
-
     .website-list li:hover {
-        background-color: rgba(0,255,234,0.1);
-        transform: translateY(-3px);
-        box-shadow: 0 0 15px #00ffea;
+        background: linear-gradient(135deg, rgba(0,255,234,0.2) 0%, rgba(0,255,234,0.1) 100%);
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,255,234,0.4);
+        border-color: #00ffea;
     }
-
     .icon {
-        font-size: clamp(1rem, 2vw, 1.2rem);
+        font-size: clamp(1rem, 2vw, 1.3rem);
         transition: transform 0.3s;
     }
-
     .website-list li:hover .icon {
-        transform: translateX(5px);
+        transform: translateX(8px);
     }
-
     footer {
         width: 100%;
         text-align: center;
         color: #00ffea;
-        font-size: clamp(0.8rem, 2vw, 1rem);
+        font-size: clamp(0.75rem, 2vw, 0.95rem);
         text-shadow: 0 0 3px #00ffea;
         margin-top: 20px;
+        margin-bottom: 80px;
         flex-shrink: 0;
+        opacity: 0.8;
     }
-
     .container::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
+    }
+    .container::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.2);
     }
     .container::-webkit-scrollbar-thumb {
-        background-color: rgba(0,255,234,0.3);
-        border-radius: 3px;
+        background: linear-gradient(180deg, #00ffea 0%, rgba(0,255,234,0.5) 100%);
+        border-radius: 4px;
     }
-
+    .container::-webkit-scrollbar-thumb:hover {
+        background: #00ffea;
+    }
     #soundToggle {
         position: fixed;
         bottom: 20px;
         left: 20px;
-        padding: 10px 15px;
-        font-size: 1rem;
+        padding: 12px 18px;
+        font-size: 1.2rem;
         color: #00ffea;
         border: 2px solid #00ffea;
-        background: rgba(0,0,0,0.2);
-        border-radius: 6px;
+        background: rgba(15, 32, 39, 0.8);
+        border-radius: 8px;
         cursor: pointer;
         z-index: 1000;
         transition: all 0.3s;
+        backdrop-filter: blur(10px);
     }
-
     #soundToggle:hover {
-        background: rgba(0,255,234,0.1);
-        transform: scale(1.05);
+        background: rgba(0,255,234,0.2);
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(0,255,234,0.5);
     }
-
+    .ribbon {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 80px;
+        height: 80px;
+        opacity: 0.9;
+        z-index: 9999;
+        pointer-events: none;
+        background: linear-gradient(135deg, #000 0%, #333 100%);
+        clip-path: polygon(100% 0, 100% 100%, 0 0);
+    }
 </style>
 </head>
 <body>
-<img src="Image/ribbon_top_right.png" 
-     alt="Black mourning ribbon" 
-     style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
-
+<div class="ribbon"></div>
 <div id="landing">
     <h1>Welcome to Websites</h1>
     <button id="enterBtn">ENTER</button>
 </div>
-
-<audio id="bgSound" src="/assets/Stranger.mp3" loop></audio>
 <canvas id="particles"></canvas>
-
 <div class="container">
     <h1 class="container-title">My Websites Dashboard</h1>
     <div id="time"></div>
-
     <ul class="website-list">
         <li onclick="window.open('https://minta0077.online/minta0077.html','_parent')">
             <span>Minta Online</span>
@@ -186,64 +191,64 @@
             <span>GitHub Profile</span>
             <span class="icon">➡️</span>
         </li>
-        <li onclick="window.open('https://www.tiktok.com/@minta1826?is_from_webapp=1&sender_device=pc','_blank')">
+        <li onclick="window.open('https://www.tiktok.com/@minta1826','_blank')">
             <span>TikTok</span>
             <span class="icon">➡️</span>
         </li>
         <li onclick="window.open('https://minta0077.online/Games/XO.html','_blank')">
-            <span>XO offline</span>
+            <span>XO Offline</span>
             <span class="icon">➡️</span>
         </li>
         <li onclick="window.open('https://minta0077.online/Games/Chess.html','_blank')">
-            <span>Chess offline</span>
+            <span>Chess Offline</span>
             <span class="icon">➡️</span>
         </li>
     </ul>
-
     <footer>© 2026 Minta0077. All rights reserved.</footer>
-
     <button id="soundToggle">🔊</button>
 </div>
-
 <script>
-    
     const enterBtn = document.getElementById('enterBtn');
     const landing = document.getElementById('landing');
     const container = document.querySelector('.container');
-    const bgSound = document.getElementById('bgSound');
     const soundToggle = document.getElementById('soundToggle');
 
-    enterBtn.addEventListener('click', ()=>{
+    enterBtn.addEventListener('click', () => {
         landing.style.display = 'none';
         container.style.display = 'flex';
-        bgSound.play().catch(()=>{}); 
     });
 
-    let isPlaying = true;
-    soundToggle.addEventListener('click', ()=>{
-        if(isPlaying){
-            bgSound.pause();
-            soundToggle.innerText = '🔇';
-            isPlaying = false;
-        } else {
-            bgSound.play().catch(()=>{});
-            soundToggle.innerText = '🔊';
-            isPlaying = true;
-        }
+    let isPlaying = false;
+    soundToggle.addEventListener('click', () => {
+        isPlaying = !isPlaying;
+        soundToggle.innerText = isPlaying ? '🔊' : '🔇';
     });
 
     function updateTime() {
         const now = new Date();
-        document.getElementById('time').innerText = now.toLocaleString();
+        const options = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        };
+        document.getElementById('time').innerText = now.toLocaleString('en-US', options);
     }
     setInterval(updateTime, 1000);
     updateTime();
 
     const canvas = document.getElementById('particles');
     const ctx = canvas.getContext('2d');
-    let particlesArray;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    let particlesArray = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
 
     class Particle {
         constructor(x, y, size, speedX, speedY) {
@@ -252,17 +257,18 @@
             this.size = size;
             this.speedX = speedX;
             this.speedY = speedY;
+            this.opacity = Math.random() * 0.5 + 0.5;
         }
         update() {
             this.x += this.speedX;
             this.y += this.speedY;
-            if(this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-            if(this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
         }
         draw() {
-            ctx.fillStyle = '#00ffea';
+            ctx.fillStyle = `rgba(0, 255, 234, ${this.opacity})`;
             ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
         }
     }
@@ -270,39 +276,51 @@
     function initParticles() {
         particlesArray = [];
         let particleCount = window.innerWidth < 600 ? 50 : 100;
-        for(let i=0; i<particleCount; i++){
-            let size = Math.random()*3+1;
-            let x = Math.random()*canvas.width;
-            let y = Math.random()*canvas.height;
-            let speedX = (Math.random()-0.5)*1;
-            let speedY = (Math.random()-0.5)*1;
+        for (let i = 0; i < particleCount; i++) {
+            let size = Math.random() * 2.5 + 0.5;
+            let x = Math.random() * canvas.width;
+            let y = Math.random() * canvas.height;
+            let speedX = (Math.random() - 0.5) * 0.8;
+            let speedY = (Math.random() - 0.5) * 0.8;
             particlesArray.push(new Particle(x, y, size, speedX, speedY));
         }
     }
 
+    function connectParticles() {
+        for (let i = 0; i < particlesArray.length; i++) {
+            for (let j = i + 1; j < particlesArray.length; j++) {
+                let dx = particlesArray[i].x - particlesArray[j].x;
+                let dy = particlesArray[i].y - particlesArray[j].y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 120) {
+                    ctx.strokeStyle = `rgba(0, 255, 234, ${0.2 * (1 - distance / 120)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.beginPath();
+                    ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+                    ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+
     function animateParticles() {
-        ctx.clearRect(0,0,canvas.width,canvas.height);
-        for(let particle of particlesArray){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let particle of particlesArray) {
             particle.update();
             particle.draw();
         }
+        connectParticles();
         requestAnimationFrame(animateParticles);
     }
 
-    window.addEventListener('resize', ()=>{
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+        resizeCanvas();
         initParticles();
     });
 
     initParticles();
     animateParticles();
 </script>
-
 </body>
 </html>
-
-
-
-
-
