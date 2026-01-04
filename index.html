@@ -118,8 +118,8 @@ html, body {
 		<div id="progressBar"></div>
 	</div>
 
-	<audio id="bgm" src="Stranger.mp3" loop></audio>
-	<audio id="mainSound" src="ENO-soam-tan.mp3" preload="auto"></audio>
+	<audio id="bgm" src="/assets/Stranger.mp3" loop></audio>
+	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
@@ -187,8 +187,8 @@ btn.onclick = () => {
 	bgm.pause();
 
 	const a = document.createElement("a");
-	a.href = "MicroBit.zip";  
-	a.download = "MicroBit.zip";
+	a.href = "/Download/MicroBit.zip";  
+	a.download = "/Download/MicroBit.zip";
 	document.body.appendChild(a);
 	a.click();
 	a.remove();
@@ -241,6 +241,3 @@ window.addEventListener("beforeunload", () => {
 
 </body>
 </html>
-
-
-
