@@ -92,12 +92,12 @@ li:hover{
   <div id="ping">PING: -- ms</div>
 
 <ul>
-    <li onclick="openLink('https://minta0077.online/minta0077.html')" target="_parent">Minta Online⏩ </li>
-    <li onclick="openLink('https://github.com/Minta1234')">GitHub⏩ </li>
-    <li onclick="openLink('https://www.tiktok.com/@minta1826')">TikTok📲 </li>
-    <li onclick="openLink('https://minta0077.online/Games/XO.html')" target="_parent">XO Game▶️ </li>
-    <li onclick="openLink('https://minta0077.online/Games/Chess-Optimize.html')" target="_parent">Chess▶️ </li>
-    <li onclick="openLink('https://minta0077.online/Games/Checkers.html')" target="_parent">Checkers▶️ </li>
+    <li onclick="openLink('https://minta0077.online/minta0077.html', '_parent')">Minta Online ⏩</li>
+    <li onclick="openLink('https://github.com/Minta1234', '_parent')">GitHub ⏩</li>
+    <li onclick="openLink('https://www.tiktok.com/@minta1826', '_blank')">TikTok 📲</li>
+    <li onclick="openLink('https://minta0077.online/Games/XO.html', '_parent')">XO Game ▶️</li>
+    <li onclick="openLink('https://minta0077.online/Games/Chess-Optimize.html', '_parent')">Chess ▶️</li>
+    <li onclick="openLink('https://minta0077.online/Games/Checkers.html', '_parent')">Checkers ▶️</li>
 </ul>
 
   <footer style="margin-top:40px;opacity:.6">© 2026 Minta0077</footer>
@@ -107,7 +107,7 @@ li:hover{
 
 <!-- BACKGROUND SOUND ONLY -->
 <audio id="bgm"
-  src="assets/the_best_song.mp3"
+  src="assets/Stranger.mp3"
   preload="auto"
   loop
   playsinline
@@ -115,16 +115,21 @@ li:hover{
 </audio>
 
 <script>
-/* ===============================
-   BACKGROUND SOUND CORE
-   =============================== */
-const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
+/* ===== ELEMENTS ===== */
+const enterBtn = document.getElementById("enterBtn");
+const landing  = document.getElementById("landing");
+const app      = document.getElementById("app");
+const time     = document.getElementById("time");
+const soundToggle = document.getElementById("soundToggle");
+const pingEl = document.getElementById("ping");
 const BGM = document.getElementById("bgm");
+
+/* ===== AUDIO CORE ===== */
+const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
 let audioUnlocked = false;
 let soundEnabled = true;
 BGM.volume = 0.4;
 
-/* ===== UNLOCK AUDIO ===== */
 async function unlockAudio(){
   if(audioUnlocked) return;
   try{
@@ -133,29 +138,9 @@ async function unlockAudio(){
   }catch{}
 }
 
-/* ===== AUTO RESUME IF PAUSED ===== */
-BGM.addEventListener("pause",()=>{
-  if(soundEnabled && !document.hidden && audioUnlocked){
-    BGM.play().catch(()=>{});
-  }
-});
-
-/* ===== KEEP ALIVE CHECK ===== */
-setInterval(()=>{
-  if(!soundEnabled || !audioUnlocked) return;
-  if(AudioCTX.state === "suspended"){
-    AudioCTX.resume().catch(()=>{});
-  }
-  if(BGM.paused && !document.hidden){
-    BGM.play().catch(()=>{});
-  }
-},1000);
-
-/* ===== MOBILE UNLOCK ===== */
-document.addEventListener("touchstart", unlockAudio, { once:true });
 document.addEventListener("click", unlockAudio, { once:true });
+document.addEventListener("touchstart", unlockAudio, { once:true });
 
-/* ===== ENTER ===== */
 enterBtn.onclick = async ()=>{
   await unlockAudio();
   landing.style.display="none";
@@ -166,7 +151,6 @@ enterBtn.onclick = async ()=>{
   }
 };
 
-/* ===== TOGGLE ===== */
 soundToggle.onclick = async ()=>{
   soundEnabled = !soundEnabled;
   soundToggle.textContent = soundEnabled ? "🔊" : "🔇";
@@ -174,16 +158,9 @@ soundToggle.onclick = async ()=>{
   soundEnabled ? BGM.play().catch(()=>{}) : BGM.pause();
 };
 
-/* ===== TAB BACK ===== */
-document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden && soundEnabled && audioUnlocked){
-    if(BGM.paused) BGM.play().catch(()=>{});
-  }
-});
-
-/* ===== LINKS ===== */
-function openLink(url){
-  window.open(url,"_blank");
+/* ===== LINK HANDLER ===== */
+function openLink(url, target="_blank"){
+  window.open(url, target);
 }
 
 /* ===== CLOCK ===== */
@@ -198,56 +175,50 @@ function tick(){
 setInterval(tick,1000);
 tick();
 
-/* ===== PING MONITOR ===== */
-const pingEl = document.getElementById("ping");
+/* ===== PING ===== */
 const PING_TARGET = location.origin;
 const PING_INTERVAL = 500;
 
 async function checkPing(){
   const start = performance.now();
   try{
-    await fetch(PING_TARGET, { method:"HEAD", cache:"no-store" });
-    const ms = Math.round(performance.now() - start);
+    await fetch(PING_TARGET,{method:"HEAD",cache:"no-store"});
+    const ms = Math.round(performance.now()-start);
     pingEl.textContent = `PING: ${ms} ms`;
-    pingEl.className = "";
-    if(ms < 80) pingEl.classList.add("ping-good");
-    else if(ms < 200) pingEl.classList.add("ping-mid");
-    else pingEl.classList.add("ping-bad");
+    pingEl.className = ms<80?"ping-good":ms<200?"ping-mid":"ping-bad";
   }catch{
-    pingEl.textContent = "PING: timeout";
-    pingEl.className = "ping-bad";
+    pingEl.textContent="PING: timeout";
+    pingEl.className="ping-bad";
   }
 }
-setInterval(checkPing, PING_INTERVAL);
+setInterval(checkPing,PING_INTERVAL);
 checkPing();
+/* ===== particle ===== */
+const c = bg, ctx = c.getContext("2d");
 
-/* ===== PARTICLES ===== */
-const c=bg,ctx=c.getContext("2d");
-function resize(){c.width=innerWidth;c.height=innerHeight}
-resize();addEventListener("resize",resize);
+function resize(){ c.width = innerWidth; c.height = innerHeight }
+resize();
+addEventListener("resize", resize);
 
-const P=[...Array(120)].map(()=>({
-  x:Math.random()*c.width,
-  y:Math.random()*c.height,
-  vx:(Math.random()-.5)*.6,
-  vy:(Math.random()-.5)*.6
+const P = [...Array(120)].map(() => ({
+  x: Math.random()*c.width,
+  y: Math.random()*c.height,
+  vx: (Math.random()-.5)*0.6,
+  vy: (Math.random()-.5)*0.6
 }));
 
 (function anim(){
   ctx.clearRect(0,0,c.width,c.height);
-  P.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>c.width)p.vx*=-1;
-    if(p.y<0||p.y>c.height)p.vy*=-1;
-    ctx.fillStyle="rgba(0,255,231,.7)";
+  P.forEach(p => {
+    p.x += p.vx; 
+    p.y += p.vy;
+    if(p.x<0||p.x>c.width) p.vx *= -1;
+    if(p.y<0||p.y>c.height) p.vy *= -1;
+    ctx.fillStyle = "rgba(0,255,231,.7)";
     ctx.beginPath();
-    ctx.arc(p.x,p.y,1.5,0,Math.PI*2);
+    ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
     ctx.fill();
   });
   requestAnimationFrame(anim);
 })();
 </script>
-
-</body>
-</html>
-
