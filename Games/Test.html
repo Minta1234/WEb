@@ -3,179 +3,206 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sensor Logger</title>
+<title>AR Sensor Logger 3D</title>
 
 <style>
 :root{
-  --motion:#00c8ff;
-  --env:#00ff9c;
-  --audio:#ffb300;
-  --other:#ff5c5c;
   --bg:#0b0e14;
+  --accent:#00ffcc;
 }
 *{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:var(--bg);color:#eaeaea}
-h1{text-align:center;margin:16px 0}
+h1{text-align:center;margin:10px 0}
 button{
-  display:block;margin:0 auto 10px;
-  padding:10px 18px;border:0;border-radius:8px;
-  background:#00ff9c;color:#000;font-weight:600
+  padding:8px 14px;border:0;border-radius:8px;
+  background:var(--accent);color:#000;font-weight:600;
+  margin:4px
 }
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:16px;padding:20px
-}
-.card{
-  background:#111;border-left:6px solid;
-  border-radius:12px;padding:14px;
-}
-.card.off{opacity:.35;filter:grayscale(1)}
-.value{font-size:14px;opacity:.8}
-canvas{width:100%;height:120px;background:#05070b;border-radius:8px;margin-top:8px}
-video{display:none}
+#controls{text-align:center}
+#wrap{position:relative;max-width:420px;margin:10px auto}
+video,canvas{width:100%;border-radius:12px}
+#overlay{position:absolute;top:0;left:0;pointer-events:none}
+#graph{background:#05070b;margin-top:8px}
 </style>
 </head>
 
 <body>
-<h1>📊 Sensor Graph + Logger</h1>
-<button onclick="saveCSV()">💾 Save CSV</button>
+<h1>📡 AR Sensor Logger + 3D</h1>
 
-<div class="grid">
-
-<div class="card" id="accCard" style="border-color:var(--motion)">
-<h3>Accelerometer</h3>
-<div class="value" id="accVal">Waiting…</div>
-<canvas id="accGraph"></canvas>
+<div id="controls">
+  <button onclick="saveCSV()">💾 Export CSV</button>
+  <button onclick="exportPLY()">🧊 Export 3D (PLY)</button>
 </div>
 
-<div class="card" id="gyroCard" style="border-color:var(--motion)">
-<h3>Gyroscope</h3>
-<div class="value" id="gyroVal">Waiting…</div>
+<div id="wrap">
+  <video id="cam" autoplay playsinline></video>
+  <canvas id="overlay"></canvas>
 </div>
 
-<div class="card" id="lightCard" style="border-color:var(--env)">
-<h3>Light (Camera)</h3>
-<div class="value" id="lightVal">Waiting…</div>
-<canvas id="lightGraph"></canvas>
-</div>
-
-<div class="card" id="micCard" style="border-color:var(--audio)">
-<h3>Microphone (dB)</h3>
-<div class="value" id="micVal">Waiting…</div>
-<canvas id="micGraph"></canvas>
-</div>
-
-<div class="card" id="gpsCard" style="border-color:var(--other)">
-<h3>GPS</h3>
-<div class="value" id="gpsVal">Waiting…</div>
-</div>
-
-</div>
-
-<video id="cam" autoplay playsinline></video>
+<canvas id="graph"></canvas>
 
 <script>
-const log=[]
-
-const disable=c=>c.classList.add("off")
-const draw=(ctx,data,color)=>{
- ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
- ctx.strokeStyle=color;ctx.beginPath()
- let m=Math.max(...data,1)
- data.forEach((v,i)=>{
-  let x=i*(ctx.canvas.width/(data.length-1))
-  let y=ctx.canvas.height-(v/m)*ctx.canvas.height
-  i?ctx.lineTo(x,y):ctx.moveTo(x,y)
- })
- ctx.stroke()
+/* ================= KALMAN FILTER ================= */
+class Kalman{
+ constructor(q=0.01,r=3){
+  this.q=q;this.r=r;this.x=0;this.p=1
+ }
+ update(z){
+  this.p+=this.q
+  let k=this.p/(this.p+this.r)
+  this.x+=k*(z-this.x)
+  this.p*=(1-k)
+  return this.x
+ }
 }
 
-/* Accelerometer */
-let accD=[],accCtx=accGraph.getContext("2d")
-if(DeviceMotionEvent){
- addEventListener("devicemotion",e=>{
-  let a=e.accelerationIncludingGravity
-  if(!a)return
-  let g=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)
-  accVal.textContent=g.toFixed(2)+" m/s²"
-  accD.push(g);if(accD.length>60)accD.shift()
-  draw(accCtx,accD,"#00c8ff")
-  log.push({t:Date.now(),acc:g})
- })
-}else disable(accCard)
+/* ================= GLOBAL STATE ================= */
+const log=[]
+const points3D=[]
+const kLight=new Kalman()
+const kSpeed=new Kalman()
 
-/* Gyro */
-if(DeviceOrientationEvent){
- addEventListener("deviceorientation",e=>{
-  gyroVal.textContent=`α:${e.alpha?.toFixed(1)} β:${e.beta?.toFixed(1)} γ:${e.gamma?.toFixed(1)}`
-  log.push({t:Date.now(),gyro_alpha:e.alpha})
- })
-}else disable(gyroCard)
+let gyro={a:0,b:0,c:0}
+let speedMS=0
+let posZ=0
+let lastT=Date.now()
 
-/* Light */
-let lightD=[],lightCtx=lightGraph.getContext("2d")
-navigator.mediaDevices?.getUserMedia({video:{facingMode:"environment"}})
+/* ================= GRAPH ================= */
+const gctx=graph.getContext("2d")
+let gData=[]
+function drawGraph(v){
+ gData.push(v); if(gData.length>60) gData.shift()
+ gctx.clearRect(0,0,graph.width,graph.height)
+ gctx.strokeStyle="#00ffcc"; gctx.beginPath()
+ let m=Math.max(...gData,1)
+ gData.forEach((d,i)=>{
+  let x=i*(graph.width/(gData.length-1))
+  let y=graph.height-(d/m)*graph.height
+  i?gctx.lineTo(x,y):gctx.moveTo(x,y)
+ })
+ gctx.stroke()
+}
+
+/* ================= CAMERA + LIGHT ================= */
+const cam=document.getElementById("cam")
+const overlay=document.getElementById("overlay")
+const octx=overlay.getContext("2d")
+
+navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:"environment"}}})
 .then(s=>{
  cam.srcObject=s
  const c=document.createElement("canvas"),ctx=c.getContext("2d")
+
  setInterval(()=>{
   c.width=cam.videoWidth;c.height=cam.videoHeight
+  overlay.width=c.width;overlay.height=c.height
+  graph.width=c.width;graph.height=120
+
   ctx.drawImage(cam,0,0)
   let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
   for(let i=0;i<d.length;i+=4)
    sum+=(d[i]+d[i+1]+d[i+2])/3
-  let lux=sum/(d.length/4)
-  lightVal.textContent="Brightness ~ "+lux.toFixed(0)
-  lightD.push(lux);if(lightD.length>60)lightD.shift()
-  draw(lightCtx,lightD,"#00ff9c")
-  log.push({t:Date.now(),light:lux})
+
+  let raw=sum/(d.length/4)
+  let light=kLight.update(raw)
+
+  updatePosition(light)
+  drawAR(light)
+  drawGraph(light)
+  logData(light)
+
  },500)
-}).catch(()=>disable(lightCard))
+})
 
-/* Microphone dB */
-let micD=[],micCtx=micGraph.getContext("2d")
-navigator.mediaDevices?.getUserMedia({audio:true})
-.then(s=>{
- const ac=new AudioContext()
- const src=ac.createMediaStreamSource(s)
- const an=ac.createAnalyser();an.fftSize=512
- src.connect(an)
- const buf=new Uint8Array(an.fftSize)
- setInterval(()=>{
-  an.getByteTimeDomainData(buf)
-  let sum=0
-  for(let i=0;i<buf.length;i++){
-   let v=(buf[i]-128)/128
-   sum+=v*v
+/* ================= GYROSCOPE ================= */
+if(window.DeviceOrientationEvent){
+ addEventListener("deviceorientation",e=>{
+  gyro={
+   a:e.alpha||0,
+   b:e.beta||0,
+   c:e.gamma||0
   }
-  let rms=Math.sqrt(sum/buf.length)
-  let db=20*Math.log10(rms||0.00001)
-  micVal.textContent=db.toFixed(1)+" dB"
-  micD.push(Math.abs(db));if(micD.length>60)micD.shift()
-  draw(micCtx,micD,"#ffb300")
-  log.push({t:Date.now(),mic_db:db})
- },120)
-}).catch(()=>disable(micCard))
+ })
+}
 
-/* GPS */
-navigator.geolocation?
-navigator.geolocation.getCurrentPosition(p=>{
- gpsVal.textContent=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`
- log.push({t:Date.now(),lat:p.coords.latitude,lon:p.coords.longitude})
-},()=>disable(gpsCard)):disable(gpsCard)
+/* ================= GPS SPEED ================= */
+navigator.geolocation?.watchPosition(p=>{
+ let s=p.coords.speed||0
+ speedMS=kSpeed.update(s)
+},{enableHighAccuracy:true,maximumAge:0,timeout:5000})
 
-/* Save CSV */
+/* ================= POSITION + 3D ================= */
+function updatePosition(light){
+ let now=Date.now()
+ let dt=(now-lastT)/1000
+ lastT=now
+ posZ+=speedMS*dt
+
+ let c=Math.min(255,Math.max(0,light))
+ points3D.push({
+  x:0,y:0,z:posZ,
+  r:c,g:255-c,b:120
+ })
+}
+
+/* ================= AR OVERLAY ================= */
+function drawAR(light){
+ octx.clearRect(0,0,overlay.width,overlay.height)
+ octx.fillStyle="#00ffcc"
+ octx.font="15px monospace"
+ octx.fillText(`Light: ${light.toFixed(0)}`,10,22)
+ octx.fillText(`Speed: ${(speedMS*3.6).toFixed(1)} km/h`,10,42)
+ octx.fillText(`Gyro α:${gyro.a.toFixed(1)}`,10,62)
+ octx.fillText(`β:${gyro.b.toFixed(1)} γ:${gyro.c.toFixed(1)}`,10,82)
+}
+
+/* ================= LOG ================= */
+function logData(light){
+ log.push({
+  timestamp:Date.now(),
+  light_back:light,
+  gps_speed_ms:speedMS,
+  gps_speed_kmh:speedMS*3.6,
+  gyro_alpha:gyro.a,
+  gyro_beta:gyro.b,
+  gyro_gamma:gyro.c,
+  z_position:posZ
+ })
+}
+
+/* ================= EXPORT CSV ================= */
 function saveCSV(){
- let keys=new Set()
- log.forEach(r=>Object.keys(r).forEach(k=>keys.add(k)))
- let header=[...keys].join(",")
- let rows=log.map(r=>[...keys].map(k=>r[k]??"").join(","))
- let csv=[header,...rows].join("\n")
- let blob=new Blob([csv],{type:"text/csv"})
+ if(!log.length) return
+ let h=Object.keys(log[0]).join(",")
+ let r=log.map(o=>Object.values(o).join(","))
+ let csv=[h,...r].join("\n")
+ let b=new Blob([csv],{type:"text/csv"})
  let a=document.createElement("a")
- a.href=URL.createObjectURL(blob)
+ a.href=URL.createObjectURL(b)
  a.download="sensor_log.csv"
+ a.click()
+}
+
+/* ================= EXPORT 3D (PLY) ================= */
+function exportPLY(){
+ let header=
+`ply
+format ascii 1.0
+element vertex ${points3D.length}
+property float x
+property float y
+property float z
+property uchar red
+property uchar green
+property uchar blue
+end_header\n`
+ let body=points3D.map(p=>
+  `${p.x} ${p.y} ${p.z.toFixed(3)} ${p.r} ${p.g} ${p.b}`
+ ).join("\n")
+ let b=new Blob([header+body],{type:"application/octet-stream"})
+ let a=document.createElement("a")
+ a.href=URL.createObjectURL(b)
+ a.download="sensor_path_3d.ply"
  a.click()
 }
 </script>
