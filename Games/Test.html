@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Camera Target Game</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:Arial,sans-serif;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+
+#gameContainer{
+  position:relative;
+  width:90vw;
+  max-width:800px;
+  height:600px;
+  border-radius:20px;
+  overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+
+/* video + canvas */
+video, canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scaleX(-1); /* mirror camera */
+}
+
+/* IMPORTANT FIX */
+#canvas{
+  pointer-events:none;   /* ปิดคลิกตอนยังไม่เริ่มเกม */
+  z-index:5;
+}
+
+#startScreen, #gameOver{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  background:rgba(0,0,0,.85);
+  color:#fff;
+  z-index:20;
+}
+
+#gameOver{display:none}
+
+h1{margin-bottom:20px}
+
+button{
+  padding:14px 40px;
+  font-size:1.1em;
+  border:none;
+  border-radius:50px;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  color:#fff;
+  cursor:pointer;
+}
+
+#hud,#timer{
+  position:absolute;
+  top:20px;
+  color:#fff;
+  font-size:1.5em;
+  text-shadow:2px 2px 4px #000;
+  z-index:10;
+}
+
+#hud{left:20px}
+#timer{right:20px}
+</style>
+</head>
+
+<body>
+<div id="gameContainer">
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <div id="startScreen">
+    <h1>🎯 Camera Target Game</h1>
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <div id="gameOver">
+    <h1>Game Over</h1>
+    <p id="finalScore"></p>
+    <button id="restartBtn">Play Again</button>
+  </div>
+
+  <div id="hud">Score: <span id="score">0</span></div>
+  <div id="timer">Time: <span id="time">30</span>s</div>
+
+</div>
+
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+const startScreen = document.getElementById('startScreen');
+const gameOver = document.getElementById('gameOver');
+
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const finalScoreEl = document.getElementById('finalScore');
+
+let score = 0;
+let timeLeft = 30;
+let active = false;
+let targets = [];
+let spawnTimer = null;
+let gameTimer = null;
+
+/* ===== Canvas DPI FIX ===== */
+function resizeCanvas(){
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+/* ===== Camera ===== */
+async function initCamera(){
+  const stream = await navigator.mediaDevices.getUserMedia({ video:true });
+  video.srcObject = stream;
+  await video.play();
+}
+
+/* ===== Game Control ===== */
+function startGame(){
+  clearAll();
+  active = true;
+  score = 0;
+  timeLeft = 30;
+  targets = [];
+
+  scoreEl.textContent = score;
+  timeEl.textContent = timeLeft;
+
+  canvas.style.pointerEvents = 'auto'; /* เปิดยิง */
+
+  spawnTimer = setInterval(spawnTarget, 1000);
+  gameTimer = setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent = timeLeft;
+    if(timeLeft <= 0) endGame();
+  },1000);
+}
+
+function endGame(){
+  active = false;
+  clearAll();
+  canvas.style.pointerEvents = 'none'; /* ปิดยิง */
+  finalScoreEl.textContent = `Your Score: ${score}`;
+  gameOver.style.display = 'flex';
+}
+
+function clearAll(){
+  clearInterval(spawnTimer);
+  clearInterval(gameTimer);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
+
+/* ===== Targets ===== */
+function spawnTarget(){
+  if(!active) return;
+  const r = 30;
+  targets.push({
+    x: Math.random() * (canvas.clientWidth - r*2),
+    y: Math.random() * (canvas.clientHeight - r*2),
+    r
+  });
+}
+
+function drawTargets(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  targets.forEach(t=>{
+    ctx.beginPath();
+    ctx.arc(t.x+t.r, t.y+t.r, t.r, 0, Math.PI*2);
+    ctx.fillStyle = '#ff4d4d';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+  });
+}
+
+/* ===== Hit Detection (mouse + touch) ===== */
+canvas.addEventListener('pointerdown', e=>{
+  if(!active) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  for(let i = targets.length - 1; i >= 0; i--){
+    const t = targets[i];
+    const dx = x - (t.x + t.r);
+    const dy = y - (t.y + t.r);
+    if(Math.hypot(dx,dy) <= t.r){
+      score += 10;
+      scoreEl.textContent = score;
+      targets.splice(i,1);
+      break;
+    }
+  }
+});
+
+/* ===== Loop ===== */
+(function loop(){
+  if(active) drawTargets();
+  requestAnimationFrame(loop);
+})();
+
+/* ===== UI ===== */
+document.getElementById('startBtn').onclick = async ()=>{
+  try{
+    await initCamera();
+    startScreen.style.display = 'none';
+    startGame();
+  }catch{
+    alert('Camera permission denied');
+  }
+};
+
+document.getElementById('restartBtn').onclick = ()=>{
+  gameOver.style.display = 'none';
+  startGame();
+};
+</script>
+</body>
+  </html>
