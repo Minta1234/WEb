@@ -2,48 +2,118 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hand Control Fruit Game</title>
+<title>Hand Control Fruit Basket Game</title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <style>
+/* ===== RESET ===== */
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ===== BODY ===== */
 body{
-  margin:0;
-  background:#111;
+  background:radial-gradient(circle at top,#1a2a3a,#05080d);
+  height:100vh;
   display:flex;
   justify-content:center;
   align-items:center;
-  height:100vh;
+  font-family:Segoe UI,Arial,sans-serif;
 }
-#game{
+
+/* ===== GAME FRAME ===== */
+#gameFrame{
   position:relative;
-  width:800px;
-  height:500px;
-  background:#222;
+  width:900px;
+  height:550px;
+  border-radius:20px;
   overflow:hidden;
+  border:3px solid #00ffe7;
+  box-shadow:
+    0 0 20px rgba(0,255,231,.4),
+    inset 0 0 30px rgba(0,255,231,.15);
 }
+
+/* ===== VIDEO + CANVAS ===== */
 video,canvas{
   position:absolute;
+  inset:0;
   width:100%;
   height:100%;
   object-fit:cover;
   transform:scaleX(-1);
 }
+
+/* ===== HUD ===== */
 #hud{
   position:absolute;
-  top:10px;
-  left:10px;
-  color:#0f0;
-  font-size:20px;
+  top:15px;
+  left:20px;
   z-index:10;
+  color:#00ffe7;
+  font-size:22px;
+  text-shadow:0 0 10px #00ffe7;
+}
+
+/* ===== BASKET STYLE ===== */
+#basket{
+  position:absolute;
+  bottom:20px;
+  width:120px;
+  height:35px;
+  border-radius:0 0 15px 15px;
+  background:linear-gradient(#ffcc00,#ff8800);
+  box-shadow:0 0 15px rgba(255,200,0,.8);
+}
+
+/* ===== HAND FRAME STYLE ===== */
+.hand-box{
+  position:absolute;
+  border:2px dashed #00ff00;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,255,0,.7);
+  pointer-events:none;
+}
+
+/* ===== START SCREEN ===== */
+#startScreen{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:#00ffe7;
+  z-index:20;
+}
+
+button{
+  margin-top:20px;
+  padding:14px 45px;
+  font-size:18px;
+  border:none;
+  border-radius:50px;
+  background:linear-gradient(135deg,#00ffe7,#0077ff);
+  color:#000;
+  cursor:pointer;
+  box-shadow:0 0 20px rgba(0,255,231,.7);
 }
 </style>
 </head>
 
 <body>
-<div id="game">
+
+<div id="gameFrame">
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
+
   <div id="hud">Score: <span id="score">0</span></div>
+  <div id="basket"></div>
+
+  <div id="startScreen">
+    <h1>🖐 Hand Fruit Basket</h1>
+    <p>Move your hand left / right</p>
+    <button id="startBtn">START</button>
+  </div>
 </div>
 
 <!-- MediaPipe -->
@@ -54,101 +124,118 @@ video,canvas{
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const basket = document.getElementById('basket');
 const scoreEl = document.getElementById('score');
+const startScreen = document.getElementById('startScreen');
 
-canvas.width = 800;
-canvas.height = 500;
+canvas.width = 900;
+canvas.height = 550;
 
-let basketX = 350;
-const basketWidth = 100;
+/* ===== GAME STATE ===== */
 let score = 0;
-
 let fruits = [];
+let basketX = 390;
 
-/* ===== Basket ===== */
-function drawBasket(){
-  ctx.fillStyle = '#ffaa00';
-  ctx.fillRect(basketX, canvas.height-40, basketWidth, 20);
-}
-
-/* ===== Fruits ===== */
+/* ===== FRUIT ===== */
 function spawnFruit(){
-  fruits.push({
-    x: Math.random()*760,
-    y: -20,
-    r: 10
-  });
+  fruits.push({x:Math.random()*860,y:-20,r:12});
 }
+setInterval(spawnFruit,900);
 
-setInterval(spawnFruit, 1000);
-
+/* ===== DRAW FRUITS ===== */
 function drawFruits(){
-  ctx.fillStyle='red';
   fruits.forEach(f=>{
     ctx.beginPath();
-    ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+    ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
+    ctx.fillStyle='#ff3333';
     ctx.fill();
-    f.y += 3;
+    f.y+=4;
 
-    // collision
     if(
-      f.y > canvas.height-50 &&
-      f.x > basketX &&
-      f.x < basketX + basketWidth
+      f.y>500 &&
+      f.x>basketX &&
+      f.x<basketX+120
     ){
       score++;
-      scoreEl.textContent = score;
-      f.y = 1000;
+      scoreEl.textContent=score;
+      f.y=999;
     }
   });
-
-  fruits = fruits.filter(f=>f.y < canvas.height+50);
+  fruits = fruits.filter(f=>f.y<600);
 }
 
-/* ===== MediaPipe Hands ===== */
+/* ===== MEDIAPIPE HANDS ===== */
 const hands = new Hands({
-  locateFile: file =>
-    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
 });
 
 hands.setOptions({
-  maxNumHands: 1,
-  modelComplexity: 1,
-  minDetectionConfidence: 0.7,
-  minTrackingConfidence: 0.7
+  maxNumHands:1,
+  modelComplexity:1,
+  minDetectionConfidence:0.7,
+  minTrackingConfidence:0.7
 });
 
 hands.onResults(results=>{
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawFruits();
+
   if(results.multiHandLandmarks){
-    const hand = results.multiHandLandmarks[0];
-    const wristX = hand[0].x; // 0 = wrist
+    const lm = results.multiHandLandmarks[0];
 
-    // แปลงตำแหน่งมือ → ตะกร้า
-    basketX = wristX * canvas.width - basketWidth/2;
+    /* ===== BASKET CONTROL (WRIST) ===== */
+    basketX = lm[0].x * canvas.width - 60;
+    basketX = Math.max(0,Math.min(basketX,780));
+    basket.style.left = basketX + 'px';
 
-    // clamp
-    basketX = Math.max(0, Math.min(basketX, canvas.width-basketWidth));
+    /* ===== DRAW HAND SKELETON ===== */
+    ctx.strokeStyle='#00ff00';
+    ctx.lineWidth=2;
+
+    const connect = (a,b)=>{
+      ctx.beginPath();
+      ctx.moveTo(lm[a].x*canvas.width,lm[a].y*canvas.height);
+      ctx.lineTo(lm[b].x*canvas.width,lm[b].y*canvas.height);
+      ctx.stroke();
+    };
+
+    [[0,5],[5,9],[9,13],[13,17],[17,0],
+     [0,1],[1,2],[2,3],[3,4],
+     [5,6],[6,7],[7,8],
+     [9,10],[10,11],[11,12],
+     [13,14],[14,15],[15,16],
+     [17,18],[18,19],[19,20]
+    ].forEach(p=>connect(p[0],p[1]));
+
+    /* ===== DRAW LANDMARKS ===== */
+    lm.forEach(p=>{
+      ctx.beginPath();
+      ctx.arc(p.x*canvas.width,p.y*canvas.height,4,0,Math.PI*2);
+      ctx.fillStyle='#00ffe7';
+      ctx.fill();
+    });
   }
 });
 
-/* ===== Camera ===== */
+/* ===== CAMERA ===== */
 const camera = new Camera(video,{
-  onFrame: async ()=>{
-    await hands.send({image: video});
-  },
-  width:800,
-  height:500
+  onFrame:async()=>{await hands.send({image:video});},
+  width:900,
+  height:550
 });
-camera.start();
 
-/* ===== Game Loop ===== */
+/* ===== LOOP ===== */
 function loop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawBasket();
-  drawFruits();
   requestAnimationFrame(loop);
 }
 loop();
+
+/* ===== START ===== */
+document.getElementById('startBtn').onclick=()=>{
+  startScreen.style.display='none';
+  camera.start();
+};
 </script>
+
 </body>
 </html>
