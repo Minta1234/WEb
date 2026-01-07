@@ -3,80 +3,53 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Road Surface 3D Analyzer</title>
+<title>Road Surface – All Sensors Analyzer</title>
 
 <style>
-:root{
- --bg:#0b0e14;
- --accent:#00ffcc;
-}
+:root{--bg:#0b0e14;--accent:#00ffcc}
 *{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:var(--bg);color:#eaeaea}
-h1{text-align:center;margin:12px 0}
+h1{text-align:center;margin:10px}
 button{
  padding:8px 14px;border:0;border-radius:8px;
  background:var(--accent);color:#000;font-weight:600;margin:4px
 }
-#controls{text-align:center}
 .grid{
  display:grid;
  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
  gap:12px;padding:12px
 }
 .card{background:#111;border-radius:12px;padding:10px}
-.value{font-size:14px;opacity:.85}
+.value{font-size:13px;opacity:.85}
 canvas{width:100%;height:120px;background:#05070b;border-radius:8px}
 video{display:none}
 </style>
 </head>
 
 <body>
-<h1>🛣 Road Surface 3D Analyzer</h1>
+<h1>🛣 Road Surface – All Sensors</h1>
 
-<div id="controls">
- <button onclick="saveCSV()">💾 Export CSV</button>
- <button onclick="exportPLY()">🧊 Export 3D</button>
+<div style="text-align:center">
+<button onclick="saveCSV()">💾 CSV</button>
+<button onclick="exportPLY()">🧊 3D</button>
 </div>
 
 <div class="grid">
- <div class="card">
-  <h3>Light Intensity</h3>
-  <div id="lightVal" class="value">-</div>
-  <canvas id="lightGraph"></canvas>
- </div>
-
- <div class="card">
-  <h3>Vertical Roughness (VRI)</h3>
-  <div id="vriVal" class="value">-</div>
-  <canvas id="vriGraph"></canvas>
- </div>
-
- <div class="card">
-  <h3>Distance</h3>
-  <div id="distVal" class="value">0 m</div>
- </div>
+<div class="card"><h3>Light</h3><div id="lightVal" class="value"></div><canvas id="lightG"></canvas></div>
+<div class="card"><h3>Accelerometer (Vertical)</h3><div id="accVal" class="value"></div><canvas id="accG"></canvas></div>
+<div class="card"><h3>Gyroscope</h3><div id="gyroVal" class="value"></div><canvas id="gyroG"></canvas></div>
+<div class="card"><h3>Microphone (dB)</h3><div id="micVal" class="value"></div><canvas id="micG"></canvas></div>
+<div class="card"><h3>GPS Speed</h3><div id="gpsVal" class="value"></div><canvas id="gpsG"></canvas></div>
+<div class="card"><h3>Distance</h3><div id="distVal" class="value"></div></div>
 </div>
 
 <video id="cam" autoplay playsinline></video>
 
 <script>
-/* ================= STATE ================= */
-let speed=0
-let distance=0
-let lastT=Date.now()
-
-let accZ=0
-let lastLight=0
-
-const accBuf=[]
-const log=[]
-const points3D=[]
-
-/* ================= GRAPH ================= */
-function drawGraph(ctx,data,color){
+/* ================= UTIL ================= */
+function draw(ctx,data,color){
  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
- ctx.strokeStyle=color
- ctx.beginPath()
+ ctx.strokeStyle=color;ctx.beginPath()
  let m=Math.max(...data,1)
  data.forEach((v,i)=>{
   let x=i*(ctx.canvas.width/(data.length-1))
@@ -86,120 +59,132 @@ function drawGraph(ctx,data,color){
  ctx.stroke()
 }
 
-/* ================= CAMERA → LIGHT ONLY ================= */
+/* ================= STATE ================= */
+let speed=0, distance=0, lastT=Date.now()
+let accZ=0, gyro={a:0,b:0,c:0}
+let lastLight=0
+
+const log=[]
+const points3D=[]
+
+/* ================= BUFFERS ================= */
+const lightD=[], accD=[], gyroD=[], micD=[], gpsD=[]
+
+/* ================= CAMERA → LIGHT ================= */
 const cam=document.getElementById("cam")
-const lightCtx=lightGraph.getContext("2d")
-let lightData=[]
+const lctx=lightG.getContext("2d")
 
 navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
 .then(s=>{
  cam.srcObject=s
  const c=document.createElement("canvas"),ctx=c.getContext("2d")
-
  setInterval(()=>{
-  c.width=cam.videoWidth
-  c.height=cam.videoHeight
+  c.width=cam.videoWidth;c.height=cam.videoHeight
   ctx.drawImage(cam,0,0)
-
-  let d=ctx.getImageData(0,0,c.width,c.height).data
-  let sum=0
+  let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
   for(let i=0;i<d.length;i+=4)
    sum+=(d[i]+d[i+1]+d[i+2])/3
-
   let light=sum/(d.length/4)
   lightVal.textContent=light.toFixed(0)
-
-  lightData.push(light)
-  if(lightData.length>60) lightData.shift()
-  drawGraph(lightCtx,lightData,"#00ffcc")
-
+  lightD.push(light);if(lightD.length>60)lightD.shift()
+  draw(lctx,lightD,"#00ffcc")
   updateSurface(light)
-
  },400)
 })
 
-/* ================= ACC (VERTICAL) ================= */
+/* ================= ACC ================= */
+const actx=accG.getContext("2d")
 addEventListener("devicemotion",e=>{
- accZ=e.accelerationIncludingGravity?.z||0
+ let a=e.accelerationIncludingGravity
+ if(!a)return
+ accZ=a.z||0
+ accVal.textContent=accZ.toFixed(2)
+ accD.push(Math.abs(accZ));if(accD.length>60)accD.shift()
+ draw(actx,accD,"#00c8ff")
 })
 
-function computeVRI(){
- accBuf.push(accZ)
- if(accBuf.length>25) accBuf.shift()
- let rms=Math.sqrt(accBuf.reduce((s,v)=>s+v*v,0)/accBuf.length)
- return rms
-}
+/* ================= GYRO ================= */
+const gctx=gyroG.getContext("2d")
+addEventListener("deviceorientation",e=>{
+ gyro={a:e.alpha||0,b:e.beta||0,c:e.gamma||0}
+ gyroVal.textContent=`α:${gyro.a.toFixed(1)} β:${gyro.b.toFixed(1)} γ:${gyro.c.toFixed(1)}`
+ gyroD.push(Math.abs(gyro.b));if(gyroD.length>60)gyroD.shift()
+ draw(gctx,gyroD,"#ffb300")
+})
 
-/* ================= GPS SPEED ================= */
+/* ================= MIC ================= */
+const mctx=micG.getContext("2d")
+navigator.mediaDevices.getUserMedia({audio:true})
+.then(s=>{
+ const ac=new AudioContext()
+ const src=ac.createMediaStreamSource(s)
+ const an=ac.createAnalyser();an.fftSize=512
+ src.connect(an)
+ const buf=new Uint8Array(an.fftSize)
+ setInterval(()=>{
+  an.getByteTimeDomainData(buf)
+  let sum=0
+  for(let i=0;i<buf.length;i++){
+   let v=(buf[i]-128)/128;sum+=v*v
+  }
+  let rms=Math.sqrt(sum/buf.length)
+  let db=20*Math.log10(rms||0.00001)
+  micVal.textContent=db.toFixed(1)+" dB"
+  micD.push(Math.abs(db));if(micD.length>60)micD.shift()
+  draw(mctx,micD,"#ff5c5c")
+ },150)
+})
+
+/* ================= GPS ================= */
+const gpctx=gpsG.getContext("2d")
 navigator.geolocation.watchPosition(p=>{
  speed=p.coords.speed||0
+ gpsVal.textContent=(speed*3.6).toFixed(1)+" km/h"
+ gpsD.push(speed*3.6);if(gpsD.length>60)gpsD.shift()
+ draw(gpctx,gpsD,"#9cff00")
 },{enableHighAccuracy:true})
 
-/* ================= CORE ANALYSIS ================= */
-const vriCtx=vriGraph.getContext("2d")
-let vriData=[]
-
+/* ================= CORE ================= */
 function updateSurface(light){
  let now=Date.now()
  let dt=(now-lastT)/1000
  lastT=now
-
  distance+=speed*dt
  distVal.textContent=distance.toFixed(1)+" m"
 
- let vri=computeVRI()
- vriVal.textContent=vri.toFixed(3)
-
- let lgi=(light-lastLight)/(speed*dt||0.01)
+ let lgi=(light-lastLight)/(dt*speed||0.01)
  lastLight=light
 
- vriData.push(vri)
- if(vriData.length>60) vriData.shift()
- drawGraph(vriCtx,vriData,"#ffb300")
-
- /* 3D POINT */
- let z=vri*2 + Math.abs(lgi)*0.01
+ let z=Math.abs(accZ)*0.8 + Math.abs(lgi)*0.02 + Math.abs(micD.at(-1)||0)*0.05
  let c=Math.min(255,Math.max(0,light))
 
- points3D.push({
-  x:distance,
-  y:0,
-  z:z,
-  r:c,
-  g:255-c,
-  b:80
- })
+ points3D.push({x:distance,y:0,z,r:c,g:255-c,b:80})
 
- /* CSV LOG (UNIFIED) */
  log.push({
   timestamp:now,
   distance_m:distance,
   speed_ms:speed,
   light:light,
   light_gradient:lgi,
-  acc_vertical:accZ,
-  vri:vri,
+  acc_z:accZ,
+  gyro_alpha:gyro.a,
+  gyro_beta:gyro.b,
+  gyro_gamma:gyro.c,
+  mic_db:micD.at(-1)||0,
   surface_z:z
  })
 }
 
-/* ================= EXPORT CSV ================= */
+/* ================= EXPORT ================= */
 function saveCSV(){
- if(log.length<10){
-  alert("Not enough data")
-  return
- }
- let header=Object.keys(log[0]).join(",")
- let rows=log.map(r=>Object.values(r).join(","))
- let csv=[header,...rows].join("\n")
-
+ let h=Object.keys(log[0]).join(",")
+ let r=log.map(o=>Object.values(o).join(","))
  let a=document.createElement("a")
- a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}))
- a.download="road_surface_log.csv"
+ a.href=URL.createObjectURL(new Blob([[h,...r].join("\n")]))
+ a.download="road_surface_all_sensors.csv"
  a.click()
 }
 
-/* ================= EXPORT PLY ================= */
 function exportPLY(){
  let h=
 `ply
@@ -212,11 +197,9 @@ property uchar red
 property uchar green
 property uchar blue
 end_header\n`
-
  let b=points3D.map(p=>
   `${p.x.toFixed(3)} ${p.y} ${p.z.toFixed(3)} ${p.r} ${p.g} ${p.b}`
  ).join("\n")
-
  let a=document.createElement("a")
  a.href=URL.createObjectURL(new Blob([h+b]))
  a.download="road_surface_3d.ply"
