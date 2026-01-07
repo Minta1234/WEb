@@ -2,224 +2,153 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Camera Target Game</title>
+<title>Hand Control Fruit Game</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-
 body{
-  font-family:Arial,sans-serif;
-  background:linear-gradient(135deg,#667eea,#764ba2);
+  margin:0;
+  background:#111;
   display:flex;
   justify-content:center;
   align-items:center;
-  min-height:100vh;
+  height:100vh;
 }
-
-#gameContainer{
+#game{
   position:relative;
-  width:90vw;
-  max-width:800px;
-  height:600px;
-  border-radius:20px;
+  width:800px;
+  height:500px;
+  background:#222;
   overflow:hidden;
 }
-
 video,canvas{
   position:absolute;
-  inset:0;
   width:100%;
   height:100%;
   object-fit:cover;
+  transform:scaleX(-1);
 }
-
-canvas{
-  pointer-events:none; /* FIX: ปิดคลิกตอน start */
-}
-
-#startScreen,#gameOver{
+#hud{
   position:absolute;
-  inset:0;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  background:rgba(0,0,0,.85);
-  color:#fff;
+  top:10px;
+  left:10px;
+  color:#0f0;
+  font-size:20px;
   z-index:10;
 }
-
-#gameOver{display:none}
-
-button{
-  padding:14px 40px;
-  font-size:1.1em;
-  border:none;
-  border-radius:50px;
-  background:#667eea;
-  color:#fff;
-  cursor:pointer;
-}
-
-#hud,#timer{
-  position:absolute;
-  top:20px;
-  color:#fff;
-  font-size:1.4em;
-  z-index:5;
-}
-#hud{left:20px}
-#timer{right:20px}
 </style>
 </head>
 
 <body>
-<div id="gameContainer">
-
+<div id="game">
   <video id="video" autoplay playsinline></video>
   <canvas id="canvas"></canvas>
-
-  <div id="startScreen">
-    <h1>🎯 Camera Target Game</h1>
-    <button id="startBtn">Start Game</button>
-    <p id="msg"></p>
-  </div>
-
-  <div id="gameOver">
-    <h1>Game Over</h1>
-    <p id="finalScore"></p>
-    <button id="restartBtn">Restart</button>
-  </div>
-
   <div id="hud">Score: <span id="score">0</span></div>
-  <div id="timer">Time: <span id="time">30</span></div>
-
 </div>
+
+<!-- MediaPipe -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 
 <script>
 const video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
 
-const startScreen = document.getElementById('startScreen');
-const gameOver = document.getElementById('gameOver');
-const msg = document.getElementById('msg');
+canvas.width = 800;
+canvas.height = 500;
 
+let basketX = 350;
+const basketWidth = 100;
 let score = 0;
-let timeLeft = 30;
-let active = false;
-let targets = [];
-let spawnTimer, timer;
 
-/* DPI FIX */
-function resizeCanvas(){
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = canvas.clientWidth * dpr;
-  canvas.height = canvas.clientHeight * dpr;
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-}
-resizeCanvas();
-window.addEventListener('resize',resizeCanvas);
+let fruits = [];
 
-/* Camera */
-async function initCamera(){
-  if(location.protocol!=='https:' && location.hostname!=='localhost'){
-    throw new Error('HTTPS_REQUIRED');
-  }
-  const stream = await navigator.mediaDevices.getUserMedia({video:true});
-  video.srcObject = stream;
-  await video.play();
+/* ===== Basket ===== */
+function drawBasket(){
+  ctx.fillStyle = '#ffaa00';
+  ctx.fillRect(basketX, canvas.height-40, basketWidth, 20);
 }
 
-/* Game */
-function startGame(){
-  active=true;
-  score=0;
-  timeLeft=30;
-  targets=[];
-  canvas.style.pointerEvents='auto';
-
-  document.getElementById('score').textContent=score;
-  document.getElementById('time').textContent=timeLeft;
-
-  spawnTimer=setInterval(spawnTarget,1000);
-  timer=setInterval(()=>{
-    timeLeft--;
-    document.getElementById('time').textContent=timeLeft;
-    if(timeLeft<=0) endGame();
-  },1000);
-}
-
-function endGame(){
-  active=false;
-  clearInterval(spawnTimer);
-  clearInterval(timer);
-  canvas.style.pointerEvents='none';
-  document.getElementById('finalScore').textContent=`Score: ${score}`;
-  gameOver.style.display='flex';
-}
-
-function spawnTarget(){
-  if(!active) return;
-  const r=30;
-  targets.push({
-    x:Math.random()*(canvas.clientWidth-r*2),
-    y:Math.random()*(canvas.clientHeight-r*2),
-    r
+/* ===== Fruits ===== */
+function spawnFruit(){
+  fruits.push({
+    x: Math.random()*760,
+    y: -20,
+    r: 10
   });
 }
 
-canvas.addEventListener('pointerdown',e=>{
-  if(!active) return;
-  const rect=canvas.getBoundingClientRect();
-  const x=e.clientX-rect.left;
-  const y=e.clientY-rect.top;
+setInterval(spawnFruit, 1000);
 
-  for(let i=targets.length-1;i>=0;i--){
-    const t=targets[i];
-    if(Math.hypot(x-(t.x+t.r),y-(t.y+t.r))<=t.r){
-      score+=10;
-      document.getElementById('score').textContent=score;
-      targets.splice(i,1);
-      break;
+function drawFruits(){
+  ctx.fillStyle='red';
+  fruits.forEach(f=>{
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+    ctx.fill();
+    f.y += 3;
+
+    // collision
+    if(
+      f.y > canvas.height-50 &&
+      f.x > basketX &&
+      f.x < basketX + basketWidth
+    ){
+      score++;
+      scoreEl.textContent = score;
+      f.y = 1000;
     }
+  });
+
+  fruits = fruits.filter(f=>f.y < canvas.height+50);
+}
+
+/* ===== MediaPipe Hands ===== */
+const hands = new Hands({
+  locateFile: file =>
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+});
+
+hands.setOptions({
+  maxNumHands: 1,
+  modelComplexity: 1,
+  minDetectionConfidence: 0.7,
+  minTrackingConfidence: 0.7
+});
+
+hands.onResults(results=>{
+  if(results.multiHandLandmarks){
+    const hand = results.multiHandLandmarks[0];
+    const wristX = hand[0].x; // 0 = wrist
+
+    // แปลงตำแหน่งมือ → ตะกร้า
+    basketX = wristX * canvas.width - basketWidth/2;
+
+    // clamp
+    basketX = Math.max(0, Math.min(basketX, canvas.width-basketWidth));
   }
 });
 
-function draw(){
+/* ===== Camera ===== */
+const camera = new Camera(video,{
+  onFrame: async ()=>{
+    await hands.send({image: video});
+  },
+  width:800,
+  height:500
+});
+camera.start();
+
+/* ===== Game Loop ===== */
+function loop(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  targets.forEach(t=>{
-    ctx.beginPath();
-    ctx.arc(t.x+t.r,t.y+t.r,t.r,0,Math.PI*2);
-    ctx.fillStyle='red';
-    ctx.fill();
-  });
-}
-
-(function loop(){
-  if(active) draw();
+  drawBasket();
+  drawFruits();
   requestAnimationFrame(loop);
-})();
-
-/* UI */
-document.getElementById('startBtn').onclick=async()=>{
-  try{
-    await initCamera();
-    startScreen.style.display='none';
-    startGame();
-  }catch(e){
-    msg.textContent =
-      e.message==='HTTPS_REQUIRED'
-      ? '❌ Camera requires HTTPS or localhost'
-      : '❌ Camera permission denied';
-  }
-};
-
-document.getElementById('restartBtn').onclick=()=>{
-  gameOver.style.display='none';
-  startGame();
-};
+}
+loop();
 </script>
 </body>
 </html>
