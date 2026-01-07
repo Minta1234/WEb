@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>3D Sensor Visual System</title>
+<title>Road Surface 3D Analyzer</title>
 
 <style>
 :root{
@@ -12,77 +12,71 @@
 }
 *{box-sizing:border-box;font-family:system-ui}
 body{margin:0;background:var(--bg);color:#eaeaea}
-h1{text-align:center;margin:10px}
+h1{text-align:center;margin:12px 0}
 button{
  padding:8px 14px;border:0;border-radius:8px;
  background:var(--accent);color:#000;font-weight:600;margin:4px
 }
 #controls{text-align:center}
-#wrap{position:relative;max-width:420px;margin:10px auto}
-video,canvas{width:100%;border-radius:12px}
-#overlay{position:absolute;top:0;left:0;pointer-events:none}
 .grid{
  display:grid;
  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
  gap:12px;padding:12px
 }
 .card{background:#111;border-radius:12px;padding:10px}
-.value{font-size:13px;opacity:.85}
-#three{height:260px}
+.value{font-size:14px;opacity:.85}
+canvas{width:100%;height:120px;background:#05070b;border-radius:8px}
+video{display:none}
 </style>
 </head>
 
 <body>
-<h1>🧊 Realtime 3D Sensor Visual</h1>
+<h1>🛣 Road Surface 3D Analyzer</h1>
 
 <div id="controls">
- <button onclick="saveCSV()">💾 CSV</button>
- <button onclick="exportPLY()">📦 3D</button>
+ <button onclick="saveCSV()">💾 Export CSV</button>
+ <button onclick="exportPLY()">🧊 Export 3D</button>
 </div>
-
-<div id="wrap">
- <video id="cam" autoplay playsinline></video>
- <canvas id="overlay"></canvas>
-</div>
-
-<div id="three"></div>
 
 <div class="grid">
- <div class="card"><h3>Light</h3><div id="lightVal" class="value"></div><canvas id="lightGraph"></canvas></div>
- <div class="card"><h3>Microphone</h3><div id="micVal" class="value"></div><canvas id="micGraph"></canvas></div>
- <div class="card"><h3>Accelerometer</h3><div id="accVal" class="value"></div><canvas id="accGraph"></canvas></div>
- <div class="card"><h3>Gyroscope</h3><div id="gyroVal" class="value"></div></div>
- <div class="card"><h3>GPS Speed</h3><div id="gpsVal" class="value"></div></div>
+ <div class="card">
+  <h3>Light Intensity</h3>
+  <div id="lightVal" class="value">-</div>
+  <canvas id="lightGraph"></canvas>
+ </div>
+
+ <div class="card">
+  <h3>Vertical Roughness (VRI)</h3>
+  <div id="vriVal" class="value">-</div>
+  <canvas id="vriGraph"></canvas>
+ </div>
+
+ <div class="card">
+  <h3>Distance</h3>
+  <div id="distVal" class="value">0 m</div>
+ </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<video id="cam" autoplay playsinline></video>
 
 <script>
-/* ================= FILTER ================= */
-class Kalman{
- constructor(q=0.01,r=3){this.q=q;this.r=r;this.x=0;this.p=1}
- update(z){
-  this.p+=this.q
-  let k=this.p/(this.p+this.r)
-  this.x+=k*(z-this.x)
-  this.p*=(1-k)
-  return this.x
- }
-}
-
 /* ================= STATE ================= */
+let speed=0
+let distance=0
+let lastT=Date.now()
+
+let accZ=0
+let lastLight=0
+
+const accBuf=[]
 const log=[]
 const points3D=[]
-const kLight=new Kalman()
-const kSpeed=new Kalman()
-
-let speed=0,posZ=0,lastT=Date.now()
-let gyro={a:0,b:0,c:0}
 
 /* ================= GRAPH ================= */
 function drawGraph(ctx,data,color){
  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
- ctx.strokeStyle=color;ctx.beginPath()
+ ctx.strokeStyle=color
+ ctx.beginPath()
  let m=Math.max(...data,1)
  data.forEach((v,i)=>{
   let x=i*(ctx.canvas.width/(data.length-1))
@@ -92,12 +86,10 @@ function drawGraph(ctx,data,color){
  ctx.stroke()
 }
 
-/* ================= CAMERA LIGHT ================= */
+/* ================= CAMERA → LIGHT ONLY ================= */
 const cam=document.getElementById("cam")
-const overlay=document.getElementById("overlay")
-const octx=overlay.getContext("2d")
 const lightCtx=lightGraph.getContext("2d")
-let lightD=[]
+let lightData=[]
 
 navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
 .then(s=>{
@@ -105,136 +97,112 @@ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}})
  const c=document.createElement("canvas"),ctx=c.getContext("2d")
 
  setInterval(()=>{
-  c.width=cam.videoWidth;c.height=cam.videoHeight
-  overlay.width=c.width;overlay.height=c.height
+  c.width=cam.videoWidth
+  c.height=cam.videoHeight
   ctx.drawImage(cam,0,0)
 
-  let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
+  let d=ctx.getImageData(0,0,c.width,c.height).data
+  let sum=0
   for(let i=0;i<d.length;i+=4)
    sum+=(d[i]+d[i+1]+d[i+2])/3
-  let raw=sum/(d.length/4)
-  let lux=kLight.update(raw)
 
-  lightVal.textContent="Brightness ~ "+lux.toFixed(0)
-  lightD.push(lux);if(lightD.length>60)lightD.shift()
-  drawGraph(lightCtx,lightD,"#00ffcc")
+  let light=sum/(d.length/4)
+  lightVal.textContent=light.toFixed(0)
 
-  updatePosition(lux)
-  drawAR(lux)
-  log.push({t:Date.now(),light:lux,speed,gyro_a:gyro.a,gyro_b:gyro.b,gyro_c:gyro.c,z:posZ})
+  lightData.push(light)
+  if(lightData.length>60) lightData.shift()
+  drawGraph(lightCtx,lightData,"#00ffcc")
 
- },500)
+  updateSurface(light)
+
+ },400)
 })
 
-/* ================= MIC ================= */
-let micD=[],micCtx=micGraph.getContext("2d")
-navigator.mediaDevices.getUserMedia({audio:true})
-.then(s=>{
- const ac=new AudioContext()
- const src=ac.createMediaStreamSource(s)
- const an=ac.createAnalyser();an.fftSize=512
- src.connect(an)
- const buf=new Uint8Array(an.fftSize)
- setInterval(()=>{
-  an.getByteTimeDomainData(buf)
-  let sum=0
-  for(let i=0;i<buf.length;i++){
-   let v=(buf[i]-128)/128;sum+=v*v
-  }
-  let rms=Math.sqrt(sum/buf.length)
-  let db=20*Math.log10(rms||0.00001)
-  micVal.textContent=db.toFixed(1)+" dB"
-  micD.push(Math.abs(db));if(micD.length>60)micD.shift()
-  drawGraph(micCtx,micD,"#ffb300")
- },150)
-})
-
-/* ================= MOTION ================= */
-let accD=[],accCtx=accGraph.getContext("2d")
+/* ================= ACC (VERTICAL) ================= */
 addEventListener("devicemotion",e=>{
- let a=e.accelerationIncludingGravity
- if(!a)return
- let g=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)
- accVal.textContent=g.toFixed(2)+" m/s²"
- accD.push(g);if(accD.length>60)accD.shift()
- drawGraph(accCtx,accD,"#00c8ff")
+ accZ=e.accelerationIncludingGravity?.z||0
 })
 
-addEventListener("deviceorientation",e=>{
- gyro={a:e.alpha||0,b:e.beta||0,c:e.gamma||0}
- gyroVal.textContent=`α:${gyro.a.toFixed(1)} β:${gyro.b.toFixed(1)} γ:${gyro.c.toFixed(1)}`
-})
+function computeVRI(){
+ accBuf.push(accZ)
+ if(accBuf.length>25) accBuf.shift()
+ let rms=Math.sqrt(accBuf.reduce((s,v)=>s+v*v,0)/accBuf.length)
+ return rms
+}
 
-/* ================= GPS ================= */
+/* ================= GPS SPEED ================= */
 navigator.geolocation.watchPosition(p=>{
- speed=kSpeed.update(p.coords.speed||0)
- gpsVal.textContent=(speed*3.6).toFixed(2)+" km/h"
+ speed=p.coords.speed||0
 },{enableHighAccuracy:true})
 
-/* ================= POSITION + 3D DATA ================= */
-function updatePosition(light){
+/* ================= CORE ANALYSIS ================= */
+const vriCtx=vriGraph.getContext("2d")
+let vriData=[]
+
+function updateSurface(light){
  let now=Date.now()
  let dt=(now-lastT)/1000
  lastT=now
- posZ+=speed*dt
 
+ distance+=speed*dt
+ distVal.textContent=distance.toFixed(1)+" m"
+
+ let vri=computeVRI()
+ vriVal.textContent=vri.toFixed(3)
+
+ let lgi=(light-lastLight)/(speed*dt||0.01)
+ lastLight=light
+
+ vriData.push(vri)
+ if(vriData.length>60) vriData.shift()
+ drawGraph(vriCtx,vriData,"#ffb300")
+
+ /* 3D POINT */
+ let z=vri*2 + Math.abs(lgi)*0.01
  let c=Math.min(255,Math.max(0,light))
- points3D.push({x:0,y:0,z:posZ,r:c,g:255-c,b:120})
- addPoint3D(0,0,posZ,c)
+
+ points3D.push({
+  x:distance,
+  y:0,
+  z:z,
+  r:c,
+  g:255-c,
+  b:80
+ })
+
+ /* CSV LOG (UNIFIED) */
+ log.push({
+  timestamp:now,
+  distance_m:distance,
+  speed_ms:speed,
+  light:light,
+  light_gradient:lgi,
+  acc_vertical:accZ,
+  vri:vri,
+  surface_z:z
+ })
 }
 
-/* ================= AR ================= */
-function drawAR(l){
- octx.clearRect(0,0,overlay.width,overlay.height)
- octx.fillStyle="#00ffcc"
- octx.font="14px monospace"
- octx.fillText(`Light:${l.toFixed(0)}`,10,20)
- octx.fillText(`Speed:${(speed*3.6).toFixed(1)} km/h`,10,40)
-}
-
-/* ================= THREE.JS ================= */
-const scene=new THREE.Scene()
-const camera3=new THREE.PerspectiveCamera(60,1,0.1,1000)
-const renderer=new THREE.WebGLRenderer({antialias:true})
-renderer.setSize(three.clientWidth,three.clientHeight)
-three.appendChild(renderer.domElement)
-camera3.position.z=10
-
-const geom=new THREE.BufferGeometry()
-const positions=[]
-const colors=[]
-const material=new THREE.PointsMaterial({size:0.15,vertexColors:true})
-const cloud=new THREE.Points(geom,material)
-scene.add(cloud)
-
-function addPoint3D(x,y,z,c){
- positions.push(x,y,z)
- colors.push(c/255,(255-c)/255,0.5)
- geom.setAttribute("position",new THREE.Float32BufferAttribute(positions,3))
- geom.setAttribute("color",new THREE.Float32BufferAttribute(colors,3))
- geom.computeBoundingSphere()
-}
-
-function animate(){
- requestAnimationFrame(animate)
- renderer.render(scene,camera3)
-}
-animate()
-
-/* ================= EXPORT ================= */
+/* ================= EXPORT CSV ================= */
 function saveCSV(){
- let k=new Set()
- log.forEach(r=>Object.keys(r).forEach(x=>k.add(x)))
- let h=[...k].join(",")
- let r=log.map(o=>[...k].map(x=>o[x]??"").join(","))
- let blob=new Blob([h+"\n"+r.join("\n")],{type:"text/csv"})
+ if(log.length<10){
+  alert("Not enough data")
+  return
+ }
+ let header=Object.keys(log[0]).join(",")
+ let rows=log.map(r=>Object.values(r).join(","))
+ let csv=[header,...rows].join("\n")
+
  let a=document.createElement("a")
- a.href=URL.createObjectURL(blob)
- a.download="sensor_log.csv";a.click()
+ a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}))
+ a.download="road_surface_log.csv"
+ a.click()
 }
 
+/* ================= EXPORT PLY ================= */
 function exportPLY(){
- let h=`ply
+ let h=
+`ply
 format ascii 1.0
 element vertex ${points3D.length}
 property float x
@@ -244,11 +212,14 @@ property uchar red
 property uchar green
 property uchar blue
 end_header\n`
- let b=points3D.map(p=>`${p.x} ${p.y} ${p.z} ${p.r} ${p.g} ${p.b}`).join("\n")
- let blob=new Blob([h+b])
+
+ let b=points3D.map(p=>
+  `${p.x.toFixed(3)} ${p.y} ${p.z.toFixed(3)} ${p.r} ${p.g} ${p.b}`
+ ).join("\n")
+
  let a=document.createElement("a")
- a.href=URL.createObjectURL(blob)
- a.download="sensor_path.ply"
+ a.href=URL.createObjectURL(new Blob([h+b]))
+ a.download="road_surface_3d.ply"
  a.click()
 }
 </script>
