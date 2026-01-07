@@ -2,239 +2,187 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Hand Control Fruit Basket Game</title>
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mobile Sensor Graph Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-/* ===== RESET ===== */
-*{margin:0;padding:0;box-sizing:border-box}
-
-/* ===== BODY ===== */
-body{
-  background:radial-gradient(circle at top,#1a2a3a,#05080d);
-  height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-family:Segoe UI,Arial,sans-serif;
+body {
+    margin: 0;
+    font-family: system-ui, Arial, sans-serif;
+    background: #020617;
+    color: #e5e7eb;
 }
 
-/* ===== GAME FRAME ===== */
-#gameFrame{
-  position:relative;
-  width:900px;
-  height:550px;
-  border-radius:20px;
-  overflow:hidden;
-  border:3px solid #00ffe7;
-  box-shadow:
-    0 0 20px rgba(0,255,231,.4),
-    inset 0 0 30px rgba(0,255,231,.15);
+header {
+    padding: 12px;
+    background: #020617;
+    border-bottom: 1px solid #1e293b;
+    text-align: center;
+    font-weight: 600;
 }
 
-/* ===== VIDEO + CANVAS ===== */
-video,canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  transform:scaleX(-1);
+.container {
+    padding: 12px;
+    display: grid;
+    gap: 12px;
 }
 
-/* ===== HUD ===== */
-#hud{
-  position:absolute;
-  top:15px;
-  left:20px;
-  z-index:10;
-  color:#00ffe7;
-  font-size:22px;
-  text-shadow:0 0 10px #00ffe7;
+.card {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 12px;
 }
 
-/* ===== BASKET STYLE ===== */
-#basket{
-  position:absolute;
-  bottom:20px;
-  width:120px;
-  height:35px;
-  border-radius:0 0 15px 15px;
-  background:linear-gradient(#ffcc00,#ff8800);
-  box-shadow:0 0 15px rgba(255,200,0,.8);
+h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #38bdf8;
 }
 
-/* ===== HAND FRAME STYLE ===== */
-.hand-box{
-  position:absolute;
-  border:2px dashed #00ff00;
-  border-radius:10px;
-  box-shadow:0 0 10px rgba(0,255,0,.7);
-  pointer-events:none;
+video {
+    width: 100%;
+    border-radius: 6px;
+    background: black;
 }
 
-/* ===== START SCREEN ===== */
-#startScreen{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  color:#00ffe7;
-  z-index:20;
+.data {
+    font-size: 13px;
+    line-height: 1.6;
 }
 
-button{
-  margin-top:20px;
-  padding:14px 45px;
-  font-size:18px;
-  border:none;
-  border-radius:50px;
-  background:linear-gradient(135deg,#00ffe7,#0077ff);
-  color:#000;
-  cursor:pointer;
-  box-shadow:0 0 20px rgba(0,255,231,.7);
+canvas {
+    width: 100%;
+    height: 160px;
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+}
+
+button {
+    padding: 10px;
+    border: none;
+    background: #2563eb;
+    color: white;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.footer {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.6;
 }
 </style>
 </head>
 
 <body>
 
-<div id="gameFrame">
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas"></canvas>
+<header>Mobile Sensor Graph Monitor</header>
 
-  <div id="hud">Score: <span id="score">0</span></div>
-  <div id="basket"></div>
+<div class="container">
 
-  <div id="startScreen">
-    <h1>🖐 Hand Fruit Basket</h1>
-    <p>Move your hand left / right</p>
-    <button id="startBtn">START</button>
-  </div>
+<div class="card">
+    <h3>Camera</h3>
+    <video id="camera" autoplay playsinline></video>
 </div>
 
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+<div class="card">
+    <h3>Accelerometer Graph (X,Y,Z)</h3>
+    <canvas id="accelGraph" width="600" height="160"></canvas>
+</div>
+
+<div class="card">
+    <h3>Orientation Graph (Beta)</h3>
+    <canvas id="orientGraph" width="600" height="160"></canvas>
+</div>
+
+<div class="card">
+    <button onclick="enableAll()">Enable Sensors</button>
+</div>
+
+</div>
+
+<div class="footer">HTTPS required • Real-time sensor plotting</div>
 
 <script>
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-const basket = document.getElementById('basket');
-const scoreEl = document.getElementById('score');
-const startScreen = document.getElementById('startScreen');
-
-canvas.width = 900;
-canvas.height = 550;
-
-/* ===== GAME STATE ===== */
-let score = 0;
-let fruits = [];
-let basketX = 390;
-
-/* ===== FRUIT ===== */
-function spawnFruit(){
-  fruits.push({x:Math.random()*860,y:-20,r:12});
-}
-setInterval(spawnFruit,900);
-
-/* ===== DRAW FRUITS ===== */
-function drawFruits(){
-  fruits.forEach(f=>{
-    ctx.beginPath();
-    ctx.arc(f.x,f.y,f.r,0,Math.PI*2);
-    ctx.fillStyle='#ff3333';
-    ctx.fill();
-    f.y+=4;
-
-    if(
-      f.y>500 &&
-      f.x>basketX &&
-      f.x<basketX+120
-    ){
-      score++;
-      scoreEl.textContent=score;
-      f.y=999;
-    }
-  });
-  fruits = fruits.filter(f=>f.y<600);
-}
-
-/* ===== MEDIAPIPE HANDS ===== */
-const hands = new Hands({
-  locateFile:file=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-});
-
-hands.setOptions({
-  maxNumHands:1,
-  modelComplexity:1,
-  minDetectionConfidence:0.7,
-  minTrackingConfidence:0.7
-});
-
-hands.onResults(results=>{
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawFruits();
-
-  if(results.multiHandLandmarks){
-    const lm = results.multiHandLandmarks[0];
-
-    /* ===== BASKET CONTROL (WRIST) ===== */
-    basketX = lm[0].x * canvas.width - 60;
-    basketX = Math.max(0,Math.min(basketX,780));
-    basket.style.left = basketX + 'px';
-
-    /* ===== DRAW HAND SKELETON ===== */
-    ctx.strokeStyle='#00ff00';
-    ctx.lineWidth=2;
-
-    const connect = (a,b)=>{
-      ctx.beginPath();
-      ctx.moveTo(lm[a].x*canvas.width,lm[a].y*canvas.height);
-      ctx.lineTo(lm[b].x*canvas.width,lm[b].y*canvas.height);
-      ctx.stroke();
-    };
-
-    [[0,5],[5,9],[9,13],[13,17],[17,0],
-     [0,1],[1,2],[2,3],[3,4],
-     [5,6],[6,7],[7,8],
-     [9,10],[10,11],[11,12],
-     [13,14],[14,15],[15,16],
-     [17,18],[18,19],[19,20]
-    ].forEach(p=>connect(p[0],p[1]));
-
-    /* ===== DRAW LANDMARKS ===== */
-    lm.forEach(p=>{
-      ctx.beginPath();
-      ctx.arc(p.x*canvas.width,p.y*canvas.height,4,0,Math.PI*2);
-      ctx.fillStyle='#00ffe7';
-      ctx.fill();
+/* ================= CAMERA ================= */
+async function startCamera() {
+    const video = document.getElementById("camera");
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" } },
+        audio: false
     });
-  }
-});
-
-/* ===== CAMERA ===== */
-const camera = new Camera(video,{
-  onFrame:async()=>{await hands.send({image:video});},
-  width:900,
-  height:550
-});
-
-/* ===== LOOP ===== */
-function loop(){
-  requestAnimationFrame(loop);
+    video.srcObject = stream;
 }
-loop();
 
-/* ===== START ===== */
-document.getElementById('startBtn').onclick=()=>{
-  startScreen.style.display='none';
-  camera.start();
-};
+/* ================= PERMISSIONS ================= */
+async function enableAll() {
+    if (typeof DeviceMotionEvent?.requestPermission === "function") {
+        await DeviceMotionEvent.requestPermission();
+        await DeviceOrientationEvent.requestPermission();
+    }
+    startCamera();
+}
+
+/* ================= GRAPH ENGINE ================= */
+function createGraph(canvasId, maxPoints = 100) {
+    const canvas = document.getElementById(canvasId);
+    const ctx = canvas.getContext("2d");
+    let data = [];
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.strokeStyle = "#1e293b";
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+
+        data.forEach((line, index) => {
+            ctx.strokeStyle = ["#38bdf8", "#22c55e", "#f97316"][index] || "#e5e7eb";
+            ctx.beginPath();
+            line.forEach((v, i) => {
+                const x = (i / maxPoints) * canvas.width;
+                const y = canvas.height / 2 - v * 4;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        });
+    }
+
+    function push(values) {
+        values.forEach((v, i) => {
+            if (!data[i]) data[i] = [];
+            data[i].push(v);
+            if (data[i].length > maxPoints) data[i].shift();
+        });
+        draw();
+    }
+
+    return { push };
+}
+
+const accelGraph = createGraph("accelGraph");
+const orientGraph = createGraph("orientGraph");
+
+/* ================= MOTION ================= */
+window.addEventListener("devicemotion", e => {
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+    accelGraph.push([
+        a.x || 0,
+        a.y || 0,
+        a.z || 0
+    ]);
+});
+
+/* ================= ORIENTATION ================= */
+window.addEventListener("deviceorientation", e => {
+    if (e.beta === null) return;
+    orientGraph.push([e.beta]);
+});
 </script>
 
 </body>
