@@ -1,188 +1,206 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Mobile Sensor Graph Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sensor Dashboard</title>
 
 <style>
-body {
-    margin: 0;
-    font-family: system-ui, Arial, sans-serif;
-    background: #020617;
-    color: #e5e7eb;
+:root{
+  --motion:#00c8ff;
+  --env:#00ff9c;
+  --bio:#ffb300;
+  --other:#ff5c5c;
+  --bg:#0b0e14;
 }
-
-header {
-    padding: 12px;
-    background: #020617;
-    border-bottom: 1px solid #1e293b;
-    text-align: center;
-    font-weight: 600;
+*{box-sizing:border-box;font-family:system-ui}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#eaeaea;
 }
-
-.container {
-    padding: 12px;
-    display: grid;
-    gap: 12px;
+h1{
+  text-align:center;
+  margin:20px 0;
 }
-
-.card {
-    background: #020617;
-    border: 1px solid #1e293b;
-    border-radius: 8px;
-    padding: 12px;
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:16px;
+  padding:20px;
 }
-
-h3 {
-    margin: 0 0 8px 0;
-    font-size: 14px;
-    color: #38bdf8;
+.card{
+  border-radius:12px;
+  padding:14px;
+  background:#111;
+  box-shadow:0 0 15px rgba(0,0,0,.5);
+  border-left:6px solid;
 }
-
-video {
-    width: 100%;
-    border-radius: 6px;
-    background: black;
+.card.off{
+  opacity:.35;
+  filter:grayscale(1);
 }
-
-.data {
-    font-size: 13px;
-    line-height: 1.6;
+.card h3{margin:0 0 6px}
+.value{font-size:14px;opacity:.85}
+canvas{
+  width:100%;
+  height:120px;
+  background:#05070b;
+  border-radius:8px;
+  margin-top:8px;
 }
-
-canvas {
-    width: 100%;
-    height: 160px;
-    background: #020617;
-    border: 1px solid #1e293b;
-    border-radius: 6px;
-}
-
-button {
-    padding: 10px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    border-radius: 6px;
-    font-weight: 600;
-}
-
-.footer {
-    text-align: center;
-    font-size: 11px;
-    opacity: 0.6;
+video{display:none}
+.footer{
+  text-align:center;
+  font-size:12px;
+  opacity:.6;
+  padding-bottom:20px;
 }
 </style>
 </head>
-
 <body>
 
-<header>Mobile Sensor Graph Monitor</header>
+<h1>📊 Mobile Sensor Dashboard</h1>
 
-<div class="container">
+<div class="grid">
 
-<div class="card">
-    <h3>Camera</h3>
-    <video id="camera" autoplay playsinline></video>
+<!-- Motion -->
+<div class="card" id="accCard" style="border-color:var(--motion)">
+  <h3>Accelerometer</h3>
+  <div class="value" id="accVal">Not available</div>
+  <canvas id="accGraph"></canvas>
 </div>
 
-<div class="card">
-    <h3>Accelerometer Graph (X,Y,Z)</h3>
-    <canvas id="accelGraph" width="600" height="160"></canvas>
+<div class="card" id="gyroCard" style="border-color:var(--motion)">
+  <h3>Gyroscope</h3>
+  <div class="value" id="gyroVal">Not available</div>
 </div>
 
-<div class="card">
-    <h3>Orientation Graph (Beta)</h3>
-    <canvas id="orientGraph" width="600" height="160"></canvas>
+<div class="card off" style="border-color:var(--motion)">
+  <h3>Magnetometer</h3>
+  <div class="value">No Web API</div>
 </div>
 
-<div class="card">
-    <button onclick="enableAll()">Enable Sensors</button>
+<!-- Environment -->
+<div class="card" id="lightCard" style="border-color:var(--env)">
+  <h3>Light (Camera)</h3>
+  <div class="value" id="lightVal">Waiting...</div>
+  <canvas id="lightGraph"></canvas>
+</div>
+
+<div class="card off" style="border-color:var(--env)">
+  <h3>Barometer</h3>
+  <div class="value">No Web API</div>
+</div>
+
+<div class="card off" style="border-color:var(--env)">
+  <h3>Humidity</h3>
+  <div class="value">No Web API</div>
+</div>
+
+<!-- Biometric -->
+<div class="card off" style="border-color:var(--bio)">
+  <h3>Fingerprint</h3>
+  <div class="value">System level only</div>
+</div>
+
+<div class="card off" style="border-color:var(--bio)">
+  <h3>Face Recognition</h3>
+  <div class="value">System level only</div>
+</div>
+
+<div class="card" id="micCard" style="border-color:var(--bio)">
+  <h3>Microphone</h3>
+  <div class="value" id="micVal">Checking...</div>
+</div>
+
+<!-- Other -->
+<div class="card" id="gpsCard" style="border-color:var(--other)">
+  <h3>GPS</h3>
+  <div class="value" id="gpsVal">Checking...</div>
+</div>
+
+<div class="card off" style="border-color:var(--other)">
+  <h3>Proximity / Hall</h3>
+  <div class="value">Not accessible via Web</div>
 </div>
 
 </div>
 
-<div class="footer">HTTPS required • Real-time sensor plotting</div>
+<video id="cam" autoplay playsinline></video>
+
+<div class="footer">
+  สีการ์ด = ประเภทเซ็นเซอร์ | สีเทา = Browser / Device ไม่รองรับ
+</div>
 
 <script>
-/* ================= CAMERA ================= */
-async function startCamera() {
-    const video = document.getElementById("camera");
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" } },
-        audio: false
-    });
-    video.srcObject = stream;
+/* Utility */
+const disable=c=>c.classList.add("off")
+
+/* Accelerometer */
+const accCtx=accGraph.getContext("2d")
+let accData=[]
+if(window.DeviceMotionEvent){
+  addEventListener("devicemotion",e=>{
+    let a=e.accelerationIncludingGravity
+    if(!a) return
+    let v=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)
+    accVal.textContent=v.toFixed(2)+" m/s²"
+    accData.push(v); if(accData.length>60) accData.shift()
+    draw(accCtx,accData,"#00c8ff")
+  })
+}else disable(accCard)
+
+/* Gyroscope */
+if(window.DeviceOrientationEvent){
+  addEventListener("deviceorientation",e=>{
+    gyroVal.textContent=`α:${e.alpha?.toFixed(1)} β:${e.beta?.toFixed(1)} γ:${e.gamma?.toFixed(1)}`
+  })
+}else disable(gyroCard)
+
+/* Light via Camera */
+const lightCtx=lightGraph.getContext("2d")
+let lightData=[]
+navigator.mediaDevices?.getUserMedia({video:{facingMode:"environment"}})
+.then(s=>{
+  cam.srcObject=s
+  const c=document.createElement("canvas"),ctx=c.getContext("2d")
+  setInterval(()=>{
+    c.width=cam.videoWidth;c.height=cam.videoHeight
+    ctx.drawImage(cam,0,0)
+    let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
+    for(let i=0;i<d.length;i+=4)
+      sum+=(d[i]+d[i+1]+d[i+2])/3
+    let lux=sum/(d.length/4)
+    lightVal.textContent="Brightness ~ "+lux.toFixed(0)
+    lightData.push(lux); if(lightData.length>60) lightData.shift()
+    draw(lightCtx,lightData,"#00ff9c")
+  },500)
+}).catch(()=>disable(lightCard))
+
+/* Microphone */
+navigator.mediaDevices?.getUserMedia({audio:true})
+.then(()=>micVal.textContent="Available")
+.catch(()=>disable(micCard))
+
+/* GPS */
+navigator.geolocation?
+navigator.geolocation.getCurrentPosition(
+ p=>gpsVal.textContent=`Lat ${p.coords.latitude.toFixed(3)}`
+,()=>disable(gpsCard)
+):disable(gpsCard)
+
+/* Graph */
+function draw(ctx,data,color){
+  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
+  ctx.strokeStyle=color;ctx.beginPath()
+  data.forEach((v,i)=>{
+    let x=i*(ctx.canvas.width/(data.length-1))
+    let y=ctx.canvas.height-(v/Math.max(...data))*ctx.canvas.height
+    i?ctx.lineTo(x,y):ctx.moveTo(x,y)
+  })
+  ctx.stroke()
 }
-
-/* ================= PERMISSIONS ================= */
-async function enableAll() {
-    if (typeof DeviceMotionEvent?.requestPermission === "function") {
-        await DeviceMotionEvent.requestPermission();
-        await DeviceOrientationEvent.requestPermission();
-    }
-    startCamera();
-}
-
-/* ================= GRAPH ENGINE ================= */
-function createGraph(canvasId, maxPoints = 100) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext("2d");
-    let data = [];
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.strokeStyle = "#1e293b";
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height / 2);
-        ctx.lineTo(canvas.width, canvas.height / 2);
-        ctx.stroke();
-
-        data.forEach((line, index) => {
-            ctx.strokeStyle = ["#38bdf8", "#22c55e", "#f97316"][index] || "#e5e7eb";
-            ctx.beginPath();
-            line.forEach((v, i) => {
-                const x = (i / maxPoints) * canvas.width;
-                const y = canvas.height / 2 - v * 4;
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-        });
-    }
-
-    function push(values) {
-        values.forEach((v, i) => {
-            if (!data[i]) data[i] = [];
-            data[i].push(v);
-            if (data[i].length > maxPoints) data[i].shift();
-        });
-        draw();
-    }
-
-    return { push };
-}
-
-const accelGraph = createGraph("accelGraph");
-const orientGraph = createGraph("orientGraph");
-
-/* ================= MOTION ================= */
-window.addEventListener("devicemotion", e => {
-    const a = e.accelerationIncludingGravity;
-    if (!a) return;
-    accelGraph.push([
-        a.x || 0,
-        a.y || 0,
-        a.z || 0
-    ]);
-});
-
-/* ================= ORIENTATION ================= */
-window.addEventListener("deviceorientation", e => {
-    if (e.beta === null) return;
-    orientGraph.push([e.beta]);
-});
 </script>
 
 </body>
