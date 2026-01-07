@@ -1,205 +1,182 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sensor Dashboard</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sensor Logger</title>
 
 <style>
 :root{
   --motion:#00c8ff;
   --env:#00ff9c;
-  --bio:#ffb300;
+  --audio:#ffb300;
   --other:#ff5c5c;
   --bg:#0b0e14;
 }
 *{box-sizing:border-box;font-family:system-ui}
-body{
-  margin:0;
-  background:var(--bg);
-  color:#eaeaea;
-}
-h1{
-  text-align:center;
-  margin:20px 0;
+body{margin:0;background:var(--bg);color:#eaeaea}
+h1{text-align:center;margin:16px 0}
+button{
+  display:block;margin:0 auto 10px;
+  padding:10px 18px;border:0;border-radius:8px;
+  background:#00ff9c;color:#000;font-weight:600
 }
 .grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:16px;
-  padding:20px;
+  gap:16px;padding:20px
 }
 .card{
-  border-radius:12px;
-  padding:14px;
-  background:#111;
-  box-shadow:0 0 15px rgba(0,0,0,.5);
-  border-left:6px solid;
+  background:#111;border-left:6px solid;
+  border-radius:12px;padding:14px;
 }
-.card.off{
-  opacity:.35;
-  filter:grayscale(1);
-}
-.card h3{margin:0 0 6px}
-.value{font-size:14px;opacity:.85}
-canvas{
-  width:100%;
-  height:120px;
-  background:#05070b;
-  border-radius:8px;
-  margin-top:8px;
-}
+.card.off{opacity:.35;filter:grayscale(1)}
+.value{font-size:14px;opacity:.8}
+canvas{width:100%;height:120px;background:#05070b;border-radius:8px;margin-top:8px}
 video{display:none}
-.footer{
-  text-align:center;
-  font-size:12px;
-  opacity:.6;
-  padding-bottom:20px;
-}
 </style>
 </head>
-<body>
 
-<h1>📊 Mobile Sensor Dashboard</h1>
+<body>
+<h1>📊 Sensor Graph + Logger</h1>
+<button onclick="saveCSV()">💾 Save CSV</button>
 
 <div class="grid">
 
-<!-- Motion -->
 <div class="card" id="accCard" style="border-color:var(--motion)">
-  <h3>Accelerometer</h3>
-  <div class="value" id="accVal">Not available</div>
-  <canvas id="accGraph"></canvas>
+<h3>Accelerometer</h3>
+<div class="value" id="accVal">Waiting…</div>
+<canvas id="accGraph"></canvas>
 </div>
 
 <div class="card" id="gyroCard" style="border-color:var(--motion)">
-  <h3>Gyroscope</h3>
-  <div class="value" id="gyroVal">Not available</div>
+<h3>Gyroscope</h3>
+<div class="value" id="gyroVal">Waiting…</div>
 </div>
 
-<div class="card off" style="border-color:var(--motion)">
-  <h3>Magnetometer</h3>
-  <div class="value">No Web API</div>
-</div>
-
-<!-- Environment -->
 <div class="card" id="lightCard" style="border-color:var(--env)">
-  <h3>Light (Camera)</h3>
-  <div class="value" id="lightVal">Waiting...</div>
-  <canvas id="lightGraph"></canvas>
+<h3>Light (Camera)</h3>
+<div class="value" id="lightVal">Waiting…</div>
+<canvas id="lightGraph"></canvas>
 </div>
 
-<div class="card off" style="border-color:var(--env)">
-  <h3>Barometer</h3>
-  <div class="value">No Web API</div>
+<div class="card" id="micCard" style="border-color:var(--audio)">
+<h3>Microphone (dB)</h3>
+<div class="value" id="micVal">Waiting…</div>
+<canvas id="micGraph"></canvas>
 </div>
 
-<div class="card off" style="border-color:var(--env)">
-  <h3>Humidity</h3>
-  <div class="value">No Web API</div>
-</div>
-
-<!-- Biometric -->
-<div class="card off" style="border-color:var(--bio)">
-  <h3>Fingerprint</h3>
-  <div class="value">System level only</div>
-</div>
-
-<div class="card off" style="border-color:var(--bio)">
-  <h3>Face Recognition</h3>
-  <div class="value">System level only</div>
-</div>
-
-<div class="card" id="micCard" style="border-color:var(--bio)">
-  <h3>Microphone</h3>
-  <div class="value" id="micVal">Checking...</div>
-</div>
-
-<!-- Other -->
 <div class="card" id="gpsCard" style="border-color:var(--other)">
-  <h3>GPS</h3>
-  <div class="value" id="gpsVal">Checking...</div>
-</div>
-
-<div class="card off" style="border-color:var(--other)">
-  <h3>Proximity / Hall</h3>
-  <div class="value">Not accessible via Web</div>
+<h3>GPS</h3>
+<div class="value" id="gpsVal">Waiting…</div>
 </div>
 
 </div>
 
 <video id="cam" autoplay playsinline></video>
 
-<div class="footer">
-  สีการ์ด = ประเภทเซ็นเซอร์ | สีเทา = Browser / Device ไม่รองรับ
-</div>
-
 <script>
-/* Utility */
+const log=[]
+
 const disable=c=>c.classList.add("off")
+const draw=(ctx,data,color)=>{
+ ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
+ ctx.strokeStyle=color;ctx.beginPath()
+ let m=Math.max(...data,1)
+ data.forEach((v,i)=>{
+  let x=i*(ctx.canvas.width/(data.length-1))
+  let y=ctx.canvas.height-(v/m)*ctx.canvas.height
+  i?ctx.lineTo(x,y):ctx.moveTo(x,y)
+ })
+ ctx.stroke()
+}
 
 /* Accelerometer */
-const accCtx=accGraph.getContext("2d")
-let accData=[]
-if(window.DeviceMotionEvent){
-  addEventListener("devicemotion",e=>{
-    let a=e.accelerationIncludingGravity
-    if(!a) return
-    let v=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)
-    accVal.textContent=v.toFixed(2)+" m/s²"
-    accData.push(v); if(accData.length>60) accData.shift()
-    draw(accCtx,accData,"#00c8ff")
-  })
+let accD=[],accCtx=accGraph.getContext("2d")
+if(DeviceMotionEvent){
+ addEventListener("devicemotion",e=>{
+  let a=e.accelerationIncludingGravity
+  if(!a)return
+  let g=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)
+  accVal.textContent=g.toFixed(2)+" m/s²"
+  accD.push(g);if(accD.length>60)accD.shift()
+  draw(accCtx,accD,"#00c8ff")
+  log.push({t:Date.now(),acc:g})
+ })
 }else disable(accCard)
 
-/* Gyroscope */
-if(window.DeviceOrientationEvent){
-  addEventListener("deviceorientation",e=>{
-    gyroVal.textContent=`α:${e.alpha?.toFixed(1)} β:${e.beta?.toFixed(1)} γ:${e.gamma?.toFixed(1)}`
-  })
+/* Gyro */
+if(DeviceOrientationEvent){
+ addEventListener("deviceorientation",e=>{
+  gyroVal.textContent=`α:${e.alpha?.toFixed(1)} β:${e.beta?.toFixed(1)} γ:${e.gamma?.toFixed(1)}`
+  log.push({t:Date.now(),gyro_alpha:e.alpha})
+ })
 }else disable(gyroCard)
 
-/* Light via Camera */
-const lightCtx=lightGraph.getContext("2d")
-let lightData=[]
+/* Light */
+let lightD=[],lightCtx=lightGraph.getContext("2d")
 navigator.mediaDevices?.getUserMedia({video:{facingMode:"environment"}})
 .then(s=>{
-  cam.srcObject=s
-  const c=document.createElement("canvas"),ctx=c.getContext("2d")
-  setInterval(()=>{
-    c.width=cam.videoWidth;c.height=cam.videoHeight
-    ctx.drawImage(cam,0,0)
-    let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
-    for(let i=0;i<d.length;i+=4)
-      sum+=(d[i]+d[i+1]+d[i+2])/3
-    let lux=sum/(d.length/4)
-    lightVal.textContent="Brightness ~ "+lux.toFixed(0)
-    lightData.push(lux); if(lightData.length>60) lightData.shift()
-    draw(lightCtx,lightData,"#00ff9c")
-  },500)
+ cam.srcObject=s
+ const c=document.createElement("canvas"),ctx=c.getContext("2d")
+ setInterval(()=>{
+  c.width=cam.videoWidth;c.height=cam.videoHeight
+  ctx.drawImage(cam,0,0)
+  let d=ctx.getImageData(0,0,c.width,c.height).data,sum=0
+  for(let i=0;i<d.length;i+=4)
+   sum+=(d[i]+d[i+1]+d[i+2])/3
+  let lux=sum/(d.length/4)
+  lightVal.textContent="Brightness ~ "+lux.toFixed(0)
+  lightD.push(lux);if(lightD.length>60)lightD.shift()
+  draw(lightCtx,lightD,"#00ff9c")
+  log.push({t:Date.now(),light:lux})
+ },500)
 }).catch(()=>disable(lightCard))
 
-/* Microphone */
+/* Microphone dB */
+let micD=[],micCtx=micGraph.getContext("2d")
 navigator.mediaDevices?.getUserMedia({audio:true})
-.then(()=>micVal.textContent="Available")
-.catch(()=>disable(micCard))
+.then(s=>{
+ const ac=new AudioContext()
+ const src=ac.createMediaStreamSource(s)
+ const an=ac.createAnalyser();an.fftSize=512
+ src.connect(an)
+ const buf=new Uint8Array(an.fftSize)
+ setInterval(()=>{
+  an.getByteTimeDomainData(buf)
+  let sum=0
+  for(let i=0;i<buf.length;i++){
+   let v=(buf[i]-128)/128
+   sum+=v*v
+  }
+  let rms=Math.sqrt(sum/buf.length)
+  let db=20*Math.log10(rms||0.00001)
+  micVal.textContent=db.toFixed(1)+" dB"
+  micD.push(Math.abs(db));if(micD.length>60)micD.shift()
+  draw(micCtx,micD,"#ffb300")
+  log.push({t:Date.now(),mic_db:db})
+ },120)
+}).catch(()=>disable(micCard))
 
 /* GPS */
 navigator.geolocation?
-navigator.geolocation.getCurrentPosition(
- p=>gpsVal.textContent=`Lat ${p.coords.latitude.toFixed(3)}`
-,()=>disable(gpsCard)
-):disable(gpsCard)
+navigator.geolocation.getCurrentPosition(p=>{
+ gpsVal.textContent=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`
+ log.push({t:Date.now(),lat:p.coords.latitude,lon:p.coords.longitude})
+},()=>disable(gpsCard)):disable(gpsCard)
 
-/* Graph */
-function draw(ctx,data,color){
-  ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
-  ctx.strokeStyle=color;ctx.beginPath()
-  data.forEach((v,i)=>{
-    let x=i*(ctx.canvas.width/(data.length-1))
-    let y=ctx.canvas.height-(v/Math.max(...data))*ctx.canvas.height
-    i?ctx.lineTo(x,y):ctx.moveTo(x,y)
-  })
-  ctx.stroke()
+/* Save CSV */
+function saveCSV(){
+ let keys=new Set()
+ log.forEach(r=>Object.keys(r).forEach(k=>keys.add(k)))
+ let header=[...keys].join(",")
+ let rows=log.map(r=>[...keys].map(k=>r[k]??"").join(","))
+ let csv=[header,...rows].join("\n")
+ let blob=new Blob([csv],{type:"text/csv"})
+ let a=document.createElement("a")
+ a.href=URL.createObjectURL(blob)
+ a.download="sensor_log.csv"
+ a.click()
 }
 </script>
 
