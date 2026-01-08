@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkers Game - 40x16</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s, transform 0.1s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .game-setup {
+            margin-bottom: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            border-radius: 10px;
+            border: 2px solid #ddd;
+        }
+
+        .mode-select, .player-names, .ai-level {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 14px;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        select:hover, input:hover {
+            border-color: #aaa;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+
+        .board-container {
+            position: relative;
+            overflow-x: auto;
+            max-width: 100%;
+            border-radius: 10px;
+            padding: 10px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(40, 25px);
+            grid-template-rows: repeat(16, 25px);
+            border: 4px solid #333;
+            border-radius: 5px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            background: #fff;
+            margin: 0 auto;
+        }
+
+        .square {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .square.light {
+            background: #f0d9b5;
+        }
+
+        .square.dark {
+            background: #b58863;
+        }
+
+        .square.selected {
+            background: #7fc97f !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            border: 2px solid #2d6a2d;
+            animation: selectedPulse 1s infinite;
+        }
+
+        @keyframes selectedPulse {
+            0%, 100% { 
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+                transform: scale(1.05);
+            }
+        }
+
+        .square.valid-move {
+            background: #ffffaa !important;
+            position: relative;
+            cursor: pointer;
+            animation: movePulse 1.2s infinite;
+        }
+
+        @keyframes movePulse {
+            0%, 100% { background: #ffffaa !important; }
+            50% { background: #ffff66 !important; }
+        }
+
+        .square.valid-move::after {
+            content: '';
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: rgba(102, 126, 234, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 6px rgba(102, 126, 234, 1);
+            animation: dotPulse 1.2s infinite;
+        }
+
+        @keyframes dotPulse {
+            0%, 100% { 
+                transform: scale(1); 
+                opacity: 0.8; 
+            }
+            50% { 
+                transform: scale(1.4); 
+                opacity: 1; 
+            }
+        }
+
+        .square.valid-move:hover {
+            background: #ffff00 !important;
+            transform: scale(1.15);
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.6);
+        }
+
+        .piece {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #333;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .piece:hover {
+            transform: scale(1.25);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            z-index: 10;
+        }
+
+        .piece.red {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+        }
+
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #495057, #212529);
+        }
+
+        .piece.king::before {
+            content: '♔';
+            color: gold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            font-size: 14px;
+        }
+
+        .info-panel {
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 280px;
+            border: 2px solid #ddd;
+        }
+
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: statusGlow 2s infinite;
+        }
+
+        @keyframes statusGlow {
+            0%, 100% { box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+            50% { box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5); }
+        }
+
+        .score {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .score-label {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .ai-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-size: 13px;
+            color: #333;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .difficulty-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 11px;
+            margin-left: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .difficulty-easy {
+            background: #51cf66;
+            color: white;
+        }
+
+        .difficulty-medium {
+            background: #ffd43b;
+            color: #333;
+        }
+
+        .difficulty-hard {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .difficulty-expert {
+            background: #495057;
+            color: white;
+        }
+
+        .paused-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+
+        .paused-text {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .move-counter {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+            
+            .board {
+                grid-template-columns: repeat(40, 20px);
+                grid-template-rows: repeat(16, 20px);
+            }
+            
+            .square {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .piece {
+                width: 16px;
+                height: 16px;
+                font-size: 10px;
+            }
+
+            .piece.king::before {
+                font-size: 11px;
+            }
+            
+            .info-panel {
+                min-width: 100%;
+            }
+
+            .paused-text {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Checkers Game - 40x16 Board</h1>
+        
+        <div class="game-setup" id="setup">
+            <div class="mode-select">
+                <label>🎮 Game Mode:</label>
+                <select id="gameMode" onchange="toggleAILevel()">
+                    <option value="pvp">👥 Player vs Player</option>
+                    <option value="pva">🤖 Player vs AI</option>
+                    <option value="ava">🤖🤖 AI vs AI</option>
+                </select>
+            </div>
+
+            <div class="ai-level" id="aiLevelSelect" style="display: none;">
+                <label>🎚️ AI Difficulty:</label>
+                <select id="aiDifficulty">
+                    <option value="easy">🟢 ง่าย (Easy) - สุ่มเดิน</option>
+                    <option value="medium" selected>🟡 ปานกลาง (Medium) - วางแผน 2 ก้าว</option>
+                    <option value="hard">🔴 ยาก (Hard) - วางแผน 4 ก้าว ⚡</option>
+                    <option value="expert">⚫ ยากมาก (Expert) - วางแผน 6 ก้าว</option>
+                </select>
+            </div>
+            
+            <div class="player-names">
+                <label>🔴 Red Player Name:</label>
+                <input type="text" id="redName" value="Red Player" placeholder="Enter red player name">
+                <label style="margin-top: 10px;">⚫ Black Player Name:</label>
+                <input type="text" id="blackName" value="Black Player" placeholder="Enter black player name">
+            </div>
+            
+            <button onclick="startGame()" style="width: 100%; margin-top: 15px; padding: 15px; font-size: 16px;">🚀 Start Game</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="newGame()">🔄 New Game</button>
+            <button onclick="togglePause()" id="pauseBtn">⏸️ Pause</button>
+            <button onclick="showSetup()">⚙️ Settings</button>
+        </div>
+
+        <div class="game-area">
+            <div class="board-container">
+                <div class="board" id="board"></div>
+                <div class="paused-overlay hidden" id="pausedOverlay">
+                    <div class="paused-text">⏸️ PAUSED</div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="status" id="status">Red's Turn</div>
+                <div class="score">
+                    <div class="score-item">
+                        <div class="score-label" id="redLabel">🔴 Red</div>
+                        <div class="score-value" style="color: #c92a2a;" id="redScore">100</div>
+                    </div>
+                    <div class="score-item">
+                        <div class="score-label" id="blackLabel">⚫ Black</div>
+                        <div class="score-value" style="color: #212529;" id="blackScore">100</div>
+                    </div>
+                </div>
+                <div class="move-counter" id="moveCounter">Move: 0</div>
+                <div class="ai-info" id="aiInfo" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // -----------------------------------------------------------------
+        // Game constants & global state
+        // -----------------------------------------------------------------
+        const ROWS = 16;
+        const COLS = 40;
+        
+        // -----------------------------------------------------------------
+        // Difficulty settings – Centralised to keep depth & timing consistent
+        // -----------------------------------------------------------------
+        const DIFFICULTY_SETTINGS = {
+            easy:   { depth: 1, delay: 200 },
+            medium: { depth: 2, delay: 300 },
+            hard:   { depth: 3, delay: 150 },
+            expert: { depth: 5, delay: 400 }
+        };
+
+        // -----------------------------------------------------------------
+        // Global variables
+        // -----------------------------------------------------------------
+        let board = [];
+        let currentPlayer = 'red';
+        let selectedPiece = null;
+        let validMoves = [];
+        let gameMode = 'pvp';
+        let aiDifficulty = 'medium';
+        let isPaused = false;
+        let redName = 'Red Player';
+        let blackName = 'Black Player';
+        let captureSequence = false;
+        let moveCount = 0;
+
+        // Transposition table for memoising minimax results
+        let transpositionTable = new Map();
+
+        // -----------------------------------------------------------------
+        // Helpers that depend on current mode / difficulty
+        // -----------------------------------------------------------------
+        function getAIDepth() {
+            // In AI vs AI we force a “mid” depth to keep the game snappy.
+            if (gameMode === 'ava') {
+                return DIFFICULTY_SETTINGS['medium'].depth;
+            }
+            return DIFFICULTY_SETTINGS[aiDifficulty]?.depth ?? 2;
+        }
+
+        function getAIDelay() {
+            // Same idea – a shorter think‑time for AI vs AI.
+            if (gameMode === 'ava') {
+                return DIFFICULTY_SETTINGS['medium'].delay;
+            }
+            return DIFFICULTY_SETTINGS[aiDifficulty]?.delay ?? 300;
+        }
+
+        // Simple (but fast) board hashing for the transposition table
+        function boardHash() {
+            let s = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const p = board[r][c];
+                    if (!p) s += '.';
+                    else if (p.color === 'red' && !p.king) s += 'r';
+                    else if (p.color === 'red' && p.king) s += 'R';
+                    else if (p.color === 'black' && !p.king) s += 'b';
+                    else s += 'B';
+                }
+            }
+            return s;
+        }
+
+        // -----------------------------------------------------------------
+        // UI helpers
+        // -----------------------------------------------------------------
+        function toggleAILevel() {
+            const mode = document.getElementById('gameMode').value;
+            const aiLevelDiv = document.getElementById('aiLevelSelect');
+            if (mode === 'pva' || mode === 'ava') {
+                aiLevelDiv.style.display = 'block';
+            } else {
+                aiLevelDiv.style.display = 'none';
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // Board initialization / rendering
+        // -----------------------------------------------------------------
+        function initBoard() {
+            board = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+            
+            // Red pieces (top 5 rows)
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if ((row + col) % 2 === 1) {
+                        board[row][col] = { color: 'red', king: false };
+                    }
+                }
+            }
+            
+            // Black pieces (bottom 5 rows)
+            for (let row = ROWS - 5; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if ((row + col) % 2 === 1) {
+                        board[row][col] = { color: 'black', king: false };
+                    }
+                }
+            }
+        }
+
+        function renderBoard() {
+            const boardEl = document.getElementById('board');
+            boardEl.innerHTML = '';
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    
+                    if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
+                        square.classList.add('selected');
+                    }
+                    
+                    if (validMoves.some(m => m.row === row && m.col === col)) {
+                        square.classList.add('valid-move');
+                    }
+                    
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceEl = document.createElement('div');
+                        pieceEl.className = `piece ${piece.color}`;
+                        if (piece.king) {
+                            pieceEl.classList.add('king');
+                        }
+                        square.appendChild(pieceEl);
+                    }
+                    
+                    square.addEventListener('click', () => handleSquareClick(row, col));
+                    boardEl.appendChild(square);
+                }
+            }
+            
+            updateScore();
+        }
+
+        // -----------------------------------------------------------------
+        // Piece movement & validation
+        // -----------------------------------------------------------------
+        function handleSquareClick(row, col) {
+            if (isPaused) return;
+            
+            if (gameMode === 'ava') return;
+            if (gameMode === 'pva' && currentPlayer === 'black') return;
+            
+            const piece = board[row][col];
+            
+            if (selectedPiece) {
+                const move = validMoves.find(m => m.row === row && m.col === col);
+                if (move) {
+                    const wasCapture = move.capture !== undefined;
+                    makeMove(selectedPiece.row, selectedPiece.col, row, col);
+                    
+                    if (wasCapture) {
+                        const nextCaptures = getCaptureMoves(row, col);
+                        if (nextCaptures.length > 0) {
+                            selectedPiece = { row, col };
+                            validMoves = nextCaptures;
+                            captureSequence = true;
+                            renderBoard();
+                            return;
+                        }
+                    }
+                    
+                    selectedPiece = null;
+                    validMoves = [];
+                    captureSequence = false;
+                    switchPlayer();
+                } else if (piece && piece.color === currentPlayer && !captureSequence) {
+                    selectedPiece = { row, col };
+                    validMoves = getValidMoves(row, col);
+                    renderBoard();
+                } else {
+                    selectedPiece = null;
+                    validMoves = [];
+                    renderBoard();
+                }
+            } else if (piece && piece.color === currentPlayer) {
+                selectedPiece = { row, col };
+                validMoves = getValidMoves(row, col);
+                renderBoard();
+            }
+        }
+
+        function getCaptureMoves(row, col) {
+            const piece = board[row][col];
+            if (!piece) return [];
+            
+            const captures = [];
+            const directions = piece.king ? 
+                [[-1, -1], [-1, 1], [1, -1], [1, 1]] :
+                piece.color === 'red' ? [[1, -1], [1, 1]] : [[-1, -1], [-1, 1]];
+            
+            for (const [dRow, dCol] of directions) {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                
+                if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS) {
+                    const target = board[newRow][newCol];
+                    if (target && target.color !== piece.color) {
+                        const jumpRow = newRow + dRow;
+                        const jumpCol = newCol + dCol;
+                        if (jumpRow >= 0 && jumpRow < ROWS && jumpCol >= 0 && jumpCol < COLS && !board[jumpRow][jumpCol]) {
+                            captures.push({ row: jumpRow, col: jumpCol, capture: { row: newRow, col: newCol } });
+                        }
+                    }
+                }
+            }
+            
+            return captures;
+        }
+
+        function getValidMoves(row, col) {
+            const piece = board[row][col];
+            if (!piece || piece.color !== currentPlayer) return [];
+            
+            const captures = getCaptureMoves(row, col);
+            if (captures.length > 0) return captures;
+            
+            const anyCaptures = getAllCaptureMoves(currentPlayer);
+            if (anyCaptures.length > 0) return [];
+            
+            const moves = [];
+            const directions = piece.king ? 
+                [[-1, -1], [-1, 1], [1, -1], [1, 1]] :
+                piece.color === 'red' ? [[1, -1], [1, 1]] : [[-1, -1], [-1, 1]];
+            
+            for (const [dRow, dCol] of directions) {
+                const newRow = row + dRow;
+                const newCol = col + dCol;
+                
+                if (newRow >= 0 && newRow < ROWS && newCol >= 0 && newCol < COLS && !board[newRow][newCol]) {
+                    moves.push({ row: newRow, col: newCol });
+                }
+            }
+            
+            return moves;
+        }
+
+        function getAllCaptureMoves(color) {
+            const captures = [];
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const piece = board[row][col];
+                    if (piece && piece.color === color) {
+                        const pieceMoves = getCaptureMoves(row, col);
+                        if (pieceMoves.length > 0) {
+                            captures.push(...pieceMoves);
+                        }
+                    }
+                }
+            }
+            return captures;
+        }
+
+        function makeMove(fromRow, fromCol, toRow, toCol) {
+            const piece = board[fromRow][fromCol];
+            board[toRow][toCol] = piece;
+            board[fromRow][fromCol] = null;
+            
+            const move = validMoves.find(m => m.row === toRow && m.col === toCol);
+            if (move && move.capture) {
+                board[move.capture.row][move.capture.col] = null;
+            }
+            
+            if ((piece.color === 'red' && toRow === ROWS - 1) || (piece.color === 'black' && toRow === 0)) {
+                piece.king = true;
+            }
+            
+            moveCount++;
+            document.getElementById('moveCounter').textContent = `Move: ${moveCount}`;
+            
+            renderBoard();
+        }
+
+        // -----------------------------------------------------------------
+        // Simple board evaluation – used by the minimax AI
+        // -----------------------------------------------------------------
+        function evaluateBoard(color) {
+            let score = 0;
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const piece = board[row][col];
+                    if (piece) {
+                        let pieceValue = piece.king ? 3 : 1;
+                        
+                        // Position bonus (forward progress)
+                        if (piece.color === 'red') {
+                            pieceValue += (ROWS - 1 - row) * 0.05;
+                        } else {
+                            pieceValue += row * 0.05;
+                        }
+                        
+                        // Center control bonus
+                        const centerDist = Math.abs((COLS / 2) - col);
+                        pieceValue += ((COLS / 2) - centerDist) * 0.02;
+                        
+                        if (piece.color === color) {
+                            score += pieceValue;
+                        } else {
+                            score -= pieceValue;
+                        }
+                    }
+                }
+            }
+            return score;
+        }
+
+        // -----------------------------------------------------------------
+        // Minimax with Alpha‑Beta pruning + transposition caching
+        // -----------------------------------------------------------------
+        function minimax(depth, isMaximizing, alpha, beta, color) {
+            if (depth === 0) {
+                return evaluateBoard(color);
+            }
+            
+            const hashKey = `${depth}-${color}-${boardHash()}`;
+            if (transpositionTable.has(hashKey)) {
+                return transpositionTable.get(hashKey);
+            }
+            
+            const moves = getAllPossibleMoves(isMaximizing ? color : (color === 'red' ? 'black' : 'red'));
+            
+            // No moves => terminal position
+            if (moves.length === 0) {
+                const terminalScore = isMaximizing ? -1000 : 1000;
+                transpositionTable.set(hashKey, terminalScore);
+                return terminalScore;
+            }
+            
+            // Move ordering – captures first (helps pruning)
+            moves.sort((a, b) => (b.to.capture ? 1 : 0) - (a.to.capture ? 1 : 0));
+            
+            let bestVal;
+            if (isMaximizing) {
+                bestVal = -Infinity;
+                for (const move of moves) {
+                    const boardCopy = JSON.parse(JSON.stringify(board));
+                    applyMove(move);
+                    const evalScore = minimax(depth - 1, false, alpha, beta, color);
+                    board = boardCopy;
+                    bestVal = Math.max(bestVal, evalScore);
+                    alpha = Math.max(alpha, evalScore);
+                    if (beta <= alpha) break; // α‑β prune
+                }
+            } else {
+                bestVal = Infinity;
+                for (const move of moves) {
+                    const boardCopy = JSON.parse(JSON.stringify(board));
+                    applyMove(move);
+                    const evalScore = minimax(depth - 1, true, alpha, beta, color);
+                    board = boardCopy;
+                    bestVal = Math.min(bestVal, evalScore);
+                    beta = Math.min(beta, evalScore);
+                    if (beta <= alpha) break; // α‑β prune
+                }
+            }
+            
+            transpositionTable.set(hashKey, bestVal);
+            return bestVal;
+        }
+
+        // -----------------------------------------------------------------
+        // Generation of ALL possible moves for a given colour (used by AI)
+        // -----------------------------------------------------------------
+        function getAllPossibleMoves(color) {
+            const allMoves = [];
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const piece = board[row][col];
+                    if (piece && piece.color === color) {
+                        const tempCurrent = currentPlayer;
+                        currentPlayer = color;
+                        const moves = getValidMoves(row, col);
+                        currentPlayer = tempCurrent;
+                        moves.forEach(move => {
+                            allMoves.push({ from: { row, col }, to: move });
+                        });
+                    }
+                }
+            }
+            return allMoves;
+        }
+
+        // -----------------------------------------------------------------
+        // Apply a move object (used by AI – works with the objects from
+        // getAllPossibleMoves). Handles promotion and capture.
+        // -----------------------------------------------------------------
+        function applyMove(move) {
+            const piece = board[move.from.row][move.from.col];
+            board[move.to.row][move.to.col] = piece;
+            board[move.from.row][move.from.col] = null;
+            
+            if (move.to.capture) {
+                board[move.to.capture.row][move.to.capture.col] = null;
+            }
+            
+            // King promotion
+            if ((piece.color === 'red' && move.to.row === ROWS - 1) ||
+                (piece.color === 'black' && move.to.row === 0)) {
+                piece.king = true;
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // Switch player & AI trigger
+        // -----------------------------------------------------------------
+        function switchPlayer() {
+            if (checkWinner()) return;
+            
+            currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
+            const playerName = currentPlayer === 'red' ? redName : blackName;
+            document.getElementById('status').textContent = `${playerName}'s Turn`;
+            
+            renderBoard();
+            
+            if ((gameMode === 'pva' && currentPlayer === 'black') || gameMode === 'ava') {
+                const delay = getAIDelay();
+                setTimeout(makeAIMove, delay);
+            }
+        }
+
+        // -----------------------------------------------------------------
+        // AI move decision – now fast for AI vs AI (mid+expert)
+        // -----------------------------------------------------------------
+        function makeAIMove() {
+            if (isPaused) return;
+            
+            // Clear transposition cache each AI turn (keeps memory bounded)
+            transpositionTable.clear();
+            
+            const allMoves = getAllPossibleMoves(currentPlayer);
+            if (allMoves.length === 0) {
+                checkWinner();
+                return;
+            }
+            
+            const difficulty = aiDifficulty; // keep UI label unchanged
+            let bestMove = null;
+            
+            // ---------- EASY – purely random (still prefers captures) ----------
+            if (difficulty === 'easy') {
+                const captureMoves = allMoves.filter(m => m.to.capture);
+                const movesToConsider = captureMoves.length > 0 ? captureMoves : allMoves;
+                bestMove = movesToConsider[Math.floor(Math.random() * movesToConsider.length)];
+            }
+            // ---------- NON‑EASY – minimax search ----------
+            else {
+                const depth = getAIDepth(); // Mid depth for AVA, full depth otherwise
+                // For faster decision‑making we first look at capture‑only moves.
+                const captureMoves = allMoves.filter(m => m.to.capture);
+                let movesToEvaluate;
+                if (captureMoves.length > 0) {
+                    movesToEvaluate = captureMoves;
+                } else {
+                    // In hard / expert we limit the branching factor to the first 15 moves.
+                    if (difficulty === 'hard' || difficulty === 'expert') {
+                        movesToEvaluate = allMoves.slice(0, Math.min(15, allMoves.length));
+                    } else {
+                        movesToEvaluate = allMoves;
+                    }
+                }
+                
+                let bestScore = -Infinity;
+                for (const move of movesToEvaluate) {
+                    const boardCopy = JSON.parse(JSON.stringify(board));
+                    applyMove(move);
+                    const score = minimax(depth - 1, false, -Infinity, Infinity, currentPlayer);
+                    board = boardCopy;
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                }
+            }
+            
+            // -----------------------------------------------------------------
+            // Visualise the AI's chosen piece (makes the UI feel responsive)
+            // -----------------------------------------------------------------
+            selectedPiece = bestMove.from;
+            validMoves = getValidMoves(bestMove.from.row, bestMove.from.col);
+            renderBoard();
+            
+            // -----------------------------------------------------------------
+            // Execute the move after a short visual pause
+            // -----------------------------------------------------------------
+            const thinkTime = getAIDelay();
+            setTimeout(() => {
+                const wasCapture = bestMove.to.capture !== undefined;
+                makeMove(bestMove.from.row, bestMove.from.col, bestMove.to.row, bestMove.to.col);
+                
+                // Handle multi‑capture chain for AI
+                if (wasCapture) {
+                    const nextCaptures = getCaptureMoves(bestMove.to.row, bestMove.to.col);
+                    if (nextCaptures.length > 0) {
+                        selectedPiece = { row: bestMove.to.row, col: bestMove.to.col };
+                        validMoves = nextCaptures;
+                        captureSequence = true;
+                        setTimeout(makeAIMove, thinkTime);
+                        return;
+                    }
+                }
+                
+                selectedPiece = null;
+                validMoves = [];
+                captureSequence = false;
+                switchPlayer();
+            }, 200); // short UI pause before the board updates
+        }
+
+        // -----------------------------------------------------------------
+        // Scoring UI
+        // -----------------------------------------------------------------
+        function updateScore() {
+            let redCount = 0;
+            let blackCount = 0;
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const piece = board[row][col];
+                    if (piece) {
+                        if (piece.color === 'red') redCount++;
+                        else blackCount++;
+                    }
+                }
+            }
+            
+            document.getElementById('redScore').textContent = redCount;
+            document.getElementById('blackScore').textContent = blackCount;
+        }
+
+        // -----------------------------------------------------------------
+        // End‑game detection
+        // -----------------------------------------------------------------
+        function checkWinner() {
+            let redCount = 0;
+            let blackCount = 0;
+            let redHasMoves = false;
+            let blackHasMoves = false;
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const piece = board[row][col];
+                    if (piece) {
+                        const tempCurrent = currentPlayer;
+                        currentPlayer = piece.color;
+                        const moves = getValidMoves(row, col);
+                        currentPlayer = tempCurrent;
+                        
+                        if (piece.color === 'red') {
+                            redCount++;
+                            if (!redHasMoves && moves.length > 0) redHasMoves = true;
+                        } else {
+                            blackCount++;
+                            if (!blackHasMoves && moves.length > 0) blackHasMoves = true;
+                        }
+                    }
+                }
+            }
+            
+            if (redCount === 0 || (currentPlayer === 'red' && !redHasMoves)) {
+                document.getElementById('status').textContent = `${blackName} Wins! 🎉🏆`;
+                return true;
+            }
+            if (blackCount === 0 || (currentPlayer === 'black' && !blackHasMoves)) {
+                document.getElementById('status').textContent = `${redName} Wins! 🎉🏆`;
+                return true;
+            }
+            return false;
+        }
+
+        // -----------------------------------------------------------------
+        // Game start / reset / pause helpers
+        // -----------------------------------------------------------------
+        function startGame() {
+            gameMode = document.getElementById('gameMode').value;
+            aiDifficulty = document.getElementById('aiDifficulty').value;
+            redName = document.getElementById('redName').value || 'Red Player';
+            blackName = document.getElementById('blackName').value || 'Black Player';
+            
+            document.getElementById('redLabel').textContent = `🔴 ${redName}`;
+            document.getElementById('blackLabel').textContent = `⚫ ${blackName}`;
+            document.getElementById('setup').classList.add('hidden');
+            
+            // Show proper AI‑info badge (kept as‑is – the label still says
+            // “Expert” even in AVA; the engine runs at mid‑depth for speed)
+            const aiInfo = document.getElementById('aiInfo');
+            if (gameMode === 'pva' || gameMode === 'ava') {
+                let difficultyText = '';
+                let difficultyClass = '';
+                switch (aiDifficulty) {
+                    case 'easy':    difficultyText = 'ง่าย'; difficultyClass = 'difficulty-easy'; break;
+                    case 'medium':  difficultyText = 'ปานกลาง'; difficultyClass = 'difficulty-medium'; break;
+                    case 'hard':    difficultyText = 'ยาก ⚡'; difficultyClass = 'difficulty-hard'; break;
+                    default:        difficultyText = 'ยากมาก'; difficultyClass = 'difficulty-expert'; break;
+                }
+                if (gameMode === 'pva') {
+                    aiInfo.innerHTML = `🤖 AI: ${blackName} <span class="${difficultyClass} difficulty-badge">${difficultyText}</span>`;
+                } else {
+                    aiInfo.innerHTML = `🤖🤖 Both players are AI <span class="${difficultyClass} difficulty-badge">${difficultyText}</span>`;
+                }
+                aiInfo.style.display = 'block';
+            } else {
+                aiInfo.style.display = 'none';
+            }
+            
+            newGame();
+        }
+
+        function newGame() {
+            currentPlayer = 'red';
+            selectedPiece = null;
+            validMoves = [];
+            captureSequence = false;
+            isPaused = false;
+            moveCount = 0;
+            
+            document.getElementById('pauseBtn').innerHTML = '⏸️ Pause';
+            document.getElementById('pausedOverlay').classList.add('hidden');
+            document.getElementById('moveCounter').textContent = 'Move: 0';
+            
+            initBoard();
+            renderBoard();
+            
+            const playerName = currentPlayer === 'red' ? redName : blackName;
+            document.getElementById('status').textContent = `${playerName}'s Turn`;
+            
+            if (gameMode === 'ava') {
+                setTimeout(makeAIMove, 1000);
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            const overlay = document.getElementById('pausedOverlay');
+            
+            if (isPaused) {
+                pauseBtn.innerHTML = '▶️ Resume';
+                overlay.classList.remove('hidden');
+            } else {
+                pauseBtn.innerHTML = '⏸️ Pause';
+                overlay.classList.add('hidden');
+                
+                if ((gameMode === 'pva' && currentPlayer === 'black') || gameMode === 'ava') {
+                    setTimeout(makeAIMove, getAIDelay());
+                }
+            }
+        }
+
+        function showSetup() {
+            document.getElementById('setup').classList.remove('hidden');
+            isPaused = true;
+            document.getElementById('pausedOverlay').classList.remove('hidden');
+            document.getElementById('pauseBtn').innerHTML = '▶️ Resume';
+        }
+
+        // -----------------------------------------------------------------
+        // Initialise page
+        // -----------------------------------------------------------------
+        initBoard();
+        renderBoard();
+    </script>
+</body>
+</html>
