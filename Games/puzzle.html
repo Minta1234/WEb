@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PBKDF2 Hard Math Puzzle</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{
+  background:#000;
+  color:#0f0;
+  font-family:monospace;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+#app{
+  border:1px solid #0f0;
+  padding:20px;
+  width:360px;
+}
+input,button{
+  width:100%;
+  margin-top:10px;
+  padding:8px;
+  background:#000;
+  color:#0f0;
+  border:1px solid #0f0;
+}
+.error{color:#f00}
+.success{color:#6f6}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* =========================
+   CONFIG
+========================= */
+const ITER = 120000;
+const KEYLEN = 256;
+const SALT = navigator.userAgent.length + "|" + screen.width;
+
+/* =========================
+   PUZZLES (hard math)
+   Hashes placeholder
+========================= */
+const PUZZLES = [
+  { q:"Puzzle 1: 4f229c169a00acb99fbc6fef903b3d81f821761530840b93561995528118c52e = ?", h:"4f229c169a00acb99fbc6fef903b3d81f821761530840b93561995528118c52e" }, 
+  { q:"Puzzle 2: 55294ccebb8f055af469def2fe68485fbe350704b1873da61c8985e706e92b0b = ?", h:"55294ccebb8f055af469def2fe68485fbe350704b1873da61c8985e706e92b0b" }, 
+  { q:"Puzzle 3: 7fd9885cdee97f86e7c755a8383b67153627ed464ac824d9ab729580d3f3a770 = ?", h:"7fd9885cdee97f86e7c755a8383b67153627ed464ac824d9ab729580d3f3a770" }, 
+  { q:"Puzzle 4: 0b515d46becdbd08ff489119e7d3f4d5ebcbb1d05d682b138a2c2b13f9f0683e = ?", h:"0b515d46becdbd08ff489119e7d3f4d5ebcbb1d05d682b138a2c2b13f9f0683e" }, 
+  { q:"Puzzle 5: 5e1ff354718b84c858df110a5f0780680bd5ca3dfed18e163b499dca60f5a016 = ?", h:"5e1ff354718b84c858df110a5f0780680bd5ca3dfed18e163b499dca60f5a016" } 
+];
+
+const END_HASH =
+"f0b28669388cfc6bdfccbba0585881bafa0ebaac4e44c08b8d289b482e93e5fb";
+
+/* =========================
+   PBKDF2
+========================= */
+async function pbkdf2(v){
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(v),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name:"PBKDF2", salt:new TextEncoder().encode(SALT), iterations:ITER, hash:"SHA-256" },
+    key,
+    KEYLEN
+  );
+  return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+
+/* =========================
+   GAME LOGIC
+========================= */
+let stage = 0;
+function render(){
+  if(stage < PUZZLES.length){
+    document.getElementById("app").innerHTML = `
+      <h3>PUZZLE ${stage+1}</h3>
+      <p>${PUZZLES[stage].q}</p>
+      <input id="ans" autocomplete="off">
+      <button onclick="check()">SUBMIT</button>
+      <div id="msg"></div>
+    `;
+  }else{
+    endGame();
+  }
+}
+
+async function check(){
+  const v = document.getElementById("ans").value.trim();
+  const h = await pbkdf2(v);
+  if(h === PUZZLES[stage].h){
+    stage++;
+    render();
+  }else{
+    document.getElementById("msg").innerHTML = "<p class='error'>WRONG</p>";
+  }
+}
+
+async function endGame(){
+  const final = await pbkdf2("kuy");
+  if(final === END_HASH){
+    document.getElementById("app").innerHTML = `
+      <h3 class="success">COMPLETED</h3>
+      <p class="success">Crack this: f0b28669388cfc6bdfccbba0585881bafa0ebaac4e44c08b8d289b482e93e5fb</p>
+    `;
+  }else{
+    document.getElementById("app").innerHTML = "<p class='error'>INTEGRITY ERROR</p>";
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>
+<!-- 12, 120, 1, 3, 32 -->
