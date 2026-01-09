@@ -60,8 +60,15 @@ li:hover{
   background:rgba(0,255,231,.2);
   box-shadow:0 0 20px rgba(17, 218, 198, 0.6);
 }
-#time{margin-bottom:6px;opacity:.85}
-#ping{margin-bottom:14px;font-size:0.9rem;opacity:.85}
+#time{
+  margin-bottom:1em;
+  opacity:.85;
+  font-size:clamp(2.2rem, 4vw, 3.2rem);
+  font-weight:700;
+  letter-spacing:2px;
+  text-shadow:0 0 12px rgba(255,0,221,.6);
+}
+#ping{margin-bottom:14px;font-size: 2em;opacity:.85}
 .ping-good{color:#00ff7f}
 .ping-mid{color:#ffe600}
 .ping-bad{color:#ff4d4d}
