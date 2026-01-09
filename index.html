@@ -12,8 +12,8 @@ html,body{
   width:100%;
   height:100%;
   font-family:"Courier New",monospace;
-  background:#05080d;
-  color:#00ffe7;
+  background:#000000;
+  color:#e142f0;
   overflow:hidden;
 }
 canvas{position:fixed;inset:0;z-index:0}
@@ -29,19 +29,19 @@ canvas{position:fixed;inset:0;z-index:0}
 h1{
   font-size:clamp(2rem,5vw,3.5rem);
   margin-bottom:30px;
-  text-shadow:0 0 15px #00ffe7;
+  text-shadow:0 0 15px #ff00dd;
 }
 button{
   background:transparent;
-  border:2px solid #00ffe7;
-  color:#00ffe7;
+  border:2px solid #ff09ff;
+  color:#b311ff;
   padding:14px 36px;
   font-size:1.1rem;
   border-radius:12px;
   cursor:pointer;
 }
 button:hover{
-  background:#00ffe7;
+  background:#f7b0b0;
   color:#000;
   box-shadow:0 0 25px #00ffe7;
 }
@@ -50,15 +50,15 @@ li{
   margin:14px 0;
   padding:18px 24px;
   border-radius:14px;
-  border:2px solid rgba(0,255,231,.4);
-  background:rgba(0,255,231,.08);
+  border:2px solid rgba(252, 252, 252, 0.4);
+  background:rgba(78, 209, 196, 0.08);
   display:flex;
   justify-content:space-between;
   cursor:pointer;
 }
 li:hover{
   background:rgba(0,255,231,.2);
-  box-shadow:0 0 20px rgba(0,255,231,.6);
+  box-shadow:0 0 20px rgba(17, 218, 198, 0.6);
 }
 #time{margin-bottom:6px;opacity:.85}
 #ping{margin-bottom:14px;font-size:0.9rem;opacity:.85}
@@ -214,7 +214,7 @@ const P = [...Array(120)].map(() => ({
     p.y += p.vy;
     if(p.x<0||p.x>c.width) p.vx *= -1;
     if(p.y<0||p.y>c.height) p.vy *= -1;
-    ctx.fillStyle = "rgba(0,255,231,.7)";
+    ctx.fillStyle = "rgb(235, 227, 255)";
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2);
     ctx.fill();
@@ -222,5 +222,4 @@ const P = [...Array(120)].map(() => ({
   requestAnimationFrame(anim);
 })();
 </script>
-
 
