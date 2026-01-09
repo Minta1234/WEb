@@ -137,7 +137,7 @@ const BGM = document.getElementById("bgm");
 const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
 let audioUnlocked = false;
 let soundEnabled = true;
-BGM.volume = 0.4;
+BGM.volume = 1;
 
 async function unlockAudio(){
   if(audioUnlocked) return;
@@ -231,4 +231,5 @@ const P = [...Array(120)].map(() => ({
   requestAnimationFrame(anim);
 })();
 </script>
+
 
