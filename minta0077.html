@@ -17,54 +17,127 @@ html, body {
 }
 
 #matrix { position: fixed; inset: 0; z-index: 0; }
-#gradient { position: fixed; inset: 0; z-index: 1; pointer-events: none; background:
-	radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 42%),
-	radial-gradient(circle at 80% 40%, rgba(0,255,0,0.25), transparent 45%),
-	radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 48%);
+#gradient { 
+	position: fixed; 
+	inset: 0; 
+	z-index: 1; 
+	pointer-events: none; 
+	background:
+		radial-gradient(circle at 20% 30%, rgba(0,0,255,0.25), transparent 42%),
+		radial-gradient(circle at 80% 40%, rgba(0,255,0,0.25), transparent 45%),
+		radial-gradient(circle at 50% 80%, rgba(255,0,0,0.25), transparent 48%);
 	transition: background 0.12s linear;
 }
 #particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
 
-#neonText {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	font-size: 64px;
-	font-weight: bold;
-	color: #00ffff;
+#gate { 
+	position: fixed; 
+	inset: 0; 
+	background: rgba(0,0,0,0.9); 
+	display: flex; 
+	align-items: center; 
+	justify-content: center; 
+	z-index: 10; 
+}
+#gate button { 
+	font-size: 20px; 
+	padding: 16px 30px; 
+	border-radius: 6px; 
+	background: #00ccff; 
+	color: #fff; 
+	border: none; 
+	cursor: pointer; 
+}
+
+#content { 
+	position: relative; 
+	z-index: 3; 
+	padding: 40px; 
+	pointer-events: none; 
+	filter: blur(6px);
+	transition: filter 0.3s ease;
+}
+
+.engineer {
+	color: #ff0000;
+	font-weight: 600;
 	text-shadow:
-	0 0 8px #00ffff,
-	0 0 16px #00ffff,
-	0 0 24px #ff00ff,
-	0 0 32px #ff00ff,
-	0 0 40px #ff00ff;
-	z-index: 2;
-	animation: glowPulse 2s infinite alternate;
-	pointer-events: none;
+		0 0 4px #ff0000,
+		0 0 8px #ff0000,
+		0 0 12px #ff0000,
+		0 0 20px #ff0000,
+		0 0 30px #ff0000,
+		0 0 40px #ff0000;
+	animation: neonPulse 1.5s ease-in-out infinite alternate;
 }
 
-@keyframes glowPulse {
-	from { text-shadow: 0 0 8px #00ffff,0 0 16px #00ffff,0 0 24px #ff00ff,0 0 32px #ff00ff; }
-	to   { text-shadow: 0 0 16px #00ffff,0 0 32px #00ffff,0 0 48px #ff00ff,0 0 64px #ff00ff; }
+@keyframes neonPulse {
+	from {
+		text-shadow:
+			0 0 4px #ff0000,
+			0 0 8px #ff0000,
+			0 0 12px #ff0000,
+			0 0 20px #ff0000,
+			0 0 30px #ff0000,
+			0 0 40px #ff0000;
+	}
+	to {
+		text-shadow:
+			0 0 2px #ff0000,
+			0 0 4px #ff0000,
+			0 0 6px #ff0000,
+			0 0 10px #ff0000,
+			0 0 15px #ff0000,
+			0 0 20px #ff0000;
+	}
 }
 
-#gate { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 5; }
-#gate button { font-size: 20px; padding: 16px 30px; border-radius: 6px; background: #00ccff; color: #fff; border: none; cursor: pointer; }
+.btn { 
+	padding: 10px 20px; 
+	font-size: 16px; 
+	background: #cc1515; 
+	color: #fff; 
+	border: none; 
+	border-radius: 5px; 
+	cursor: pointer; 
+	margin-top: 20px;
+	transition: opacity 0.3s;
+}
 
-#content { position: relative; z-index: 3; padding: 40px; pointer-events: none; filter: blur(6px); }
-.btn { padding: 10px 20px; font-size: 16px; background: #cc1515; color: #fff; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+.btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
 
-#progressWrap { width: 320px; height: 10px; background: #333; border-radius: 5px; margin-top: 18px; overflow: hidden; }
-#progressBar { width: 0%; height: 100%; background: linear-gradient(90deg, #00ffcc, #00aaff); }
+#progressWrap { 
+	width: 320px; 
+	height: 10px; 
+	background: #333; 
+	border-radius: 5px; 
+	margin-top: 18px; 
+	overflow: hidden; 
+}
+#progressBar { 
+	width: 0%; 
+	height: 100%; 
+	background: linear-gradient(90deg, #00ffcc, #00aaff);
+	transition: width 0.1s linear;
+}
 
-#timer { position: fixed; top: 5px; right: 100px; font-size: 15px; z-index: 10; color: rgb(226, 230, 226); }
+#timer { 
+	position: fixed; 
+	top: 5px; 
+	right: 100px; 
+	font-size: 15px; 
+	z-index: 20; 
+	color: rgb(226, 230, 226); 
+}
 
 </style>
 </head>
 <body>
 <img src="Image/ribbon_top_right.png" 
-     alt="Black mourning ribbon for websites, top right corner, ริบบิ้นไว้ทุกข์สีดำ มุมบนขวา สำหรับแสดงความอาลัยบนเว็บไซต์" 
+     alt="Black mourning ribbon" 
      style="position:fixed; top:0; right:0; width:80px; opacity:0.9; z-index:9999; pointer-events:none;">
 
 <canvas id="matrix"></canvas>
@@ -75,25 +148,28 @@ html, body {
 
 <div id="content">
 	<h1>Hi</h1>
-	<p>I'm Minta.R4M, </p>
-	<p>я i'm code engineer</p>
+	<p>I'm Minta.R4M</p>
+	<p><span class="engineer">я code engineer</span></p>
 	<button id="mainBtn" class="btn">Click me</button>
 	<div id="progressWrap"><div id="progressBar"></div></div>
-	<audio id="bgm" src="/assets/мита.mp3" loop></audio>
+	<audio id="bgm" src="/assets/мита.wav" loop></audio>
 	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
 
 <script>
+// ===== MATRIX =====
 const matrixCanvas = document.getElementById("matrix");
 const ctx = matrixCanvas.getContext("2d");
 let w = matrixCanvas.width = window.innerWidth;
 let h = matrixCanvas.height = window.innerHeight;
-const fontSize = 15;
-let cols = Math.floor(w / fontSize);
-let drops = Array(cols).fill(1);
-const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбюあかさたなはまやらいうえおくきけこすしせそちつてとぬにのねふひほへむみもめゆ（よ）るりろれんを〜ー#!?$%&@";
+const fontSize = 14;
+const xSpacing = 22;
+const ySpacing = 24;
+let cols = Math.floor(w / xSpacing);
+let drops = Array(cols).fill(0).map(() => Math.random() * 50);
+const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбюあかさたなはまやらいうえおくきけこすしせそちつてとぬにのねふひほへむみもめゆよるりろれんを#!?$%&@";
 
 function drawMatrix(){
 	ctx.fillStyle = "rgba(0,0,0,0.08)";
@@ -102,18 +178,23 @@ function drawMatrix(){
 	ctx.font = fontSize+"px monospace";
 	for(let i=0;i<drops.length;i++){
 		const t=chars[Math.floor(Math.random()*chars.length)];
-		ctx.fillText(t,i*fontSize,drops[i]*fontSize);
-		drops[i] += 0.4; 
-		if(drops[i]*fontSize>h && Math.random()>0.975) drops[i]=0;
+		const x = i * xSpacing;
+		const y = drops[i] * ySpacing;
+		ctx.fillText(t, x, y);
+		drops[i]++;
+		if(y > h && Math.random() > 0.98) drops[i]=0;
 	}
 	requestAnimationFrame(drawMatrix);
 }
 drawMatrix();
+
 window.addEventListener("resize",()=>{
 	w=matrixCanvas.width=window.innerWidth;
 	h=matrixCanvas.height=window.innerHeight;
-	cols=Math.floor(w/fontSize);
-	drops=Array(cols).fill(1);
+	cols=Math.floor(w/xSpacing);
+	drops=Array(cols).fill(0).map(() => Math.random() * 50);
+	particlesCanvas.width=window.innerWidth;
+	particlesCanvas.height=window.innerHeight;
 });
 
 // ===== PARTICLES =====
@@ -153,10 +234,6 @@ function drawParticles(){
 	requestAnimationFrame(drawParticles);
 }
 drawParticles();
-window.addEventListener('resize',()=>{
-	particlesCanvas.width=window.innerWidth;
-	particlesCanvas.height=window.innerHeight;
-});
 
 // ===== GATE & AUDIO =====
 const gate=document.getElementById("gate");
@@ -181,8 +258,7 @@ enterBtn.onclick=()=>{
 	bgm.play().catch(()=>{});
 };
 
-// FIXED: Single button click handler with background image change
-const bgImageUrl = "MicroBit/AURA.png"; // FIXED: Changed > to .
+const bgImageUrl = "MicroBit/AURA.png";
 
 btn.onclick = () => {
 	if (!unlocked || playing) return;
@@ -215,6 +291,8 @@ main.addEventListener("timeupdate",()=>{
 	if(!main.duration) return;
 	const p=main.currentTime/main.duration;
 	bar.style.width=(p*100)+"%";
+	
+	// Animated gradient
 	const bx=20+Math.sin(p*Math.PI*2)*18;
 	const gx=80+Math.cos(p*Math.PI*2)*18;
 	const ry=75+Math.sin(p*Math.PI)*20;
@@ -242,11 +320,11 @@ setInterval(()=>{
 	const secs=secondsOnPage%60;
 	timerEl.textContent=`Time on page: ${mins}m ${secs}s`;
 },1000);
-window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPage,"seconds on page");});
-</script>
 
-</body>
-</html>
+window.addEventListener("beforeunload",()=>{
+	console.log("User spent",secondsOnPage,"seconds on page");
+});
+</script>
 
 </body>
 </html>
