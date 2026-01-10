@@ -142,10 +142,9 @@
         const auraSound = document.getElementById('auraSound');
 
         function generateAura() {
-            const randomAura = Math.floor(Math.random() * 100000) + 1;
+            const randomAura = Math.floor(Math.random() * 1000000) + 1;
             auraNumber.textContent = randomAura.toLocaleString();
-            
-            
+            auraSound.volume = 1;
             auraSound.play();
         }
 
