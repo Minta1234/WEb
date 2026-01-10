@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minta1234 Web</title>
+
+<style>
+html,body{
+  margin:0; width:100%; height:100%; overflow:hidden;
+  font-family:Arial, sans-serif; background:#000; color:#fff;
+}
+
+canvas{ position:fixed; inset:0; z-index:0; }
+
+#gate{
+  position:fixed; inset:0;
+  background:#1a1a1a; display:flex; align-items:center; justify-content:center; z-index:10;
+}
+#gate button{
+  font-size:22px; padding:18px 36px; background:#D0787C; border:none; border-radius:6px; cursor:pointer; color:#fff;
+}
+
+#frameWrap{
+  position:fixed; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  z-index:2;
+}
+
+#frame{
+  width:420px; padding:30px; border:2px solid rgba(255,255,255,.25);
+  border-radius:12px; background:rgba(0,0,0,.35); backdrop-filter:blur(6px);
+  box-shadow:0 0 30px rgba(0,255,255,.15); pointer-events:none; filter:blur(6px);
+}
+h1{margin:0 0 8px} p{margin:4px 0}
+button.main{ margin-top:15px; padding:12px 24px; font-size:16px; background:#c51414; border:none; border-radius:5px; cursor:pointer; color:#fff; }
+#barWrap{ width:100%; height:10px; background:#222; margin-top:15px; border-radius:5px; overflow:hidden; }
+#bar{ width:0%; height:100%; background:linear-gradient(90deg,#c33010,#ff5a2a); }
+#time{ margin-top:15px; font-size:13px; opacity:.85; text-align:right; }
+
+#downloadPage{ display:none; flex-direction:column; gap:8px; margin-top:15px; }
+.fileRow{ display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,.05); padding:8px 12px; border-radius:6px; }
+.fileRow button{ padding:6px 12px; background:#c51414; border:none; color:#fff; cursor:pointer; font-size:14px; }
+#exitDownload{ margin-top:10px; padding:8px 16px; background:#444; border:none; color:#fff; cursor:pointer; border-radius:6px; }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="gate">
+  <button id="enter">Click to Enter</button>
+</div>
+
+<div id="frameWrap">
+  <div id="frame">
+    <h1>Hi, привет</h1>
+    <p>I'm Minta</p>
+    <p>Я Code Engineer</p>
+    <p>Я программист 👍🧑‍🎓</p>
+
+    <button class="main" id="downloadBtn">Click me</button>
+
+    <div id="barWrap"><div id="bar"></div></div>
+    <div id="time">Time: 0s</div>
+
+    <div id="downloadPage">
+      Loading files...
+      <button id="exitDownload">Exit Download</button>
+    </div>
+
+    <audio id="bgm" src="https://minta0077.online/assets/мита.mp3" loop></audio>
+    <audio id="fx" src="https://minta0077.online/assets/ENO-soam-tan.mp3"></audio>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+/* ===== CANVAS DOT BACKGROUND ===== */
+const canvas=document.getElementById("bg");
+const ctx=canvas.getContext("2d");
+function resize(){ canvas.width=innerWidth; canvas.height=innerHeight; }
+resize(); addEventListener("resize",resize);
+const frame=document.getElementById("frame");
+function getFrameBox(){ const r=frame.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height}; }
+function inFrame(x,y,box){ return x>box.x && x<box.x+box.w && y>box.y && y<box.y+box.h; }
+
+const dots=[]; const MAX=140;
+for(let i=0;i<MAX;i++){ let x,y; do{x=Math.random()*canvas.width; y=Math.random()*canvas.height;}while(inFrame(x,y,getFrameBox())); dots.push({x,y,r:Math.random()*2+0.6,vx:(Math.random()-.5)*0.4,vy:(Math.random()-.5)*0.4,col:Math.random()<.7?"#061459":"#D0787C"}); }
+function draw(){ const g=ctx.createLinearGradient(0,0,canvas.width,0); g.addColorStop(0,"#41DFFF"); g.addColorStop(.5,"#4FEED8"); g.addColorStop(1,"#3CFFB6"); ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height); const box=getFrameBox(); for(const p of dots){ p.x+=p.vx; p.y+=p.vy; if(inFrame(p.x,p.y,box)){ p.vx*=-1; p.vy*=-1; } if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0; if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=p.col; ctx.shadowColor=p.col; ctx.shadowBlur=4; ctx.fill(); } requestAnimationFrame(draw);}
+draw();
+
+/* ===== GATE ===== */
+const gate=document.getElementById("gate");
+const enter=document.getElementById("enter");
+const bgm=document.getElementById("bgm");
+const fx=document.getElementById("fx");
+let unlocked=false;
+enter.onclick=()=>{
+  if(unlocked) return;
+  unlocked=true;
+  gate.remove();
+  frame.style.pointerEvents="auto"; frame.style.filter="none";
+  bgm.volume=1; bgm.play().catch(()=>{});
+};
+
+/* ===== TIMER ===== */
+let sec=0; setInterval(()=>{ sec++; const m=Math.floor(sec/60); const s=sec%60; document.getElementById("time").textContent=`Time: ${m}m ${s}s`; },1000);
+
+/* ===== PROGRESS BAR ===== */
+const bar=document.getElementById("bar");
+fx.ontimeupdate=()=>{ if(!fx.duration) return; bar.style.width=(fx.currentTime/fx.duration*100)+"%"; };
+fx.onended=()=>{ bar.style.width="0%"; bgm.play().catch(()=>{}); };
+
+/* ===== DOWNLOAD PAGE ===== */
+const downloadBtn=document.getElementById("downloadBtn");
+const downloadPage=document.getElementById("downloadPage");
+const exitDownload=document.getElementById("exitDownload");
+downloadBtn.onclick=()=>{ if(!unlocked) return; downloadPage.style.display="flex"; loadGitHubFiles(); };
+
+/* ===== EXIT DOWNLOAD ===== */
+exitDownload.onclick=()=>{ downloadPage.style.display="none"; };
+
+/* ===== GITHUB DOWNLOAD LIST ===== */
+const GITHUB_USER="Minta1234";
+const GITHUB_REPO="WEb";
+const DOWNLOAD_PATH="Download";
+
+async function loadGitHubFiles(){
+  try{
+    const api=`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DOWNLOAD_PATH}`;
+    const res=await fetch(api);
+    if(!res.ok) throw new Error("GitHub API error");
+    const files=await res.json();
+    downloadPage.innerHTML=""; downloadPage.appendChild(exitDownload);
+    files.filter(f=>f.type==="file").forEach(f=>{
+      const row=document.createElement("div"); row.className="fileRow";
+      const name=document.createElement("span"); name.textContent=f.name;
+      const btn=document.createElement("button"); btn.textContent="Download";
+      btn.onclick=async()=>{
+        fx.currentTime=0; fx.play().catch(()=>{});
+        bgm.pause();
+        if(!f.name.endsWith(".zip")){
+          // fetch content + zip
+          const fileRes=await fetch(f.download_url);
+          const blob=await fileRes.blob();
+          const zip=new JSZip();
+          zip.file(f.name,blob);
+          const content=await zip.generateAsync({type:"blob"});
+          const a=document.createElement("a"); a.href=URL.createObjectURL(content);
+          a.download=f.name.replace(/\..+$/,"")+".zip";
+          document.body.appendChild(a); a.click(); a.remove();
+        }else{
+          const a=document.createElement("a"); a.href=f.download_url; a.download=""; document.body.appendChild(a); a.click(); a.remove();
+        }
+      };
+      row.appendChild(name); row.appendChild(btn);
+      downloadPage.insertBefore(row, exitDownload);
+    });
+  }catch(err){
+    downloadPage.innerHTML="Failed to load files"; downloadPage.appendChild(exitDownload);
+    console.error(err);
+  }
+}
+
+// Auto update every 30s
+setInterval(loadGitHubFiles,30000);
+</script>
+</body>
+</html>
