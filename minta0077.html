@@ -15,7 +15,7 @@ html, body {
 	font-family: Arial, sans-serif;
 }
 
-/* LAYERS */
+/* ===== LAYERS ===== */
 #matrix, #particles {
 	position: fixed;
 	inset: 0;
@@ -33,37 +33,74 @@ html, body {
 		radial-gradient(circle at 20% 30%, rgba(0,0,255,.25), transparent 42%),
 		radial-gradient(circle at 80% 40%, rgba(0,255,0,.25), transparent 45%),
 		radial-gradient(circle at 50% 80%, rgba(255,0,0,.25), transparent 48%);
-	transition: background .12s linear;
 }
 
+/* ===== GATE ===== */
 #gate {
 	position: fixed;
 	inset: 0;
 	z-index: 10;
 	background: rgba(0,0,0,.9);
 	display: flex;
-	justify-content: center;
 	align-items: center;
+	justify-content: center;
 }
 
 #gate button {
 	padding: 16px 30px;
 	font-size: 20px;
-	border: none;
 	border-radius: 6px;
+	border: none;
 	cursor: pointer;
 	background: #00ccff;
 	color: #fff;
 }
 
+/* ===== CONTENT ===== */
 #content {
 	position: relative;
 	z-index: 5;
 	padding: 40px;
 	filter: blur(6px);
 	pointer-events: none;
+	transition: filter .3s ease;
 }
 
+.engineer {
+	color: #ff0000;
+	font-weight: 600;
+	text-shadow:
+		0 0 4px #ff0000,
+		0 0 8px #ff0000,
+		0 0 12px #ff0000,
+		0 0 20px #ff0000,
+		0 0 30px #ff0000,
+		0 0 40px #ff0000;
+	animation: neonPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+	from {
+		text-shadow:
+			0 0 4px #ff0000,
+			0 0 8px #ff0000,
+			0 0 12px #ff0000,
+			0 0 20px #ff0000,
+			0 0 30px #ff0000,
+			0 0 40px #ff0000;
+	}
+	to {
+		text-shadow:
+			0 0 2px #ff0000,
+			0 0 4px #ff0000,
+			0 0 6px #ff0000,
+			0 0 10px #ff0000,
+			0 0 15px #ff0000,
+			0 0 20px #ff0000;
+	}
+}
+
+/* ===== UI ===== */
 .btn {
 	margin-top: 20px;
 	padding: 10px 20px;
@@ -102,9 +139,10 @@ html, body {
 </head>
 
 <body>
+
 <img src="/Image/ribbon_top_right.png"
-     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
-	
+	style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
+
 <canvas id="matrix"></canvas>
 <canvas id="particles"></canvas>
 <div id="gradient"></div>
@@ -116,7 +154,8 @@ html, body {
 <div id="content">
 	<h1>Hi</h1>
 	<p>I'm Minta.R4M</p>
-	<p>я code engineer</p>
+	<p><span class="engineer">я code engineer</span></p>
+
 	<button class="btn" id="mainBtn">Click me</button>
 
 	<div id="progressWrap">
@@ -130,89 +169,78 @@ html, body {
 <div id="timer">Time on page: 0s</div>
 
 <script>
-/* ================= MATRIX ================= */
+/* ===== MATRIX ===== */
 const mCanvas = document.getElementById("matrix");
 const mCtx = mCanvas.getContext("2d");
 
-const FONT_SIZE = 14;
-const X_SPACING = 22;
-const Y_SPACING = 24;
+const FONT = 14;
+const X_SPACE = 22;
+const Y_SPACE = 24;
 const FADE = 0.08;
 
 const CHARS =
 "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 "йцукенгшщзхъфывапролджэячсмитьбю" +
-"あかさたなはまやらいうえおくきけこすしせそ" +
+"あかさたなはまやらいうえお" +
 "#!?$%&@";
 
-let mW, mH, cols, drops;
+let cols, drops;
 
-function resizeAll() {
-	mW = mCanvas.width = window.innerWidth;
-	mH = mCanvas.height = window.innerHeight;
+function resize() {
+	mCanvas.width = innerWidth;
+	mCanvas.height = innerHeight;
+	cols = Math.floor(innerWidth / X_SPACE);
+	drops = Array(cols).fill(0).map(()=>Math.random()*50);
 
-	cols = Math.floor(mW / X_SPACING);
-	drops = Array.from({length: cols}, () => ({
-		y: Math.random() * 50,
-		speed: 0.3 + Math.random() * 0.6
-	}));
-
-	pCanvas.width = window.innerWidth;
-	pCanvas.height = window.innerHeight;
+	pCanvas.width = innerWidth;
+	pCanvas.height = innerHeight;
 }
 
 function drawMatrix() {
 	mCtx.fillStyle = `rgba(0,0,0,${FADE})`;
-	mCtx.fillRect(0, 0, mW, mH);
+	mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
 
 	mCtx.fillStyle = "#00ff41";
-	mCtx.font = FONT_SIZE + "px monospace";
-	mCtx.textBaseline = "top";
+	mCtx.font = FONT + "px monospace";
 
-	for (let i = 0; i < cols; i++) {
-		const char = CHARS[Math.floor(Math.random() * CHARS.length)];
-		const x = i * X_SPACING;
-		const y = drops[i].y * Y_SPACING;
-
-		mCtx.fillText(char, x, y);
-
-		drops[i].y += drops[i].speed;
-		if (y > mH && Math.random() > 0.98) drops[i].y = 0;
+	for(let i=0;i<cols;i++){
+		const c = CHARS[Math.floor(Math.random()*CHARS.length)];
+		const x = i * X_SPACE;
+		const y = drops[i] * Y_SPACE;
+		mCtx.fillText(c,x,y);
+		drops[i]++;
+		if(y > innerHeight && Math.random() > .98) drops[i]=0;
 	}
 	requestAnimationFrame(drawMatrix);
 }
 
-/* ================= PARTICLES ================= */
+/* ===== PARTICLES ===== */
 const pCanvas = document.getElementById("particles");
 const pCtx = pCanvas.getContext("2d");
 
-const particles = Array.from({length: 100}, () => ({
-	x: Math.random() * window.innerWidth,
-	y: Math.random() * window.innerHeight,
-	r: Math.random() * 2 + 1,
-	dx: (Math.random() - .5) * .6,
-	dy: (Math.random() - .5) * .6
+const particles = Array.from({length:100},()=>({
+	x: Math.random()*innerWidth,
+	y: Math.random()*innerHeight,
+	r: Math.random()*2+1,
+	dx:(Math.random()-.5)*.6,
+	dy:(Math.random()-.5)*.6
 }));
 
-function drawParticles() {
+function drawParticles(){
 	pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
-	pCtx.fillStyle = "#00ffff";
-
-	for (const p of particles) {
+	pCtx.fillStyle="#00ffff";
+	for(const p of particles){
 		pCtx.beginPath();
 		pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
 		pCtx.fill();
-
-		p.x += p.dx;
-		p.y += p.dy;
-
-		if (p.x < 0 || p.x > pCanvas.width) p.dx *= -1;
-		if (p.y < 0 || p.y > pCanvas.height) p.dy *= -1;
+		p.x+=p.dx; p.y+=p.dy;
+		if(p.x<0||p.x>pCanvas.width) p.dx*=-1;
+		if(p.y<0||p.y>pCanvas.height) p.dy*=-1;
 	}
 	requestAnimationFrame(drawParticles);
 }
 
-/* ================= UI / AUDIO ================= */
+/* ===== UI / AUDIO ===== */
 const gate = document.getElementById("gate");
 const enterBtn = document.getElementById("enterBtn");
 const content = document.getElementById("content");
@@ -221,53 +249,50 @@ const bgm = document.getElementById("bgm");
 const main = document.getElementById("mainSound");
 const bar = document.getElementById("progressBar");
 
-let unlocked = false;
-
 enterBtn.onclick = () => {
-	if (unlocked) return;
-	unlocked = true;
 	gate.remove();
-	content.style.filter = "none";
-	content.style.pointerEvents = "auto";
+	content.style.filter="none";
+	content.style.pointerEvents="auto";
+	bgm.volume=1;
 	bgm.play().catch(()=>{});
-	bgm.volume = 1;
 };
 
 btn.onclick = () => {
 	bgm.pause();
-	const a = document.createElement("a");
-	a.href = "/Download/MicroBit.zip";  
-	a.download = "VIRuS>MiTa<.zip";        
-	document.body.appendChild(a);
+
+	const a=document.createElement("a");
+	a.href="/Download/MicroBit.zip";
+	a.download="VIRuS-MiTa.zip";
 	a.click();
-	a.remove();
-	main.currentTime = 0;
-	main.volume = 1;
+
+	main.currentTime=0;
+	main.volume=1;
 	main.play().catch(()=>{});
 };
 
 main.ontimeupdate = () => {
+	if (!main.duration) return;
 	bar.style.width = (main.currentTime / main.duration * 100) + "%";
 };
 
-main.onended = () => {
-	bar.style.width = "0%";
+main.onended=()=>{
+	bar.style.width="0%";
 	bgm.play().catch(()=>{});
 };
 
-/* ================= TIMER ================= */
-let sec = 0;
+/* ===== TIMER ===== */
+let sec=0;
 setInterval(()=>{
 	sec++;
-	document.getElementById("timer").textContent =
+	document.getElementById("timer").textContent=
 	`Time on page: ${Math.floor(sec/60)}m ${sec%60}s`;
 },1000);
 
 /* INIT */
-resizeAll();
+resize();
 drawMatrix();
 drawParticles();
-window.addEventListener("resize", resizeAll);
+addEventListener("resize",resize);
 </script>
 
 </body>
