@@ -115,7 +115,7 @@
 <body>
     <div class="container">
         <div class="start-screen" id="startScreen">
-            <h1> AURA </h1>
+            <h1>AURA</h1>
             <button class="btn" id="startBtn">Get AURA</button>
         </div>
 
@@ -142,7 +142,7 @@
         const auraSound = document.getElementById('auraSound');
 
         function generateAura() {
-            const randomAura = Math.floor(Math.random() * 1000000) + 1;
+            const randomAura = Math.floor(Math.random() * 1100001) - 100000;
             auraNumber.textContent = randomAura.toLocaleString();
             auraSound.volume = 1;
             auraSound.play();
