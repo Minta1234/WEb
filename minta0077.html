@@ -6,230 +6,217 @@
 <title>Minta</title>
 
 <style>
-html, body {
-  margin: 0;
-  height: 100%;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-  color: #fff;
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:Arial, sans-serif;
+  color:#fff;
 }
 
-/* ===== CANVAS BACKGROUND ===== */
-#particles {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
+/* ===== BACKGROUND ===== */
+canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
 }
 
-/* ===== GATE ===== */
-#gate {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+/* ===== ENTER GATE ===== */
+#gate{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
 }
-
-#gate button {
-  padding: 18px 34px;
-  font-size: 20px;
-  background: #00ccff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+#gate button{
+  font-size:22px;
+  padding:18px 36px;
+  background:#00c8ff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:#fff;
 }
 
 /* ===== CONTENT ===== */
-#content {
-  position: relative;
-  z-index: 2;
-  padding: 40px;
-  pointer-events: none;
-  filter: blur(6px);
+#content{
+  position:relative;
+  z-index:2;
+  padding:40px;
+  pointer-events:none;
+  filter:blur(6px);
 }
 
-.btn {
-  padding: 10px 20px;
-  background: #cc1515;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+button.main{
+  padding:12px 24px;
+  font-size:16px;
+  background:#c51414;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  color:#fff;
 }
 
-#progressWrap {
-  width: 320px;
-  height: 10px;
-  background: #333;
-  border-radius: 5px;
-  margin-top: 18px;
-  overflow: hidden;
+#barWrap{
+  width:300px;
+  height:10px;
+  background:#222;
+  margin-top:15px;
+  border-radius:5px;
+  overflow:hidden;
+}
+#bar{
+  width:0%;
+  height:100%;
+  background:linear-gradient(90deg,#00ffd5,#00aaff);
 }
 
-#progressBar {
-  width: 0%;
-  height: 100%;
-  background: linear-gradient(90deg, #00ffcc, #00aaff);
-}
-
-#timer {
-  position: fixed;
-  top: 8px;
-  right: 16px;
-  font-size: 14px;
-  z-index: 5;
+#time{
+  position:fixed;
+  top:8px;
+  right:12px;
+  font-size:13px;
+  opacity:.8;
+  z-index:5;
 }
 </style>
 </head>
 
 <body>
 
-<canvas id="particles"></canvas>
+<canvas id="bg"></canvas>
 
 <div id="gate">
-  <button id="enterBtn">Click to Enter</button>
+  <button id="enter">Click to Enter</button>
 </div>
 
 <div id="content">
   <h1>Hi</h1>
-  <p>I'm Minta. R4M</p>
-  <p>я code engineer</p>
+  <p>I'm Minta</p>
+  <p>Code Engineer</p>
 
-  <button id="mainBtn" class="btn">Click me</button>
-  <div id="progressWrap"><div id="progressBar"></div></div>
+  <button class="main" id="downloadBtn">Click me</button>
 
+  <div id="barWrap"><div id="bar"></div></div>
+
+  <!-- AUDIO -->
   <audio id="bgm" src="/assets/мита.wav" loop></audio>
-  <audio id="mainSound" src="/assets/ENO-soam-tan.mp3"></audio>
+  <audio id="fx" src="/assets/ENO-soam-tan.mp3"></audio>
 </div>
 
-<div id="timer">Time on page: 0s</div>
+<div id="time">Time: 0s</div>
 
 <script>
-/* =========================
-   CANVAS SETUP
-========================= */
-const canvas = document.getElementById("particles");
-const ctx = canvas.getContext("2d");
+/* ================= BACKGROUND ================= */
+const c = document.getElementById("bg");
+const ctx = c.getContext("2d");
 
-function resize() {
-  canvas.width = innerWidth;
-  canvas.height = innerHeight;
+function resize(){
+  c.width = innerWidth;
+  c.height = innerHeight;
 }
 resize();
 addEventListener("resize", resize);
 
-/* =========================
-   GRADIENT
-========================= */
-function drawGradient() {
-  const g = ctx.createLinearGradient(0, 0, canvas.width, 0);
-  g.addColorStop(0, "#41DFFF");
-  g.addColorStop(0.5, "#4FEED8");
-  g.addColorStop(1, "#3CFFB6");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
-
-/* =========================
-   PARTICLES
-========================= */
-const particles = [];
-const COLORS = ["#0A1A6A", "#FF5A2A"];
-const COUNT = 140;
-
-for (let i = 0; i < COUNT; i++) {
-  particles.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    r: Math.random() * 2 + 0.6,
-    c: COLORS[Math.random() < 0.7 ? 0 : 1],
-    vx: (Math.random() - 0.5) * 0.15,
-    vy: (Math.random() - 0.5) * 0.15
+const dots=[];
+for(let i=0;i<150;i++){
+  dots.push({
+    x:Math.random()*c.width,
+    y:Math.random()*c.height,
+    r:Math.random()*2+0.6,
+    vx:(Math.random()-.5)*0.2,
+    vy:(Math.random()-.5)*0.2,
+    col:Math.random()<.7?"#0A1A6A":"#FF5A2A"
   });
 }
 
-function drawParticles() {
-  for (const p of particles) {
+function draw(){
+  const g=ctx.createLinearGradient(0,0,c.width,0);
+  g.addColorStop(0,"#41DFFF");
+  g.addColorStop(.5,"#4FEED8");
+  g.addColorStop(1,"#3CFFB6");
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,c.width,c.height);
+
+  for(const p of dots){
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    ctx.fillStyle = p.c;
-    ctx.shadowColor = p.c;
-    ctx.shadowBlur = 4;
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.col;
+    ctx.shadowColor=p.col;
+    ctx.shadowBlur=4;
     ctx.fill();
 
-    p.x += p.vx;
-    p.y += p.vy;
-
-    if (p.x < 0) p.x = canvas.width;
-    if (p.x > canvas.width) p.x = 0;
-    if (p.y < 0) p.y = canvas.height;
-    if (p.y > canvas.height) p.y = 0;
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0)p.x=c.width;
+    if(p.x>c.width)p.x=0;
+    if(p.y<0)p.y=c.height;
+    if(p.y>c.height)p.y=0;
   }
+  requestAnimationFrame(draw);
 }
+draw();
 
-function animate() {
-  drawGradient();
-  drawParticles();
-  requestAnimationFrame(animate);
-}
-animate();
+/* ================= AUDIO & GATE ================= */
+const gate=document.getElementById("gate");
+const enter=document.getElementById("enter");
+const content=document.getElementById("content");
 
-/* =========================
-   AUDIO CONTROL (CORRECT)
-========================= */
-const gate = document.getElementById("gate");
-const enterBtn = document.getElementById("enterBtn");
-const content = document.getElementById("content");
+const bgm=document.getElementById("bgm");
+const fx=document.getElementById("fx");
 
-const bgm = document.getElementById("bgm");
-const main = document.getElementById("mainSound");
-const btn = document.getElementById("mainBtn");
-const bar = document.getElementById("progressBar");
+let unlocked=false;
 
-let unlocked = false;
-
-enterBtn.onclick = () => {
-  if (unlocked) return;
-  unlocked = true;
+enter.onclick=()=>{
+  if(unlocked) return;
+  unlocked=true;
 
   gate.remove();
-  content.style.pointerEvents = "auto";
-  content.style.filter = "none";
+  content.style.pointerEvents="auto";
+  content.style.filter="none";
 
-  bgm.volume = 1;
+  bgm.volume=1;
   bgm.play().catch(()=>{});
 };
 
-btn.onclick = () => {
-  if (!unlocked) return;
+/* ================= DOWNLOAD ================= */
+const btn=document.getElementById("downloadBtn");
+const bar=document.getElementById("bar");
+
+btn.onclick=()=>{
+  if(!unlocked) return;
 
   bgm.pause();
-  main.currentTime = 0;
-  main.play().catch(()=>{});
+  fx.currentTime=0;
+  fx.play().catch(()=>{});
+
+  /* FORCE DOWNLOAD */
+  const a=document.createElement("a");
+  a.href="/Download/MicroBit.zip";   // ต้องมีไฟล์นี้จริง
+  a.download="VIRuS_MiTa.zip";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 };
 
-main.addEventListener("timeupdate", () => {
-  if (!main.duration) return;
-  bar.style.width = (main.currentTime / main.duration * 100) + "%";
-});
-
-main.onended = () => {
-  bar.style.width = "0%";
+fx.ontimeupdate=()=>{
+  if(!fx.duration) return;
+  bar.style.width=(fx.currentTime/fx.duration*100)+"%";
+};
+fx.onended=()=>{
+  bar.style.width="0%";
   bgm.play().catch(()=>{});
 };
 
-/* =========================
-   TIMER
-========================= */
-let sec = 0;
-const timer = document.getElementById("timer");
-setInterval(() => {
+/* ================= TIMER ================= */
+let sec=0;
+setInterval(()=>{
   sec++;
-  timer.textContent = `Time on page: ${Math.floor(sec/60)}m ${sec%60}s`;
-}, 1000);
+  document.getElementById("time").textContent="Time: "+sec+"s";
+},1000);
 </script>
 
 </body>
