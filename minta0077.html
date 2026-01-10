@@ -6,122 +6,105 @@
 <title>Minta</title>
 
 <style>
-html,body{
-	margin:0;
-	height:100%;
-	overflow:hidden;
-	background:#050505;
-	color:#fff;
-	font-family:Arial,sans-serif;
+html, body {
+	margin: 0;
+	height: 100%;
+	overflow: hidden;
+	background: #050505;
+	color: #fff;
+	font-family: Arial, sans-serif;
 }
 
-/* ===== LAYERS ===== */
-#matrix,#particles{
-	position:fixed;
-	inset:0;
+/* LAYERS */
+#matrix, #particles {
+	position: fixed;
+	inset: 0;
 }
-#matrix{z-index:0}
-#particles{z-index:1;pointer-events:none}
 
-#gradient{
-	position:fixed;
-	inset:0;
-	z-index:2;
-	pointer-events:none;
+#matrix { z-index: 0; }
+#particles { z-index: 1; pointer-events: none; }
+
+#gradient {
+	position: fixed;
+	inset: 0;
+	z-index: 2;
+	pointer-events: none;
 	background:
-		radial-gradient(circle at 20% 30%,rgba(0,0,255,.25),transparent 42%),
-		radial-gradient(circle at 80% 40%,rgba(0,255,0,.25),transparent 45%),
-		radial-gradient(circle at 50% 80%,rgba(255,0,0,.25),transparent 48%);
+		radial-gradient(circle at 20% 30%, rgba(0,0,255,.25), transparent 42%),
+		radial-gradient(circle at 80% 40%, rgba(0,255,0,.25), transparent 45%),
+		radial-gradient(circle at 50% 80%, rgba(255,0,0,.25), transparent 48%);
+	transition: background .12s linear;
 }
 
-/* ===== GATE ===== */
-#gate{
-	position:fixed;
-	inset:0;
-	z-index:10;
-	background:rgba(0,0,0,.9);
-	display:flex;
-	align-items:center;
-	justify-content:center;
-}
-#gate button{
-	padding:16px 30px;
-	font-size:20px;
-	border:none;
-	border-radius:6px;
-	cursor:pointer;
-	background:#00ccff;
-	color:#fff;
+#gate {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	background: rgba(0,0,0,.9);
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
-/* ===== CONTENT ===== */
-#content{
-	position:relative;
-	z-index:5;
-	padding:40px;
-	filter:blur(6px);
-	pointer-events:none;
-	transition:filter .3s ease;
+#gate button {
+	padding: 16px 30px;
+	font-size: 20px;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	background: #00ccff;
+	color: #fff;
 }
 
-.engineer{
-	color:#ff0000;
-	font-weight:600;
-	text-shadow:
-		0 0 4px #ff0000,
-		0 0 8px #ff0000,
-		0 0 16px #ff0000,
-		0 0 30px #ff0000;
-	animation:neon 1.4s ease-in-out infinite alternate;
+#content {
+	position: relative;
+	z-index: 5;
+	padding: 40px;
+	filter: blur(6px);
+	pointer-events: none;
 }
 
-@keyframes neon{
-	from{opacity:.7}
-	to{opacity:1}
+.btn {
+	margin-top: 20px;
+	padding: 10px 20px;
+	font-size: 16px;
+	border-radius: 5px;
+	border: none;
+	background: #cc1515;
+	color: #fff;
+	cursor: pointer;
 }
 
-/* ===== UI ===== */
-.btn{
-	margin-top:20px;
-	padding:10px 20px;
-	font-size:16px;
-	border:none;
-	border-radius:5px;
-	background:#cc1515;
-	color:#fff;
-	cursor:pointer;
+#progressWrap {
+	margin-top: 18px;
+	width: 320px;
+	height: 10px;
+	background: #333;
+	border-radius: 5px;
+	overflow: hidden;
 }
 
-#progressWrap{
-	margin-top:18px;
-	width:320px;
-	height:10px;
-	background:#222;
-	border-radius:5px;
-	overflow:hidden;
-}
-#progressBar{
-	height:100%;
-	width:0%;
-	background:linear-gradient(90deg,#00ffcc,#00aaff);
+#progressBar {
+	height: 100%;
+	width: 0%;
+	background: linear-gradient(90deg,#00ffcc,#00aaff);
 }
 
-#timer{
-	position:fixed;
-	top:6px;
-	right:80px;
-	z-index:20;
-	font-size:14px;
-	color:#e2e6e2;
+#timer {
+	position: fixed;
+	top: 6px;
+	right: 80px;
+	z-index: 20;
+	font-size: 14px;
+	color: #e2e6e2;
 }
 </style>
 </head>
 
 <body>
-
 <img src="/Image/ribbon_top_right.png"
-style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
-
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
+	
 <canvas id="matrix"></canvas>
 <canvas id="particles"></canvas>
 <div id="gradient"></div>
@@ -133,144 +116,158 @@ style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none"
 <div id="content">
 	<h1>Hi</h1>
 	<p>I'm Minta.R4M</p>
-	<p><span class="engineer">я code engineer</span></p>
-
+	<p>я code engineer</p>
 	<button class="btn" id="mainBtn">Click me</button>
 
 	<div id="progressWrap">
 		<div id="progressBar"></div>
 	</div>
 
-	<audio id="bgm" src="/assets/мита.wav" loop preload="auto"></audio>
-	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="metadata"></audio>
+	<audio id="bgm" src="/assets/мита.wav" loop></audio>
+	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
 
 <script>
-/* ===== MATRIX ===== */
-const mCanvas=document.getElementById("matrix");
-const mCtx=mCanvas.getContext("2d");
+/* ================= MATRIX ================= */
+const mCanvas = document.getElementById("matrix");
+const mCtx = mCanvas.getContext("2d");
 
-const FONT=14,X_SPACE=22,Y_SPACE=24,FADE=.08;
-const CHARS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбю#!?$%&@";
+const FONT_SIZE = 14;
+const X_SPACING = 22;
+const Y_SPACING = 24;
+const FADE = 0.08;
 
-let cols=[],drops=[];
+const CHARS =
+"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+"йцукенгшщзхъфывапролджэячсмитьбю" +
+"あかさたなはまやらいうえおくきけこすしせそ" +
+"#!?$%&@";
 
-function resize(){
-	mCanvas.width=innerWidth;
-	mCanvas.height=innerHeight;
-	cols=Math.floor(innerWidth/X_SPACE);
-	drops=Array(cols).fill(0).map(()=>Math.random()*50);
+let mW, mH, cols, drops;
 
-	pCanvas.width=innerWidth;
-	pCanvas.height=innerHeight;
+function resizeAll() {
+	mW = mCanvas.width = window.innerWidth;
+	mH = mCanvas.height = window.innerHeight;
+
+	cols = Math.floor(mW / X_SPACING);
+	drops = Array.from({length: cols}, () => ({
+		y: Math.random() * 50,
+		speed: 0.3 + Math.random() * 0.6
+	}));
+
+	pCanvas.width = window.innerWidth;
+	pCanvas.height = window.innerHeight;
 }
 
-function drawMatrix(){
-	mCtx.fillStyle=`rgba(0,0,0,${FADE})`;
-	mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
-	mCtx.fillStyle="#00ff41";
-	mCtx.font=FONT+"px monospace";
+function drawMatrix() {
+	mCtx.fillStyle = `rgba(0,0,0,${FADE})`;
+	mCtx.fillRect(0, 0, mW, mH);
 
-	for(let i=0;i<cols;i++){
-		const c=CHARS[Math.floor(Math.random()*CHARS.length)];
-		const x=i*X_SPACE;
-		const y=drops[i]*Y_SPACE;
-		mCtx.fillText(c,x,y);
-		drops[i]++;
-		if(y>innerHeight&&Math.random()>.98)drops[i]=0;
+	mCtx.fillStyle = "#00ff41";
+	mCtx.font = FONT_SIZE + "px monospace";
+	mCtx.textBaseline = "top";
+
+	for (let i = 0; i < cols; i++) {
+		const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+		const x = i * X_SPACING;
+		const y = drops[i].y * Y_SPACING;
+
+		mCtx.fillText(char, x, y);
+
+		drops[i].y += drops[i].speed;
+		if (y > mH && Math.random() > 0.98) drops[i].y = 0;
 	}
 	requestAnimationFrame(drawMatrix);
 }
 
-/* ===== PARTICLES ===== */
-const pCanvas=document.getElementById("particles");
-const pCtx=pCanvas.getContext("2d");
+/* ================= PARTICLES ================= */
+const pCanvas = document.getElementById("particles");
+const pCtx = pCanvas.getContext("2d");
 
-const particles=Array.from({length:100},()=>({
-	x:Math.random()*innerWidth,
-	y:Math.random()*innerHeight,
-	r:Math.random()*2+1,
-	dx:(Math.random()-.5)*.6,
-	dy:(Math.random()-.5)*.6
+const particles = Array.from({length: 100}, () => ({
+	x: Math.random() * window.innerWidth,
+	y: Math.random() * window.innerHeight,
+	r: Math.random() * 2 + 1,
+	dx: (Math.random() - .5) * .6,
+	dy: (Math.random() - .5) * .6
 }));
 
-function drawParticles(){
+function drawParticles() {
 	pCtx.clearRect(0,0,pCanvas.width,pCanvas.height);
-	pCtx.fillStyle="#00ffff";
-	for(const p of particles){
+	pCtx.fillStyle = "#00ffff";
+
+	for (const p of particles) {
 		pCtx.beginPath();
 		pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
 		pCtx.fill();
-		p.x+=p.dx;p.y+=p.dy;
-		if(p.x<0||p.x>pCanvas.width)p.dx*=-1;
-		if(p.y<0||p.y>pCanvas.height)p.dy*=-1;
+
+		p.x += p.dx;
+		p.y += p.dy;
+
+		if (p.x < 0 || p.x > pCanvas.width) p.dx *= -1;
+		if (p.y < 0 || p.y > pCanvas.height) p.dy *= -1;
 	}
 	requestAnimationFrame(drawParticles);
 }
 
-/* ===== UI / AUDIO ===== */
-const gate=document.getElementById("gate");
-const enterBtn=document.getElementById("enterBtn");
-const content=document.getElementById("content");
-const btn=document.getElementById("mainBtn");
-const bgm=document.getElementById("bgm");
-const main=document.getElementById("mainSound");
-const bar=document.getElementById("progressBar");
+/* ================= UI / AUDIO ================= */
+const gate = document.getElementById("gate");
+const enterBtn = document.getElementById("enterBtn");
+const content = document.getElementById("content");
+const btn = document.getElementById("mainBtn");
+const bgm = document.getElementById("bgm");
+const main = document.getElementById("mainSound");
+const bar = document.getElementById("progressBar");
 
-let mainReady=false;
+let unlocked = false;
 
-main.addEventListener("loadedmetadata",()=>{
-	mainReady=true;
-	bar.style.width="0%";
-});
-
-enterBtn.onclick=()=>{
+enterBtn.onclick = () => {
+	if (unlocked) return;
+	unlocked = true;
 	gate.remove();
-	content.style.filter="none";
-	content.style.pointerEvents="auto";
-	bgm.volume=1;
+	content.style.filter = "none";
+	content.style.pointerEvents = "auto";
 	bgm.play().catch(()=>{});
+	bgm.volume = 1;
 };
 
-btn.onclick=()=>{
+btn.onclick = () => {
 	bgm.pause();
-	bar.style.width="0%";
-
-	const a=document.createElement("a");
-	a.href="/Download/MicroBit.zip";
-	a.download="VIRuS-MiTa.zip";
+	const a = document.createElement("a");
+	a.href = "/Download/MicroBit.zip";  
+	a.download = "VIRuS-MiTa.zip";        
+	document.body.appendChild(a);
 	a.click();
-
-	main.currentTime=0;
-	main.volume=1;
+	a.remove();
+	main.currentTime = 0;
+	main.volume = 1;
 	main.play().catch(()=>{});
 };
 
-main.ontimeupdate=()=>{
-	if(!mainReady||!isFinite(main.duration))return;
-	bar.style.width=(main.currentTime/main.duration*100).toFixed(2)+"%";
+main.ontimeupdate = () => {
+	bar.style.width = (main.currentTime / main.duration * 100) + "%";
 };
 
-main.onended=()=>{
-	bar.style.width="0%";
+main.onended = () => {
+	bar.style.width = "0%";
 	bgm.play().catch(()=>{});
 };
 
-/* ===== TIMER ===== */
-let sec=0;
+/* ================= TIMER ================= */
+let sec = 0;
 setInterval(()=>{
 	sec++;
-	document.getElementById("timer").textContent=
+	document.getElementById("timer").textContent =
 	`Time on page: ${Math.floor(sec/60)}m ${sec%60}s`;
 },1000);
 
 /* INIT */
-resize();
+resizeAll();
 drawMatrix();
 drawParticles();
-addEventListener("resize",resize);
+window.addEventListener("resize", resizeAll);
 </script>
 
 </body>
