@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Minta</title>
 
@@ -11,9 +12,9 @@ html,body{
 	width:100%;
 	height:100%;
 	overflow:hidden;
+	font-family:Arial, sans-serif;
 	background:#050505;
 	color:#fff;
-	font-family:Arial, sans-serif;
 }
 
 /* ===== LAYERS ===== */
@@ -29,7 +30,6 @@ html,body{
 	pointer-events:none;
 	transition:background .1s linear;
 }
-#particles{z-index:2}
 
 /* ===== GATE ===== */
 #gate{
@@ -39,13 +39,13 @@ html,body{
 	display:flex;
 	align-items:center;
 	justify-content:center;
-	z-index:10;
+	z-index:5;
 }
 #gate button{
 	font-size:20px;
 	padding:16px 30px;
-	border:0;
 	border-radius:6px;
+	border:none;
 	background:#00ccff;
 	color:#fff;
 	cursor:pointer;
@@ -54,43 +54,31 @@ html,body{
 /* ===== CONTENT ===== */
 #content{
 	position:relative;
-	z-index:5;
+	z-index:3;
 	padding:40px;
 	filter:blur(6px);
 	pointer-events:none;
 	transition:.3s;
 }
-
-.engineer{
-	color:#ff0000;
-	font-weight:600;
-	text-shadow:0 0 8px #ff0000,0 0 20px #ff0000;
-	animation:pulse 1.5s infinite alternate;
-}
-@keyframes pulse{
-	from{opacity:.6}
-	to{opacity:1}
-}
-
 .btn{
 	padding:10px 20px;
 	font-size:16px;
 	background:#cc1515;
 	color:#fff;
-	border:0;
+	border:none;
 	border-radius:5px;
 	cursor:pointer;
 	margin-top:20px;
 }
 .btn:disabled{opacity:.5}
 
-/* ===== AUDIO BAR ===== */
+/* ===== PROGRESS ===== */
 #progressWrap{
 	width:320px;
 	height:10px;
 	background:#333;
 	border-radius:5px;
-	margin-top:15px;
+	margin-top:18px;
 	overflow:hidden;
 }
 #progressBar{
@@ -102,15 +90,19 @@ html,body{
 /* ===== TIMER ===== */
 #timer{
 	position:fixed;
-	top:6px;
-	right:15px;
+	top:5px;
+	right:20px;
 	font-size:14px;
-	z-index:20;
+	z-index:10;
+	color:#e2e6e2;
 }
 </style>
 </head>
 
 <body>
+
+<img src="Image/ribbon_top_right.png"
+	style="position:fixed;top:0;right:0;width:80px;opacity:.9;z-index:9999;pointer-events:none;">
 
 <canvas id="matrix"></canvas>
 <div id="gradient"></div>
@@ -123,12 +115,10 @@ html,body{
 <div id="content">
 	<h1>Hi</h1>
 	<p>I'm Minta.R4M</p>
-	<p><span class="engineer">я code engineer</span></p>
-
 	<button id="mainBtn" class="btn">Click me</button>
 	<div id="progressWrap"><div id="progressBar"></div></div>
 
-	<audio id="bgm" src="/assets/мита.wav" loop></audio>
+	<audio id="bgm" src="/assets/Stranger.mp3" loop></audio>
 	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
 </div>
 
@@ -136,47 +126,49 @@ html,body{
 
 <script>
 /* ================= MATRIX ================= */
-const m=document.getElementById("matrix");
-const mctx=m.getContext("2d");
-const chars="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const fs=14;
-let w,h,cols,drops;
+const mc=document.getElementById("matrix");
+const mctx=mc.getContext("2d");
+const chars="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщ";
+const fontSize=15;
+let mw,mh,cols,drops;
 
-function resize(){
-	w=m.width=window.innerWidth;
-	h=m.height=window.innerHeight;
-	cols=Math.floor(w/22);
-	drops=Array(cols).fill(0);
+function resizeMatrix(){
+	mw=mc.width=window.innerWidth;
+	mh=mc.height=window.innerHeight;
+	cols=Math.floor(mw/fontSize);
+	drops=Array(cols).fill(1);
 }
-resize();
-window.addEventListener("resize",resize);
+resizeMatrix();
+window.addEventListener("resize",resizeMatrix);
 
-function matrix(){
+function drawMatrix(){
 	mctx.fillStyle="rgba(0,0,0,.08)";
-	mctx.fillRect(0,0,w,h);
+	mctx.fillRect(0,0,mw,mh);
 	mctx.fillStyle="#00ff41";
-	mctx.font=fs+"px monospace";
+	mctx.font=fontSize+"px monospace";
 	drops.forEach((y,i)=>{
 		const t=chars[Math.random()*chars.length|0];
-		mctx.fillText(t,i*22,y*24);
-		drops[i]=y*24>h&&Math.random()>.98?0:y+1;
+		mctx.fillText(t,i*fontSize,y*fontSize);
+		drops[i]+=0.5;
+		if(y*fontSize>mh&&Math.random()>.98) drops[i]=0;
 	});
-	requestAnimationFrame(matrix);
+	requestAnimationFrame(drawMatrix);
 }
-matrix();
+drawMatrix();
 
-/* ================= PARTICLES ================= */
+/* ================= PARTICLES (BLUE ONLY) ================= */
 const pc=document.getElementById("particles");
 const pctx=pc.getContext("2d");
 pc.width=window.innerWidth;
 pc.height=window.innerHeight;
 
+const PARTICLE_COLOR="#00aaff";
 const particles=[...Array(120)].map(()=>({
 	x:Math.random()*pc.width,
 	y:Math.random()*pc.height,
 	r:Math.random()*3+1,
-	dx:(Math.random()-.5),
-	dy:(Math.random()-.5)
+	dx:(Math.random()-.5)*0.8,
+	dy:(Math.random()-.5)*0.8
 }));
 
 function drawParticles(){
@@ -184,7 +176,9 @@ function drawParticles(){
 	particles.forEach(p=>{
 		pctx.beginPath();
 		pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-		pctx.fillStyle="#00ffff";
+		pctx.fillStyle=PARTICLE_COLOR;
+		pctx.shadowColor=PARTICLE_COLOR;
+		pctx.shadowBlur=10;
 		pctx.fill();
 		p.x+=p.dx; p.y+=p.dy;
 		if(p.x<0||p.x>pc.width) p.dx*=-1;
@@ -193,6 +187,11 @@ function drawParticles(){
 	requestAnimationFrame(drawParticles);
 }
 drawParticles();
+
+window.addEventListener("resize",()=>{
+	pc.width=window.innerWidth;
+	pc.height=window.innerHeight;
+});
 
 /* ================= AUDIO SYSTEM ================= */
 const gate=document.getElementById("gate");
@@ -218,16 +217,18 @@ enterBtn.onclick=()=>{
 	bgm.play().catch(()=>{});
 };
 
+const bgImageUrl="MicroBit/AURA.png";
+
 function updateProgress(){
 	if(!playing||!audioReady) return;
 	const p=main.currentTime/main.duration;
 	bar.style.width=(p*100)+"%";
 
-	const glow=.3+Math.sin(p*6)*.2;
+	const glow=.25+Math.sin(p*6)*.15;
 	gradient.style.background=
-	`radial-gradient(circle at 30% 30%, rgba(0,0,255,${glow}), transparent 40%),
-	 radial-gradient(circle at 70% 40%, rgba(0,255,0,${glow}), transparent 45%),
-	 radial-gradient(circle at 50% 80%, rgba(255,0,0,${glow}), transparent 50%)`;
+	`radial-gradient(circle at 30% 30%, rgba(0,0,255,${glow}), transparent 42%),
+	 radial-gradient(circle at 70% 40%, rgba(0,255,255,${glow}), transparent 45%),
+	 radial-gradient(circle at 50% 80%, rgba(0,150,255,${glow}), transparent 48%)`;
 
 	requestAnimationFrame(updateProgress);
 }
@@ -238,10 +239,19 @@ btn.onclick=()=>{
 	btn.disabled=true;
 	bgm.pause();
 
-	document.body.style.background="url('MicroBit/AURA.png') center/cover fixed";
+	document.body.style.background=
+	`url('${bgImageUrl}') center/cover fixed`;
+
+	const a=document.createElement("a");
+	a.href="Download/MicroBit.zip";
+	a.download="MicroBit.zip";
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
 
 	main.currentTime=0;
-	main.play().then(()=>requestAnimationFrame(updateProgress))
+	main.play()
+	.then(()=>requestAnimationFrame(updateProgress))
 	.catch(()=>{
 		playing=false;
 		btn.disabled=false;
@@ -252,6 +262,7 @@ main.onended=()=>{
 	bar.style.width="0%";
 	playing=false;
 	btn.disabled=false;
+	bgm.currentTime=0;
 	bgm.play().catch(()=>{});
 };
 
