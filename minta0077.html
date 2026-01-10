@@ -1,8 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+  <head>
 <meta charset="utf-8">
-<link rel="icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Minta</title>
 <style>
@@ -74,11 +73,12 @@ html, body {
 
 <div id="content">
 	<h1>Hi</h1>
-	<p>I'm Minta.R4M</p>
+	<p>I'm Minta. R4M</p>
+	<p>я code engineer</p>
 	<button id="mainBtn" class="btn">Click me</button>
 	<div id="progressWrap"><div id="progressBar"></div></div>
-	<audio id="bgm" src="/assets/мита.mp3" loop></audio>
-	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
+	<audio id="bgm" src="/assets/мита.wav" loop></audio>
+	<audio id="mainSound" src=/assets/ENO-soam-tan.mp3" preload="auto"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
@@ -91,7 +91,7 @@ let h = matrixCanvas.height = window.innerHeight;
 const fontSize = 15;
 let cols = Math.floor(w / fontSize);
 let drops = Array(cols).fill(1);
-const chars = "あかさたなはまやらいうえおくきけこすしせそちつてとぬにのねふひほへむみもめゆ（よ）るりろれんを〜ー#!?$%&@";
+const chars = "あ か さ た な は ま や ら い う え お く き け こ す し せ そ ち つ て と ぬ に の ね ふ ひ ほ へ む み も め ゆ よ る り ろ れ ん を 〜 ー # ! ? $ % & @";
 
 function drawMatrix(){
 	ctx.fillStyle = "rgba(0,0,0,0.08)";
@@ -121,7 +121,7 @@ particlesCanvas.width = window.innerWidth;
 particlesCanvas.height = window.innerHeight;
 
 const particles = [];
-const colors = ['#000080'];
+const colors = ['#000080','#F54927'];
 for(let i=0;i<120;i++){
 	particles.push({
 		x: Math.random()*window.innerWidth,
@@ -179,6 +179,7 @@ enterBtn.onclick=()=>{
 	bgm.play().catch(()=>{});
 };
 
+// FIXED: Single button click handler with background image change
 const bgImageUrl = "MicroBit/AURA.png"; // FIXED: Changed > to .
 
 btn.onclick = () => {
@@ -194,8 +195,8 @@ btn.onclick = () => {
 
 	// Trigger download
 	const a = document.createElement("a");
-	a.href = "Download/MicroBit.zip";  
-	a.download = "MicroBit.zip";
+	a.href = "/Download/MicroBit.zip";  
+	a.download = "VIRuS_MiTa.zip";
 	document.body.appendChild(a);
 	a.click();
 	a.remove();
@@ -244,4 +245,3 @@ window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPa
 
 </body>
 </html>
-edit distance alphabet the matrix only
