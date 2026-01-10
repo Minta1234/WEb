@@ -6,134 +6,113 @@
 <title>Minta</title>
 
 <style>
-html, body {
-	margin: 0;
-	height: 100%;
-	overflow: hidden;
-	background: #050505;
-	color: #fff;
-	font-family: Arial, sans-serif;
+html,body{
+	margin:0;
+	height:100%;
+	overflow:hidden;
+	background:#050505;
+	color:#fff;
+	font-family:Arial,sans-serif;
 }
 
 /* ===== LAYERS ===== */
-#matrix, #particles {
-	position: fixed;
-	inset: 0;
+#matrix,#particles{
+	position:fixed;
+	inset:0;
 }
+#matrix{z-index:0}
+#particles{z-index:1;pointer-events:none}
 
-#matrix { z-index: 0; }
-#particles { z-index: 1; pointer-events: none; }
-
-#gradient {
-	position: fixed;
-	inset: 0;
-	z-index: 2;
-	pointer-events: none;
+#gradient{
+	position:fixed;
+	inset:0;
+	z-index:2;
+	pointer-events:none;
 	background:
-		radial-gradient(circle at 20% 30%, rgba(0,0,255,.25), transparent 42%),
-		radial-gradient(circle at 80% 40%, rgba(0,255,0,.25), transparent 45%),
-		radial-gradient(circle at 50% 80%, rgba(255,0,0,.25), transparent 48%);
+		radial-gradient(circle at 20% 30%,rgba(0,0,255,.25),transparent 42%),
+		radial-gradient(circle at 80% 40%,rgba(0,255,0,.25),transparent 45%),
+		radial-gradient(circle at 50% 80%,rgba(255,0,0,.25),transparent 48%);
 }
 
 /* ===== GATE ===== */
-#gate {
-	position: fixed;
-	inset: 0;
-	z-index: 10;
-	background: rgba(0,0,0,.9);
-	display: flex;
-	align-items: center;
-	justify-content: center;
+#gate{
+	position:fixed;
+	inset:0;
+	z-index:10;
+	background:rgba(0,0,0,.9);
+	display:flex;
+	align-items:center;
+	justify-content:center;
 }
-
-#gate button {
-	padding: 16px 30px;
-	font-size: 20px;
-	border-radius: 6px;
-	border: none;
-	cursor: pointer;
-	background: #00ccff;
-	color: #fff;
+#gate button{
+	padding:16px 30px;
+	font-size:20px;
+	border:none;
+	border-radius:6px;
+	cursor:pointer;
+	background:#00ccff;
+	color:#fff;
 }
 
 /* ===== CONTENT ===== */
-#content {
-	position: relative;
-	z-index: 5;
-	padding: 40px;
-	filter: blur(6px);
-	pointer-events: none;
-	transition: filter .3s ease;
+#content{
+	position:relative;
+	z-index:5;
+	padding:40px;
+	filter:blur(6px);
+	pointer-events:none;
+	transition:filter .3s ease;
 }
 
-.engineer {
-	color: #ff0000;
-	font-weight: 600;
+.engineer{
+	color:#ff0000;
+	font-weight:600;
 	text-shadow:
 		0 0 4px #ff0000,
 		0 0 8px #ff0000,
-		0 0 12px #ff0000,
-		0 0 20px #ff0000,
-		0 0 30px #ff0000,
-		0 0 40px #ff0000;
-	animation: neonPulse 1.5s ease-in-out infinite alternate;
+		0 0 16px #ff0000,
+		0 0 30px #ff0000;
+	animation:neon 1.4s ease-in-out infinite alternate;
 }
 
-@keyframes neonPulse {
-	from {
-		text-shadow:
-			0 0 4px #ff0000,
-			0 0 8px #ff0000,
-			0 0 12px #ff0000,
-			0 0 20px #ff0000,
-			0 0 30px #ff0000,
-			0 0 40px #ff0000;
-	}
-	to {
-		text-shadow:
-			0 0 2px #ff0000,
-			0 0 4px #ff0000,
-			0 0 6px #ff0000,
-			0 0 10px #ff0000,
-			0 0 15px #ff0000,
-			0 0 20px #ff0000;
-	}
+@keyframes neon{
+	from{opacity:.7}
+	to{opacity:1}
 }
 
 /* ===== UI ===== */
-.btn {
-	margin-top: 20px;
-	padding: 10px 20px;
-	font-size: 16px;
-	border-radius: 5px;
-	border: none;
-	background: #cc1515;
-	color: #fff;
-	cursor: pointer;
+.btn{
+	margin-top:20px;
+	padding:10px 20px;
+	font-size:16px;
+	border:none;
+	border-radius:5px;
+	background:#cc1515;
+	color:#fff;
+	cursor:pointer;
 }
 
-#progressWrap {
-	margin-top: 18px;
-	width: 320px;
-	height: 10px;
-	background: #333;
-	border-radius: 5px;
-	overflow: hidden;
+#progressWrap{
+	margin-top:18px;
+	width:320px;
+	height:10px;
+	background:#222;
+	border-radius:5px;
+	overflow:hidden;
+}
+#progressBar{
+	height:100%;
+	width:0%;
+	background:linear-gradient(90deg,#00ffcc,#00aaff);
 }
 
-#progressBar {
-	height: 100%;
-	width: 0%;
-	background: linear-gradient(90deg,#00ffcc,#00aaff);
-}
-
-#timer {
-	position: fixed;
-	top: 6px;
-	right: 80px;
-	z-index: 20;
-	font-size: 14px;
-	color: #e2e6e2;
+#timer{
+	position:fixed;
+	top:6px;
+	right:80px;
+	z-index:20;
+	font-size:14px;
+	color:#e2e6e2;
 }
 </style>
 </head>
@@ -141,7 +120,7 @@ html, body {
 <body>
 
 <img src="/Image/ribbon_top_right.png"
-	style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
+style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
 
 <canvas id="matrix"></canvas>
 <canvas id="particles"></canvas>
@@ -162,66 +141,57 @@ html, body {
 		<div id="progressBar"></div>
 	</div>
 
-	<audio id="bgm" src="/assets/мита.wav" loop></audio>
-	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3"></audio>
+	<audio id="bgm" src="/assets/мита.wav" loop preload="auto"></audio>
+	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="metadata"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
 
 <script>
 /* ===== MATRIX ===== */
-const mCanvas = document.getElementById("matrix");
-const mCtx = mCanvas.getContext("2d");
+const mCanvas=document.getElementById("matrix");
+const mCtx=mCanvas.getContext("2d");
 
-const FONT = 14;
-const X_SPACE = 22;
-const Y_SPACE = 24;
-const FADE = 0.08;
+const FONT=14,X_SPACE=22,Y_SPACE=24,FADE=.08;
+const CHARS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбю#!?$%&@";
 
-const CHARS =
-"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-"йцукенгшщзхъфывапролджэячсмитьбю" +
-"あかさたなはまやらいうえお" +
-"#!?$%&@";
+let cols=[],drops=[];
 
-let cols, drops;
+function resize(){
+	mCanvas.width=innerWidth;
+	mCanvas.height=innerHeight;
+	cols=Math.floor(innerWidth/X_SPACE);
+	drops=Array(cols).fill(0).map(()=>Math.random()*50);
 
-function resize() {
-	mCanvas.width = innerWidth;
-	mCanvas.height = innerHeight;
-	cols = Math.floor(innerWidth / X_SPACE);
-	drops = Array(cols).fill(0).map(()=>Math.random()*50);
-
-	pCanvas.width = innerWidth;
-	pCanvas.height = innerHeight;
+	pCanvas.width=innerWidth;
+	pCanvas.height=innerHeight;
 }
 
-function drawMatrix() {
-	mCtx.fillStyle = `rgba(0,0,0,${FADE})`;
+function drawMatrix(){
+	mCtx.fillStyle=`rgba(0,0,0,${FADE})`;
 	mCtx.fillRect(0,0,mCanvas.width,mCanvas.height);
-
-	mCtx.fillStyle = "#00ff41";
-	mCtx.font = FONT + "px monospace";
+	mCtx.fillStyle="#00ff41";
+	mCtx.font=FONT+"px monospace";
 
 	for(let i=0;i<cols;i++){
-		const c = CHARS[Math.floor(Math.random()*CHARS.length)];
-		const x = i * X_SPACE;
-		const y = drops[i] * Y_SPACE;
+		const c=CHARS[Math.floor(Math.random()*CHARS.length)];
+		const x=i*X_SPACE;
+		const y=drops[i]*Y_SPACE;
 		mCtx.fillText(c,x,y);
 		drops[i]++;
-		if(y > innerHeight && Math.random() > .98) drops[i]=0;
+		if(y>innerHeight&&Math.random()>.98)drops[i]=0;
 	}
 	requestAnimationFrame(drawMatrix);
 }
 
 /* ===== PARTICLES ===== */
-const pCanvas = document.getElementById("particles");
-const pCtx = pCanvas.getContext("2d");
+const pCanvas=document.getElementById("particles");
+const pCtx=pCanvas.getContext("2d");
 
-const particles = Array.from({length:100},()=>({
-	x: Math.random()*innerWidth,
-	y: Math.random()*innerHeight,
-	r: Math.random()*2+1,
+const particles=Array.from({length:100},()=>({
+	x:Math.random()*innerWidth,
+	y:Math.random()*innerHeight,
+	r:Math.random()*2+1,
 	dx:(Math.random()-.5)*.6,
 	dy:(Math.random()-.5)*.6
 }));
@@ -233,23 +203,30 @@ function drawParticles(){
 		pCtx.beginPath();
 		pCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
 		pCtx.fill();
-		p.x+=p.dx; p.y+=p.dy;
-		if(p.x<0||p.x>pCanvas.width) p.dx*=-1;
-		if(p.y<0||p.y>pCanvas.height) p.dy*=-1;
+		p.x+=p.dx;p.y+=p.dy;
+		if(p.x<0||p.x>pCanvas.width)p.dx*=-1;
+		if(p.y<0||p.y>pCanvas.height)p.dy*=-1;
 	}
 	requestAnimationFrame(drawParticles);
 }
 
 /* ===== UI / AUDIO ===== */
-const gate = document.getElementById("gate");
-const enterBtn = document.getElementById("enterBtn");
-const content = document.getElementById("content");
-const btn = document.getElementById("mainBtn");
-const bgm = document.getElementById("bgm");
-const main = document.getElementById("mainSound");
-const bar = document.getElementById("progressBar");
+const gate=document.getElementById("gate");
+const enterBtn=document.getElementById("enterBtn");
+const content=document.getElementById("content");
+const btn=document.getElementById("mainBtn");
+const bgm=document.getElementById("bgm");
+const main=document.getElementById("mainSound");
+const bar=document.getElementById("progressBar");
 
-enterBtn.onclick = () => {
+let mainReady=false;
+
+main.addEventListener("loadedmetadata",()=>{
+	mainReady=true;
+	bar.style.width="0%";
+});
+
+enterBtn.onclick=()=>{
 	gate.remove();
 	content.style.filter="none";
 	content.style.pointerEvents="auto";
@@ -257,8 +234,9 @@ enterBtn.onclick = () => {
 	bgm.play().catch(()=>{});
 };
 
-btn.onclick = () => {
+btn.onclick=()=>{
 	bgm.pause();
+	bar.style.width="0%";
 
 	const a=document.createElement("a");
 	a.href="/Download/MicroBit.zip";
@@ -270,9 +248,9 @@ btn.onclick = () => {
 	main.play().catch(()=>{});
 };
 
-main.ontimeupdate = () => {
-	if (!main.duration) return;
-	bar.style.width = (main.currentTime / main.duration * 100) + "%";
+main.ontimeupdate=()=>{
+	if(!mainReady||!isFinite(main.duration))return;
+	bar.style.width=(main.currentTime/main.duration*100).toFixed(2)+"%";
 };
 
 main.onended=()=>{
