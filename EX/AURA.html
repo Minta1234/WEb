@@ -85,7 +85,7 @@
             font-weight: bold;
             margin: 20px 0;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            background: linear-gradient(45deg, #ffd89b, #19547b);
+            background: linear-gradient(45deg, #00FFFF, #DE3163);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -116,7 +116,7 @@
     <div class="container">
         <div class="start-screen" id="startScreen">
             <h1> AURA </h1>
-            <button class="btn" id="startBtn">Click to Get AURA</button>
+            <button class="btn" id="startBtn">Get AURA</button>
         </div>
 
         <div class="main-screen" id="mainScreen">
@@ -125,7 +125,7 @@
                 <img src="/MicroBit/AURA.png" alt="AURA" class="aura-image" id="auraImage">
                 <div class="aura-number" id="auraNumber">0</div>
             </div>
-            <button class="btn play-again" id="playAgainBtn">Get Another AURA</button>
+            <button class="btn play-again" id="playAgainBtn">Get AURA</button>
         </div>
     </div>
 
@@ -142,7 +142,7 @@
         const auraSound = document.getElementById('auraSound');
 
         function generateAura() {
-            const randomAura = Math.floor(Math.random() * 1000000000) + 1;
+            const randomAura = Math.floor(Math.random() * 100000) + 1;
             auraNumber.textContent = randomAura.toLocaleString();
             
             
