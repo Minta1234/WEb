@@ -77,124 +77,109 @@ html, body {
 	<p>I'm Minta.R4M</p>
 	<button id="mainBtn" class="btn">Click me</button>
 	<div id="progressWrap"><div id="progressBar"></div></div>
-	<audio id="bgm" src="/assets/Stranger.mp3" loop></audio>
+	<audio id="bgm" src="/assets/мита.mp3" loop></audio>
 	<audio id="mainSound" src="/assets/ENO-soam-tan.mp3" preload="auto"></audio>
 </div>
 
 <div id="timer">Time on page: 0s</div>
 
 <script>
-/* ================= MATRIX SYSTEM ================= */
 const matrixCanvas = document.getElementById("matrix");
 const ctx = matrixCanvas.getContext("2d");
+let w = matrixCanvas.width = window.innerWidth;
+let h = matrixCanvas.height = window.innerHeight;
+const fontSize = 15;
+let cols = Math.floor(w / fontSize);
+let drops = Array(cols).fill(1);
+const chars = "あかさたなはまやらいうえおくきけこすしせそちつてとぬにのねふひほへむみもめゆ（よ）るりろれんを〜ー#!?$%&@";
 
-/* === MATRIX CONFIG (ปรับตรงนี้อย่างเดียวพอ) === */
-const fontSize = 15;     // ขนาดตัวอักษร
-const xSpacing = 22;     // ระยะห่างแนวนอน (ซ้าย-ขวา)
-const ySpacing = 26;     // ระยะห่างแนวตั้ง (บน-ล่าง)
-const fallSpeed = 0.45;  // ความเร็วการตก
-
-const chars =
-"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZйцукенгшщзхъфывапролджэячсмитьбю" +
-"あかさたなはまやらいうえおくきけこすしせそちつてとぬにのね" +
-"#!?$%&@";
-
-let w, h, cols, drops;
-
-function resizeMatrix() {
-	w = matrixCanvas.width = window.innerWidth;
-	h = matrixCanvas.height = window.innerHeight;
-	cols = Math.floor(w / xSpacing);
-	drops = Array(cols).fill(1);
-}
-resizeMatrix();
-window.addEventListener("resize", resizeMatrix);
-
-function drawMatrix() {
+function drawMatrix(){
 	ctx.fillStyle = "rgba(0,0,0,0.08)";
-	ctx.fillRect(0, 0, w, h);
-
+	ctx.fillRect(0,0,w,h);
 	ctx.fillStyle = "#00ff41";
-	ctx.font = fontSize + "px monospace";
-
-	for (let i = 0; i < drops.length; i++) {
-		const char = chars[Math.floor(Math.random() * chars.length)];
-		ctx.fillText(char, i * xSpacing, drops[i] * ySpacing);
-
-		drops[i] += fallSpeed;
-
-		if (drops[i] * ySpacing > h && Math.random() > 0.975) {
-			drops[i] = 0;
-		}
+	ctx.font = fontSize+"px monospace";
+	for(let i=0;i<drops.length;i++){
+		const t=chars[Math.floor(Math.random()*chars.length)];
+		ctx.fillText(t,i*fontSize,drops[i]*fontSize);
+		drops[i] += 0.4; 
+		if(drops[i]*fontSize>h && Math.random()>0.975) drops[i]=0;
 	}
 	requestAnimationFrame(drawMatrix);
 }
 drawMatrix();
+window.addEventListener("resize",()=>{
+	w=matrixCanvas.width=window.innerWidth;
+	h=matrixCanvas.height=window.innerHeight;
+	cols=Math.floor(w/fontSize);
+	drops=Array(cols).fill(1);
+});
 
-/* ================= PARTICLES (BLUE ONLY) ================= */
+// ===== PARTICLES =====
 const particlesCanvas = document.getElementById("particles");
 const pctx = particlesCanvas.getContext("2d");
+particlesCanvas.width = window.innerWidth;
+particlesCanvas.height = window.innerHeight;
 
-function resizeParticles() {
-	particlesCanvas.width = window.innerWidth;
-	particlesCanvas.height = window.innerHeight;
+const particles = [];
+const colors = ['#000080'];
+for(let i=0;i<120;i++){
+	particles.push({
+		x: Math.random()*window.innerWidth,
+		y: Math.random()*window.innerHeight,
+		r: Math.random()*3+1,
+		color: colors[Math.floor(Math.random()*colors.length)],
+		dx: (Math.random()-0.5)*0.8,
+		dy: (Math.random()-0.5)*0.8
+	});
 }
-resizeParticles();
-window.addEventListener("resize", resizeParticles);
 
-const PARTICLE_COLOR = "#000080";
-const particles = Array.from({ length: 120 }, () => ({
-	x: Math.random() * particlesCanvas.width,
-	y: Math.random() * particlesCanvas.height,
-	r: Math.random() * 3 + 1,
-	dx: (Math.random() - 0.5) * 0.8,
-	dy: (Math.random() - 0.5) * 0.8
-}));
-
-function drawParticles() {
-	pctx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
-	for (const p of particles) {
+function drawParticles(){
+	pctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+	for(let i=0;i<particles.length;i++){
+		const p=particles[i];
 		pctx.beginPath();
-		pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-		pctx.fillStyle = PARTICLE_COLOR;
-		pctx.shadowColor = PARTICLE_COLOR;
-		pctx.shadowBlur = 10;
+		pctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+		pctx.fillStyle=p.color;
+		pctx.shadowColor=p.color;
+		pctx.shadowBlur=10;
 		pctx.fill();
-
-		p.x += p.dx;
-		p.y += p.dy;
-
-		if (p.x < 0 || p.x > particlesCanvas.width) p.dx *= -1;
-		if (p.y < 0 || p.y > particlesCanvas.height) p.dy *= -1;
+		p.x+=p.dx;
+		p.y+=p.dy;
+		if(p.x<0||p.x>window.innerWidth) p.dx*=-1;
+		if(p.y<0||p.y>window.innerHeight) p.dy*=-1;
 	}
 	requestAnimationFrame(drawParticles);
 }
 drawParticles();
+window.addEventListener('resize',()=>{
+	particlesCanvas.width=window.innerWidth;
+	particlesCanvas.height=window.innerHeight;
+});
 
-/* ================= GATE & AUDIO ================= */
-const gate = document.getElementById("gate");
-const enterBtn = document.getElementById("enterBtn");
-const content = document.getElementById("content");
-const btn = document.getElementById("mainBtn");
+// ===== GATE & AUDIO =====
+const gate=document.getElementById("gate");
+const enterBtn=document.getElementById("enterBtn");
+const content=document.getElementById("content");
+const btn=document.getElementById("mainBtn");
+const bgm=document.getElementById("bgm");
+const main=document.getElementById("mainSound");
+const bar=document.getElementById("progressBar");
+const gradient=document.getElementById("gradient");
 
-const bgm = document.getElementById("bgm");
-const main = document.getElementById("mainSound");
-const bar = document.getElementById("progressBar");
-const gradient = document.getElementById("gradient");
+let unlocked=false;
+let playing=false;
 
-let unlocked = false;
-let playing = false;
-
-enterBtn.onclick = () => {
-	if (unlocked) return;
-	unlocked = true;
+enterBtn.onclick=()=>{
+	if(unlocked) return;
+	unlocked=true;
 	gate.remove();
-	content.style.pointerEvents = "auto";
-	content.style.filter = "none";
-	bgm.play().catch(() => {});
+	content.style.pointerEvents="auto";
+	content.style.filter="none";
+	bgm.volume=1;
+	bgm.play().catch(()=>{});
 };
 
-const bgImageUrl = "MicroBit/AURA.png";
+const bgImageUrl = "MicroBit/AURA.png"; // FIXED: Changed > to .
 
 btn.onclick = () => {
 	if (!unlocked || playing) return;
@@ -203,17 +188,19 @@ btn.onclick = () => {
 	btn.disabled = true;
 	bgm.pause();
 
-	document.body.style.background =
-	`url('${bgImageUrl}') no-repeat center center fixed`;
+	// Change background image
+	document.body.style.background = `url('${bgImageUrl}') no-repeat center center fixed`;
 	document.body.style.backgroundSize = "cover";
 
+	// Trigger download
 	const a = document.createElement("a");
-	a.href = "Download/MicroBit.zip";
+	a.href = "Download/MicroBit.zip";  
 	a.download = "MicroBit.zip";
 	document.body.appendChild(a);
 	a.click();
 	a.remove();
 
+	// Play main sound
 	main.currentTime = 0;
 	main.play().catch(() => {
 		playing = false;
@@ -221,41 +208,40 @@ btn.onclick = () => {
 	});
 };
 
-main.addEventListener("timeupdate", () => {
-	if (!main.duration) return;
-
-	const p = main.currentTime / main.duration;
-	bar.style.width = (p * 100) + "%";
-
-	const bx = 20 + Math.sin(p * Math.PI * 2) * 18;
-	const gx = 80 + Math.cos(p * Math.PI * 2) * 18;
-	const ry = 75 + Math.sin(p * Math.PI) * 20;
-	const glow = 0.25 + Math.sin(p * Math.PI * 4) * 0.15;
-
-	gradient.style.background =
+main.addEventListener("timeupdate",()=>{
+	if(!main.duration) return;
+	const p=main.currentTime/main.duration;
+	bar.style.width=(p*100)+"%";
+	const bx=20+Math.sin(p*Math.PI*2)*18;
+	const gx=80+Math.cos(p*Math.PI*2)*18;
+	const ry=75+Math.sin(p*Math.PI)*20;
+	const glow=0.25+Math.sin(p*Math.PI*4)*0.15;
+	gradient.style.background=
 	`radial-gradient(circle at ${bx}% 30%, rgba(0,0,255,${glow}), transparent 42%),
 	 radial-gradient(circle at ${gx}% 40%, rgba(0,255,0,${glow}), transparent 45%),
 	 radial-gradient(circle at 50% ${ry}%, rgba(255,0,0,${glow}), transparent 48%)`;
 });
 
-main.onended = () => {
-	bar.style.width = "0%";
-	playing = false;
-	btn.disabled = false;
-	bgm.currentTime = 0;
-	bgm.play().catch(() => {});
+main.onended=()=>{
+	bar.style.width="0%";
+	bgm.currentTime=0;
+	bgm.play().catch(()=>{});
+	playing=false;
+	btn.disabled=false;
 };
 
-/* ================= TIMER ================= */
-let secondsOnPage = 0;
-const timerEl = document.getElementById("timer");
-setInterval(() => {
+// ===== TIMER =====
+let secondsOnPage=0;
+const timerEl=document.getElementById("timer");
+setInterval(()=>{
 	secondsOnPage++;
-	const m = Math.floor(secondsOnPage / 60);
-	const s = secondsOnPage % 60;
-	timerEl.textContent = `Time on page: ${m}m ${s}s`;
-}, 1000);
+	const mins=Math.floor(secondsOnPage/60);
+	const secs=secondsOnPage%60;
+	timerEl.textContent=`Time on page: ${mins}m ${secs}s`;
+},1000);
+window.addEventListener("beforeunload",()=>{console.log("User spent",secondsOnPage,"seconds on page");});
 </script>
 
 </body>
 </html>
+edit distance alphabet the matrix only
