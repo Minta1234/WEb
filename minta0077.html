@@ -102,7 +102,9 @@ html, body {
 </head>
 
 <body>
-
+<img src="/Image/ribbon_top_right.png"
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">
+	
 <canvas id="matrix"></canvas>
 <canvas id="particles"></canvas>
 <div id="gradient"></div>
@@ -228,11 +230,19 @@ enterBtn.onclick = () => {
 	content.style.filter = "none";
 	content.style.pointerEvents = "auto";
 	bgm.play().catch(()=>{});
+	bgm.volume = 1;
 };
 
 btn.onclick = () => {
 	bgm.pause();
+	const a = document.createElement("a");
+	a.href = "/Download/MicroBit.zip";  
+	a.download = "VиRuS.zip";        
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
 	main.currentTime = 0;
+	main.volume = 1;
 	main.play().catch(()=>{});
 };
 
