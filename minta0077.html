@@ -12,21 +12,21 @@ html,body{
   height:100%;
   overflow:hidden;
   font-family:Arial, sans-serif;
-  color:#fff;
+  background:#000;
+  color:#000000;
+  font-size: 20px
 }
 
-/* ===== BACKGROUND ===== */
 canvas{
   position:fixed;
   inset:0;
   z-index:0;
 }
 
-/* ===== ENTER GATE ===== */
 #gate{
   position:fixed;
   inset:0;
-  background:#000;
+  background:#a9c9d1;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -35,23 +35,38 @@ canvas{
 #gate button{
   font-size:22px;
   padding:18px 36px;
-  background:#00c8ff;
+  background:#D0787C;
   border:none;
   border-radius:6px;
   cursor:pointer;
   color:#fff;
 }
 
-/* ===== CONTENT ===== */
-#content{
-  position:relative;
+#frameWrap{
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   z-index:2;
-  padding:40px;
+}
+
+#frame{
+  width:420px;
+  padding:30px;
+  border:2px solid rgba(255,255,255,.25);
+  border-radius:12px;
+  background:rgba(0,0,0,.35);
+  backdrop-filter:blur(6px);
+  box-shadow:0 0 30px rgba(0,255,255,.15);
   pointer-events:none;
   filter:blur(6px);
 }
+h1{margin:0 0 8px}
+p{margin:4px 0}
 
 button.main{
+  margin-top:15px;
   padding:12px 24px;
   font-size:16px;
   background:#c51414;
@@ -62,7 +77,7 @@ button.main{
 }
 
 #barWrap{
-  width:300px;
+  width:100%;
   height:10px;
   background:#222;
   margin-top:15px;
@@ -72,16 +87,14 @@ button.main{
 #bar{
   width:0%;
   height:100%;
-  background:linear-gradient(90deg,#c33010);
+  background:linear-gradient(90deg,#c33010,#ff5a2a);
 }
 
 #time{
-  position:fixed;
-  top:8px;
-  right:12px;
+  margin-top:15px;
   font-size:13px;
-  opacity:.8;
-  z-index:5;
+  opacity:.85;
+  text-align:right;
 }
 </style>
 </head>
@@ -94,79 +107,106 @@ button.main{
   <button id="enter">Click to Enter</button>
 </div>
 
-<div id="content">
-  <h1>Hi</h1>
-  <p>I'm Minta</p>
-  <p>Code Engineer</p>
+<div id="frameWrap">
+  <div id="frame">
+    <h1>Hi</h1>
+    <p>I'm Minta</p>
+    <p>Code Engineer</p>
 
-  <button class="main" id="downloadBtn">Click me</button>
+    <button class="main" id="downloadBtn">Click me</button>
 
-  <div id="barWrap"><div id="bar"></div></div>
+    <div id="barWrap"><div id="bar"></div></div>
 
-  <!-- AUDIO -->
-  <audio id="bgm" src="/assets/мита.wav" loop></audio>
-  <audio id="fx" src="/assets/ENO-soam-tan.mp3"></audio>
+    <div id="time">Time: 0s</div>
+
+    <audio id="bgm" src="/assets/мита.wav" loop></audio>
+    <audio id="fx" src="/assets/ENO-soam-tan.mp3"></audio>
+  </div>
 </div>
 
-<div id="time">Time: 0s</div>
-
 <script>
-/* ================= BACKGROUND ================= */
-const c = document.getElementById("bg");
-const ctx = c.getContext("2d");
+
+const canvas = document.getElementById("bg");
+const ctx = canvas.getContext("2d");
 
 function resize(){
-  c.width = innerWidth;
-  c.height = innerHeight;
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 }
 resize();
 addEventListener("resize", resize);
+const frame = document.getElementById("frame");
+
+function getFrameBox(){
+  const r = frame.getBoundingClientRect();
+  return { x:r.left, y:r.top, w:r.width, h:r.height };
+}
+
+function inFrame(x,y,box){
+  return (
+    x > box.x && x < box.x + box.w &&
+    y > box.y && y < box.y + box.h
+  );
+}
 
 const dots=[];
-for(let i=0;i<150;i++){
+const MAX = 140;
+const box = getFrameBox();
+
+for(let i=0;i<MAX;i++){
+  let x,y;
+  do{
+    x = Math.random()*canvas.width;
+    y = Math.random()*canvas.height;
+  }while(inFrame(x,y,box));
   dots.push({
-    x:Math.random()*c.width,
-    y:Math.random()*c.height,
+    x,y,
     r:Math.random()*2+0.6,
-    vx:(Math.random()-.5)*0.2,
-    vy:(Math.random()-.5)*0.2,
-    col:Math.random()<.7?"#0A1A6A":"#FF5A2A"
+    vx:(Math.random()-.5)*0.4,
+    vy:(Math.random()-.5)*0.4,
+    col:Math.random()<.7?"#061459":"#D0787C"
   });
 }
 
 function draw(){
-  const g=ctx.createLinearGradient(0,0,c.width,0);
+  const g = ctx.createLinearGradient(0,0,canvas.width,0);
   g.addColorStop(0,"#41DFFF");
   g.addColorStop(.5,"#4FEED8");
   g.addColorStop(1,"#3CFFB6");
-  ctx.fillStyle=g;
-  ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const box = getFrameBox();
 
   for(const p of dots){
+    p.x += p.vx;
+    p.y += p.vy;
+
+    if(inFrame(p.x,p.y,box)){
+      p.vx *= -1;
+      p.vy *= -1;
+    }
+
+    if(p.x<0)p.x=canvas.width;
+    if(p.x>canvas.width)p.x=0;
+    if(p.y<0)p.y=canvas.height;
+    if(p.y>canvas.height)p.y=0;
+
     ctx.beginPath();
     ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
     ctx.fillStyle=p.col;
     ctx.shadowColor=p.col;
     ctx.shadowBlur=4;
     ctx.fill();
-
-    p.x+=p.vx; p.y+=p.vy;
-    if(p.x<0)p.x=c.width;
-    if(p.x>c.width)p.x=0;
-    if(p.y<0)p.y=c.height;
-    if(p.y>c.height)p.y=0;
   }
   requestAnimationFrame(draw);
 }
 draw();
 
-/* ================= AUDIO & GATE ================= */
-const gate=document.getElementById("gate");
-const enter=document.getElementById("enter");
-const content=document.getElementById("content");
-
-const bgm=document.getElementById("bgm");
-const fx=document.getElementById("fx");
+const gate = document.getElementById("gate");
+const enter = document.getElementById("enter");
+const bgm = document.getElementById("bgm");
+const fx = document.getElementById("fx");
 
 let unlocked=false;
 
@@ -175,16 +215,15 @@ enter.onclick=()=>{
   unlocked=true;
 
   gate.remove();
-  content.style.pointerEvents="auto";
-  content.style.filter="none";
+  frame.style.pointerEvents="auto";
+  frame.style.filter="none";
 
   bgm.volume=1;
   bgm.play().catch(()=>{});
 };
 
-/* ================= DOWNLOAD ================= */
-const btn=document.getElementById("downloadBtn");
-const bar=document.getElementById("bar");
+const btn = document.getElementById("downloadBtn");
+const bar = document.getElementById("bar");
 
 btn.onclick=()=>{
   if(!unlocked) return;
@@ -193,9 +232,8 @@ btn.onclick=()=>{
   fx.currentTime=0;
   fx.play().catch(()=>{});
 
-  /* FORCE DOWNLOAD */
   const a=document.createElement("a");
-  a.href="/Download/MicroBit.zip";   // ต้องมีไฟล์นี้จริง
+  a.href="/Download/MicroBit.zip";
   a.download="VIRuS_MiTa.zip";
   document.body.appendChild(a);
   a.click();
@@ -211,11 +249,13 @@ fx.onended=()=>{
   bgm.play().catch(()=>{});
 };
 
-/* ================= TIMER ================= */
 let sec=0;
 setInterval(()=>{
   sec++;
-  document.getElementById("time").textContent="Time: "+sec+"s";
+  const m=Math.floor(sec/60);
+  const s=sec%60;
+  document.getElementById("time").textContent =
+    `Time: ${m}m ${s}s`;
 },1000);
 </script>
 
