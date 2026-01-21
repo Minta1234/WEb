@@ -1,40 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>DOOM + micro:bit Controller (1080p)</title>
+<meta charset="utf-8">
+<title>DOOM + micro:bit (USB)</title>
 
 <style>
-html, body {
+body {
     margin: 0;
-    padding: 0;
-    background: #000;
+    background: black;
     color: #0f0;
     font-family: monospace;
 }
-
-#topbar {
-    padding: 8px;
+#bar {
+    padding: 6px;
     background: #111;
-    display: flex;
-    gap: 10px;
-    align-items: center;
 }
-
 button {
-    background: #0f0;
-    color: #000;
-    border: none;
     padding: 6px 12px;
-    cursor: pointer;
     font-weight: bold;
 }
-
-#status {
-    color: #0f0;
-}
-
-#doom {
+canvas {
     display: block;
     width: 1920px;
     height: 1080px;
@@ -42,105 +27,61 @@ button {
 }
 </style>
 
-<!-- js-dos -->
 <script src="https://js-dos.com/6.22/current/js-dos.js"></script>
 </head>
 
 <body>
 
-<div id="topbar">
-    <button onclick="connectMicrobit()">CONNECT micro:bit</button>
-    <span id="status">DISCONNECTED</span>
+<div id="bar">
+    <button onclick="connect()">CONNECT USB micro:bit</button>
+    <span id="state">DISCONNECTED</span>
 </div>
 
-<canvas id="doom" width="1920" height="1080"></canvas>
+<canvas id="screen" width="1920" height="1080"></canvas>
 
 <script>
-/* ===========================
-   DOOM ENGINE INIT
-=========================== */
-let doom;
-Dos(document.getElementById("doom"), {
+let port, reader, doom;
+
+/* ================= DOOM ================= */
+Dos(document.getElementById("screen"), {
     wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
 }).ready((fs, main) => {
     doom = main;
-    // โหลด DOOM shareware (freedoom)
     fs.extract("https://js-dos.com/cdn/upload/DOOM-@evilution.zip").then(() => {
-        main(["-c", "doom.exe"], {
-            fullscreen: true,
-            autolock: true
-        });
+        main(["-c", "doom.exe"], { fullscreen: true });
     });
 });
 
-/* ===========================
-   KEY EMULATION LAYER
-=========================== */
-function press(key) {
-    doom.simulateKeyPress(key);
-}
+/* =============== USB SERIAL ============== */
+async function connect() {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
 
-/* ===========================
-   MICROBIT SERIAL
-=========================== */
-let port, reader;
-const status = document.getElementById("status");
+    const decoder = new TextDecoderStream();
+    port.readable.pipeTo(decoder.writable);
+    reader = decoder.readable.getReader();
 
-async function connectMicrobit() {
-    try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
+    document.getElementById("state").textContent = "CONNECTED";
 
-        const decoder = new TextDecoderStream();
-        port.readable.pipeTo(decoder.writable);
-        reader = decoder.readable.getReader();
-
-        status.textContent = "CONNECTED";
-        status.style.color = "#0f0";
-
-        readLoop();
-    } catch (e) {
-        status.textContent = "ERROR";
-        status.style.color = "red";
-        console.error(e);
-    }
-}
-
-async function readLoop() {
     while (true) {
         const { value } = await reader.read();
-        if (!value) continue;
-
-        const cmd = value.trim();
-        handleInput(cmd);
+        if (value) parse(value.trim());
     }
 }
 
-/* ===========================
-   COMMAND MAP
-=========================== */
-function handleInput(cmd) {
-    console.log("CMD:", cmd);
+/* ============== INPUT MAP =============== */
+function key(k) {
+    doom.simulateKeyPress(k);
+}
 
+function parse(cmd) {
+    console.log(cmd);
     switch (cmd) {
-        case "UP":
-            press("ArrowUp");
-            break;
-        case "DOWN":
-            press("ArrowDown");
-            break;
-        case "LEFT":
-            press("ArrowLeft");
-            break;
-        case "RIGHT":
-            press("ArrowRight");
-            break;
-        case "FIRE":
-            press("Control");
-            break;
-        case "USE":
-            press("Space");
-            break;
+        case "UP":    key("ArrowUp"); break;
+        case "DOWN":  key("ArrowDown"); break;
+        case "LEFT":  key("ArrowLeft"); break;
+        case "RIGHT": key("ArrowRight"); break;
+        case "FIRE":  key("Control"); break;
     }
 }
 </script>
