@@ -2,26 +2,36 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>micro:bit USB Serial TEST</title>
+<title>micro:bit USB Controller</title>
 
 <style>
 body {
-    background: #000;
-    color: #0f0;
-    font-family: monospace;
+    margin: 0;
     padding: 20px;
+    background: #000;
+    color: #00ff00;
+    font-family: monospace;
 }
+
 button {
+    padding: 8px 16px;
     font-size: 16px;
-    padding: 6px 14px;
+    font-weight: bold;
+    cursor: pointer;
 }
+
+#status {
+    margin-left: 10px;
+    font-weight: bold;
+}
+
 #log {
     margin-top: 20px;
-    white-space: pre;
-    border: 1px solid #0f0;
+    border: 1px solid #00ff00;
     padding: 10px;
-    height: 300px;
+    height: 320px;
     overflow-y: auto;
+    white-space: pre-wrap;
 }
 </style>
 </head>
@@ -30,47 +40,105 @@ button {
 
 <h2>micro:bit USB Serial (NO BLUETOOTH)</h2>
 
-<button id="btn">CONNECT USB</button>
-<span id="state">DISCONNECTED</span>
+<button id="connectBtn">CONNECT USB</button>
+<span id="status">DISCONNECTED</span>
 
 <div id="log"></div>
 
 <script>
-/* ===============================
-   HARD FAIL IF NO WEB SERIAL
-================================ */
+/* =========================
+   HARD CHECK
+========================= */
 if (!("serial" in navigator)) {
-    alert("Web Serial NOT supported. Use Chrome or Edge.");
+    alert("Web Serial API NOT supported.\nUse Chrome or Edge only.");
     throw new Error("NO WEB SERIAL");
 }
 
-const btn   = document.getElementById("btn");
-const log   = document.getElementById("log");
-const state = document.getElementById("state");
+/* =========================
+   UI
+========================= */
+const btn = document.getElementById("connectBtn");
+const status = document.getElementById("status");
+const log = document.getElementById("log");
+
+function writeLog(text) {
+    log.textContent += text + "\n";
+    log.scrollTop = log.scrollHeight;
+}
+
+/* =========================
+   USB SERIAL
+========================= */
+let port, reader;
 
 btn.onclick = async () => {
     try {
-        const port = await navigator.serial.requestPort();
+        port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
 
-        state.textContent = "CONNECTED (USB)";
-        log.textContent += "USB CONNECTED\n";
+        status.textContent = "CONNECTED (USB)";
+        writeLog("[SYSTEM] USB CONNECTED");
 
         const decoder = new TextDecoderStream();
         port.readable.pipeTo(decoder.writable);
-        const reader = decoder.readable.getReader();
+        reader = decoder.readable.getReader();
 
-        while (true) {
-            const { value } = await reader.read();
-            if (value) {
-                log.textContent += value;
-                log.scrollTop = log.scrollHeight;
-            }
-        }
-    } catch (e) {
-        log.textContent += "ERROR: " + e + "\n";
+        readLoop();
+    } catch (err) {
+        writeLog("[ERROR] " + err);
     }
 };
+
+async function readLoop() {
+    while (true) {
+        const { value } = await reader.read();
+        if (value) handleCommand(value.trim());
+    }
+}
+
+/* =========================
+   COMMAND HANDLER
+========================= */
+function handleCommand(cmd) {
+    writeLog("[RX] " + cmd);
+
+    switch (cmd) {
+        case "UP":
+            console.log("MOVE UP");
+            break;
+
+        case "DOWN":
+            console.log("MOVE DOWN");
+            break;
+
+        case "LEFT":
+            console.log("TURN LEFT");
+            break;
+
+        case "RIGHT":
+            console.log("TURN RIGHT");
+            break;
+
+        case "STRAFE_LEFT":
+            console.log("STRAFE LEFT");
+            break;
+
+        case "STRAFE_RIGHT":
+            console.log("STRAFE RIGHT");
+            break;
+
+        case "FIRE":
+            console.log("ACTION FIRE");
+            break;
+
+        case "STOP":
+            console.log("STOP");
+            break;
+
+        default:
+            console.log("UNKNOWN CMD:", cmd);
+    }
+}
 </script>
 
 </body>
