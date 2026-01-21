@@ -3,72 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>micro:bit Doom Controller</title>
+<title>micro:bit Doom Controller - Enhanced</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-    background: #1a1a1a;
+    background: #0a0a0a;
     color: #0f0;
     font-family: 'Courier New', monospace;
     overflow: hidden;
 }
 #controls {
     position: fixed;
-    top: 10px;
-    left: 10px;
+    top: 20px;
+    left: 20px;
     z-index: 100;
-    background: rgba(0,0,0,0.8);
-    padding: 15px;
+    background: rgba(0,0,0,0.85);
+    padding: 20px;
     border: 2px solid #0f0;
-    border-radius: 5px;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,255,0,0.3);
 }
 button {
-    background: #0a0;
+    background: linear-gradient(135deg, #0a0 0%, #0d0 100%);
     color: #000;
     border: none;
-    padding: 10px 20px;
+    padding: 12px 24px;
     margin: 5px;
     cursor: pointer;
     font-weight: bold;
     font-family: inherit;
-    border-radius: 3px;
+    border-radius: 5px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-button:hover { background: #0f0; }
+button:hover { 
+    background: linear-gradient(135deg, #0d0 0%, #0f0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,255,0,0.4);
+}
+button:active {
+    transform: translateY(0);
+}
 button:disabled {
-    background: #555;
-    color: #888;
+    background: #333;
+    color: #666;
     cursor: not-allowed;
+    transform: none;
 }
 #status {
     display: inline-block;
     margin-left: 10px;
-    padding: 5px 10px;
-    border-radius: 3px;
+    padding: 8px 16px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: all 0.3s;
 }
-.connected { background: #0a0; color: #000; }
-.disconnected { background: #a00; color: #fff; }
+.connected { 
+    background: #0a0; 
+    color: #000;
+    box-shadow: 0 0 10px rgba(0,255,0,0.5);
+}
+.disconnected { 
+    background: #a00; 
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,0,0,0.5);
+}
 #hud {
     position: fixed;
-    top: 10px;
-    right: 10px;
-    background: rgba(0,0,0,0.8);
-    padding: 15px;
+    top: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.85);
+    padding: 20px;
     border: 2px solid #0f0;
-    font-size: 18px;
+    font-size: 20px;
     z-index: 100;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,255,0,0.3);
+    min-width: 200px;
+}
+#hud > div {
+    margin: 8px 0;
+    padding: 5px;
+    border-left: 3px solid;
+    padding-left: 10px;
 }
 #log {
     position: fixed;
-    bottom: 10px;
-    left: 10px;
-    width: 350px;
-    height: 150px;
+    bottom: 20px;
+    left: 20px;
+    width: 400px;
+    height: 180px;
     background: rgba(0,0,0,0.9);
     border: 2px solid #0f0;
-    padding: 10px;
+    padding: 15px;
     overflow-y: auto;
-    font-size: 12px;
+    font-size: 13px;
     z-index: 100;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,255,0,0.3);
+}
+#log::-webkit-scrollbar {
+    width: 8px;
+}
+#log::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+#log::-webkit-scrollbar-thumb {
+    background: #0a0;
+    border-radius: 4px;
 }
 #canvas {
     display: block;
@@ -76,8 +118,42 @@ button:disabled {
     height: 100vh;
     background: #000;
 }
-.health { color: #0f0; }
-.ammo { color: #ff0; }
+.health { color: #0f0; border-color: #0f0 !important; }
+.ammo { color: #ff0; border-color: #ff0 !important; }
+.enemies { color: #f33; border-color: #f33 !important; }
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+    z-index: 99;
+}
+#crosshair::before,
+#crosshair::after {
+    content: '';
+    position: absolute;
+    background: rgba(255,0,0,0.8);
+}
+#crosshair::before {
+    width: 2px;
+    height: 20px;
+    left: 9px;
+}
+#crosshair::after {
+    width: 20px;
+    height: 2px;
+    top: 9px;
+}
+@keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+.flash {
+    animation: flash 0.2s;
+}
 </style>
 </head>
 <body>
@@ -90,9 +166,10 @@ button:disabled {
 <div id="hud">
     <div class="health">HEALTH: <span id="health">100</span></div>
     <div class="ammo">AMMO: <span id="ammo">50</span></div>
-    <div>ENEMIES: <span id="enemies">5</span></div>
+    <div class="enemies">ENEMIES: <span id="enemies">5</span></div>
 </div>
 
+<div id="crosshair"></div>
 <div id="log"></div>
 <canvas id="canvas"></canvas>
 
@@ -114,8 +191,15 @@ let keepReading = true;
 
 function log(msg) {
     const time = new Date().toLocaleTimeString();
-    logDiv.innerHTML += `[${time}] ${msg}<br>`;
+    const entry = document.createElement('div');
+    entry.innerHTML = `<span style="color:#666">[${time}]</span> ${msg}`;
+    logDiv.appendChild(entry);
     logDiv.scrollTop = logDiv.scrollHeight;
+    
+    // Keep only last 50 entries
+    while (logDiv.children.length > 50) {
+        logDiv.removeChild(logDiv.firstChild);
+    }
 }
 
 connectBtn.onclick = async () => {
@@ -130,11 +214,11 @@ connectBtn.onclick = async () => {
         connectBtn.disabled = true;
         disconnectBtn.disabled = false;
         
-        log("USB CONNECTED - Ready to play!");
+        log("<span style='color:#0f0;font-weight:bold'>✓ USB CONNECTED - Ready to play!</span>");
         keepReading = true;
         readLoop();
     } catch (err) {
-        log("ERROR: " + err.message);
+        log("<span style='color:#f00'>✗ ERROR: " + err.message + "</span>");
     }
 };
 
@@ -159,7 +243,7 @@ async function disconnect() {
     status.className = "disconnected";
     connectBtn.disabled = false;
     disconnectBtn.disabled = true;
-    log("DISCONNECTED");
+    log("<span style='color:#fa0'>⚠ DISCONNECTED</span>");
 }
 
 async function readLoop() {
@@ -185,7 +269,7 @@ async function readLoop() {
             }
         }
     } catch (err) {
-        log("Stream error: " + err.message);
+        log("<span style='color:#f00'>✗ Stream error: " + err.message + "</span>");
     } finally {
         await disconnect();
     }
@@ -195,93 +279,106 @@ async function readLoop() {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-// Player state
+// Player state with smooth interpolation
 let player = {
     x: 8,
     y: 8,
     angle: 0,
     health: 100,
-    ammo: 50
+    ammo: 50,
+    velocity: { x: 0, y: 0 },
+    angularVelocity: 0
 };
 
-// Movement state
+// Movement state with smooth acceleration
 let movement = {
-    forward: false,
-    backward: false,
-    turnLeft: false,
-    turnRight: false,
-    strafeLeft: false,
-    strafeRight: false
+    forward: 0,
+    backward: 0,
+    turnLeft: 0,
+    turnRight: 0,
+    strafeLeft: 0,
+    strafeRight: 0
 };
 
-// Simple map (1 = wall, 0 = empty)
+// Enhanced map with more detail
 const map = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,1,1,0,0,0,0,1,1,1,0,0,1],
-    [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1],
-    [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1],
-    [1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1],
-    [1,0,0,1,1,1,0,0,0,0,1,1,1,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+    [1,0,0,1,1,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-// Enemies
+// Enemies with AI
 let enemies = [
-    { x: 4, y: 4, health: 30 },
-    { x: 12, y: 4, health: 30 },
-    { x: 8, y: 8, health: 30 },
-    { x: 4, y: 12, health: 30 },
-    { x: 12, y: 12, health: 30 }
+    { x: 5, y: 5, health: 30, angle: 0 },
+    { x: 14, y: 5, health: 30, angle: Math.PI },
+    { x: 10, y: 9, health: 30, angle: Math.PI/2 },
+    { x: 5, y: 13, health: 30, angle: 0 },
+    { x: 14, y: 13, health: 30, angle: Math.PI }
 ];
+
+// Particle system for effects
+let particles = [];
 
 function handleCommand(cmd) {
-    log("CMD: " + cmd);
+    log(`<span style='color:#0af'>→ ${cmd}</span>`);
+    
+    const accel = 0.8;
     
     switch(cmd) {
         case "UP":
-            movement.forward = true;
-            setTimeout(() => movement.forward = false, 100);
+            movement.forward = accel;
+            setTimeout(() => movement.forward *= 0.3, 150);
             break;
         case "DOWN":
-            movement.backward = true;
-            setTimeout(() => movement.backward = false, 100);
+            movement.backward = accel;
+            setTimeout(() => movement.backward *= 0.3, 150);
             break;
         case "LEFT":
-            movement.turnLeft = true;
-            setTimeout(() => movement.turnLeft = false, 100);
+            movement.turnLeft = accel;
+            setTimeout(() => movement.turnLeft *= 0.3, 150);
             break;
         case "RIGHT":
-            movement.turnRight = true;
-            setTimeout(() => movement.turnRight = false, 100);
+            movement.turnRight = accel;
+            setTimeout(() => movement.turnRight *= 0.3, 150);
             break;
         case "STRAFE_LEFT":
-            movement.strafeLeft = true;
-            setTimeout(() => movement.strafeLeft = false, 100);
+            movement.strafeLeft = accel;
+            setTimeout(() => movement.strafeLeft *= 0.3, 150);
             break;
         case "STRAFE_RIGHT":
-            movement.strafeRight = true;
-            setTimeout(() => movement.strafeRight = false, 100);
+            movement.strafeRight = accel;
+            setTimeout(() => movement.strafeRight *= 0.3, 150);
             break;
         case "FIRE":
             fire();
             break;
         case "STOP":
             movement = {
-                forward: false, backward: false,
-                turnLeft: false, turnRight: false,
-                strafeLeft: false, strafeRight: false
+                forward: 0, backward: 0,
+                turnLeft: 0, turnRight: 0,
+                strafeLeft: 0, strafeRight: 0
             };
             break;
     }
@@ -289,30 +386,88 @@ function handleCommand(cmd) {
 
 function fire() {
     if (player.ammo <= 0) {
-        log("OUT OF AMMO!");
+        log("<span style='color:#f00'>✗ OUT OF AMMO!</span>");
         return;
     }
     
     player.ammo--;
+    document.getElementById('crosshair').classList.add('flash');
+    setTimeout(() => document.getElementById('crosshair').classList.remove('flash'), 200);
     
-    // Check if enemy in front
-    const range = 5;
-    const targetX = player.x + Math.cos(player.angle) * range;
-    const targetY = player.y + Math.sin(player.angle) * range;
+    // Muzzle flash particles
+    for (let i = 0; i < 10; i++) {
+        particles.push({
+            x: player.x + Math.cos(player.angle) * 0.5,
+            y: player.y + Math.sin(player.angle) * 0.5,
+            vx: Math.cos(player.angle + (Math.random()-0.5)*0.3) * 0.2,
+            vy: Math.sin(player.angle + (Math.random()-0.5)*0.3) * 0.2,
+            life: 0.5,
+            color: [255, 200, 0]
+        });
+    }
     
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        const e = enemies[i];
-        const dist = Math.sqrt((e.x - targetX)**2 + (e.y - targetY)**2);
+    // Raycast for hit detection
+    let hitDist = Infinity;
+    let hitEnemy = null;
+    
+    const range = 20;
+    const step = 0.1;
+    
+    for (let d = 0; d < range; d += step) {
+        const x = player.x + Math.cos(player.angle) * d;
+        const y = player.y + Math.sin(player.angle) * d;
         
-        if (dist < 1.5) {
-            e.health -= 30;
-            log("HIT! Enemy health: " + e.health);
-            
-            if (e.health <= 0) {
-                enemies.splice(i, 1);
-                log("ENEMY ELIMINATED!");
-            }
+        // Check wall hit
+        if (map[Math.floor(y)] && map[Math.floor(y)][Math.floor(x)]) {
             break;
+        }
+        
+        // Check enemy hit
+        for (let i = 0; i < enemies.length; i++) {
+            const e = enemies[i];
+            const dist = Math.sqrt((e.x - x)**2 + (e.y - y)**2);
+            
+            if (dist < 0.5 && d < hitDist) {
+                hitDist = d;
+                hitEnemy = i;
+            }
+        }
+    }
+    
+    if (hitEnemy !== null) {
+        const e = enemies[hitEnemy];
+        const damage = Math.floor(Math.random() * 20) + 20;
+        e.health -= damage;
+        
+        log(`<span style='color:#f80'>🎯 HIT! -${damage} damage (${e.health} HP remaining)</span>`);
+        
+        // Blood particles
+        for (let i = 0; i < 15; i++) {
+            particles.push({
+                x: e.x,
+                y: e.y,
+                vx: (Math.random()-0.5) * 0.15,
+                vy: (Math.random()-0.5) * 0.15,
+                life: 1,
+                color: [200, 0, 0]
+            });
+        }
+        
+        if (e.health <= 0) {
+            enemies.splice(hitEnemy, 1);
+            log("<span style='color:#0f0;font-weight:bold'>💀 ENEMY ELIMINATED!</span>");
+            
+            // Death explosion
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: e.x,
+                    y: e.y,
+                    vx: (Math.random()-0.5) * 0.3,
+                    vy: (Math.random()-0.5) * 0.3,
+                    life: 1.5,
+                    color: [Math.random()*100+155, 0, 0]
+                });
+            }
         }
     }
     
@@ -325,47 +480,97 @@ function updateHUD() {
     document.getElementById("enemies").textContent = enemies.length;
 }
 
-function gameLoop() {
-    // Movement
-    const moveSpeed = 0.1;
-    const turnSpeed = 0.05;
+let lastTime = performance.now();
+
+function gameLoop(currentTime) {
+    const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+    lastTime = currentTime;
     
-    if (movement.forward) {
-        const newX = player.x + Math.cos(player.angle) * moveSpeed;
-        const newY = player.y + Math.sin(player.angle) * moveSpeed;
-        if (!map[Math.floor(newY)][Math.floor(newX)]) {
-            player.x = newX;
-            player.y = newY;
-        }
+    // Smooth movement with physics
+    const maxSpeed = 3.5;
+    const maxTurnSpeed = 2.5;
+    const friction = 0.85;
+    
+    // Apply movement forces
+    const moveForce = 0.15;
+    const turnForce = 0.12;
+    
+    if (movement.forward > 0.01) {
+        player.velocity.x += Math.cos(player.angle) * moveForce * movement.forward;
+        player.velocity.y += Math.sin(player.angle) * moveForce * movement.forward;
+        movement.forward *= 0.9;
     }
     
-    if (movement.backward) {
-        const newX = player.x - Math.cos(player.angle) * moveSpeed;
-        const newY = player.y - Math.sin(player.angle) * moveSpeed;
-        if (!map[Math.floor(newY)][Math.floor(newX)]) {
-            player.x = newX;
-            player.y = newY;
-        }
+    if (movement.backward > 0.01) {
+        player.velocity.x -= Math.cos(player.angle) * moveForce * movement.backward;
+        player.velocity.y -= Math.sin(player.angle) * moveForce * movement.backward;
+        movement.backward *= 0.9;
     }
     
-    if (movement.turnLeft) player.angle -= turnSpeed;
-    if (movement.turnRight) player.angle += turnSpeed;
-    
-    if (movement.strafeLeft) {
-        const newX = player.x + Math.cos(player.angle - Math.PI/2) * moveSpeed;
-        const newY = player.y + Math.sin(player.angle - Math.PI/2) * moveSpeed;
-        if (!map[Math.floor(newY)][Math.floor(newX)]) {
-            player.x = newX;
-            player.y = newY;
-        }
+    if (movement.strafeLeft > 0.01) {
+        player.velocity.x += Math.cos(player.angle - Math.PI/2) * moveForce * movement.strafeLeft;
+        player.velocity.y += Math.sin(player.angle - Math.PI/2) * moveForce * movement.strafeLeft;
+        movement.strafeLeft *= 0.9;
     }
     
-    if (movement.strafeRight) {
-        const newX = player.x + Math.cos(player.angle + Math.PI/2) * moveSpeed;
-        const newY = player.y + Math.sin(player.angle + Math.PI/2) * moveSpeed;
-        if (!map[Math.floor(newY)][Math.floor(newX)]) {
-            player.x = newX;
-            player.y = newY;
+    if (movement.strafeRight > 0.01) {
+        player.velocity.x += Math.cos(player.angle + Math.PI/2) * moveForce * movement.strafeRight;
+        player.velocity.y += Math.sin(player.angle + Math.PI/2) * moveForce * movement.strafeRight;
+        movement.strafeRight *= 0.9;
+    }
+    
+    if (movement.turnLeft > 0.01) {
+        player.angularVelocity -= turnForce * movement.turnLeft;
+        movement.turnLeft *= 0.9;
+    }
+    
+    if (movement.turnRight > 0.01) {
+        player.angularVelocity += turnForce * movement.turnRight;
+        movement.turnRight *= 0.9;
+    }
+    
+    // Apply friction
+    player.velocity.x *= friction;
+    player.velocity.y *= friction;
+    player.angularVelocity *= friction;
+    
+    // Clamp speeds
+    const speed = Math.sqrt(player.velocity.x**2 + player.velocity.y**2);
+    if (speed > maxSpeed) {
+        player.velocity.x *= maxSpeed / speed;
+        player.velocity.y *= maxSpeed / speed;
+    }
+    
+    player.angularVelocity = Math.max(-maxTurnSpeed, Math.min(maxTurnSpeed, player.angularVelocity));
+    
+    // Apply velocities with collision
+    const newX = player.x + player.velocity.x * dt;
+    const newY = player.y + player.velocity.y * dt;
+    
+    const margin = 0.2;
+    if (!map[Math.floor(newY)][Math.floor(newX + Math.sign(player.velocity.x) * margin)]) {
+        player.x = newX;
+    } else {
+        player.velocity.x = 0;
+    }
+    
+    if (!map[Math.floor(newY + Math.sign(player.velocity.y) * margin)][Math.floor(newX)]) {
+        player.y = newY;
+    } else {
+        player.velocity.y = 0;
+    }
+    
+    player.angle += player.angularVelocity * dt;
+    
+    // Update particles
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        
+        if (p.life <= 0) {
+            particles.splice(i, 1);
         }
     }
     
@@ -374,68 +579,152 @@ function gameLoop() {
 }
 
 function render() {
-    // Clear
-    ctx.fillStyle = "#333";
-    ctx.fillRect(0, 0, canvas.width, canvas.height/2);
-    ctx.fillStyle = "#222";
-    ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
+    const w = canvas.width;
+    const h = canvas.height;
+    
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, h/2);
+    skyGrad.addColorStop(0, '#1a0a0a');
+    skyGrad.addColorStop(1, '#3a1a1a');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h/2);
+    
+    // Floor gradient
+    const floorGrad = ctx.createLinearGradient(0, h/2, 0, h);
+    floorGrad.addColorStop(0, '#1a1a0a');
+    floorGrad.addColorStop(1, '#0a0a0a');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, h/2, w, h/2);
     
     // Raycasting
     const fov = Math.PI / 3;
-    const rays = 120;
+    const rays = 160;
+    const zbuffer = [];
     
     for (let i = 0; i < rays; i++) {
         const rayAngle = player.angle - fov/2 + (fov * i / rays);
         
         let dist = 0;
         let hit = false;
-        const stepSize = 0.05;
+        const stepSize = 0.03;
+        let hitX, hitY;
         
-        while (!hit && dist < 20) {
+        while (!hit && dist < 25) {
             dist += stepSize;
-            const x = player.x + Math.cos(rayAngle) * dist;
-            const y = player.y + Math.sin(rayAngle) * dist;
+            hitX = player.x + Math.cos(rayAngle) * dist;
+            hitY = player.y + Math.sin(rayAngle) * dist;
             
-            if (map[Math.floor(y)] && map[Math.floor(y)][Math.floor(x)]) {
+            if (map[Math.floor(hitY)] && map[Math.floor(hitY)][Math.floor(hitX)]) {
                 hit = true;
             }
         }
         
+        zbuffer[i] = dist;
+        
         // Fix fisheye
         dist *= Math.cos(rayAngle - player.angle);
         
-        const wallHeight = (canvas.height / dist) * 2;
-        const shade = Math.max(0, 255 - dist * 30);
+        const wallHeight = (h / dist) * 2.5;
+        const brightness = Math.max(0, 255 - dist * 15);
         
-        ctx.fillStyle = `rgb(${shade}, ${shade/2}, 0)`;
+        // Add subtle texture variation
+        const texVar = ((hitX + hitY) * 10) % 20 - 10;
+        const r = brightness + texVar;
+        const g = brightness * 0.5 + texVar * 0.5;
+        
+        ctx.fillStyle = `rgb(${r}, ${g}, 0)`;
         ctx.fillRect(
-            i * (canvas.width / rays),
-            (canvas.height - wallHeight) / 2,
-            canvas.width / rays + 1,
+            i * (w / rays),
+            (h - wallHeight) / 2,
+            Math.ceil(w / rays) + 1,
             wallHeight
         );
+        
+        // Add shading on top/bottom
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(i * (w / rays), (h - wallHeight) / 2, Math.ceil(w / rays) + 1, 2);
+        ctx.fillRect(i * (w / rays), (h + wallHeight) / 2 - 2, Math.ceil(w / rays) + 1, 2);
     }
     
-    // Draw enemies
-    enemies.forEach(enemy => {
+    // Draw enemies with proper depth sorting
+    const enemySprites = [];
+    
+    enemies.forEach((enemy, idx) => {
         const dx = enemy.x - player.x;
         const dy = enemy.y - player.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
-        const angle = Math.atan2(dy, dx) - player.angle;
+        let angle = Math.atan2(dy, dx) - player.angle;
         
-        if (Math.abs(angle) < fov/2 && dist < 15) {
-            const size = (canvas.height / dist) * 0.5;
-            const x = canvas.width/2 + (angle / (fov/2)) * (canvas.width/2);
+        // Normalize angle
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        
+        if (Math.abs(angle) < fov/2 + 0.2 && dist < 20) {
+            enemySprites.push({ enemy, dist, angle, idx });
+        }
+    });
+    
+    // Sort by distance (far to near)
+    enemySprites.sort((a, b) => b.dist - a.dist);
+    
+    // Draw sprites
+    enemySprites.forEach(({ enemy, dist, angle }) => {
+        const size = (h / dist) * 0.8;
+        const screenX = w/2 + (angle / (fov/2)) * (w/2);
+        
+        // Check if behind wall using zbuffer
+        const rayIdx = Math.floor((angle / fov + 0.5) * rays);
+        if (rayIdx >= 0 && rayIdx < rays && dist < zbuffer[rayIdx]) {
+            const healthPercent = enemy.health / 30;
             
-            ctx.fillStyle = "#f00";
-            ctx.fillRect(x - size/2, canvas.height/2 - size/2, size, size);
+            // Draw enemy body with gradient
+            const grad = ctx.createRadialGradient(screenX, h/2, 0, screenX, h/2, size/2);
+            grad.addColorStop(0, `rgba(255,${healthPercent*100},0,1)`);
+            grad.addColorStop(1, `rgba(200,0,0,0.8)`);
+            
+            ctx.fillStyle = grad;
+            ctx.fillRect(screenX - size/2, h/2 - size/2, size, size);
+            
+            // Draw enemy "eyes"
+            ctx.fillStyle = '#ff0';
+            ctx.fillRect(screenX - size/3, h/2 - size/4, size/6, size/8);
+            ctx.fillRect(screenX + size/6, h/2 - size/4, size/6, size/8);
+            
+            // Health bar
+            const barWidth = size;
+            const barHeight = 4;
+            ctx.fillStyle = '#300';
+            ctx.fillRect(screenX - barWidth/2, h/2 + size/2 + 5, barWidth, barHeight);
+            ctx.fillStyle = healthPercent > 0.5 ? '#0f0' : healthPercent > 0.25 ? '#ff0' : '#f00';
+            ctx.fillRect(screenX - barWidth/2, h/2 + size/2 + 5, barWidth * healthPercent, barHeight);
+        }
+    });
+    
+    // Draw particles
+    particles.forEach(p => {
+        const dx = p.x - player.x;
+        const dy = p.y - player.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        let angle = Math.atan2(dy, dx) - player.angle;
+        
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        
+        if (Math.abs(angle) < fov/2 + 0.5 && dist < 20) {
+            const size = Math.max(2, (h / dist) * 0.1);
+            const screenX = w/2 + (angle / (fov/2)) * (w/2);
+            const screenY = h/2;
+            
+            ctx.fillStyle = `rgba(${p.color[0]},${p.color[1]},${p.color[2]},${p.life})`;
+            ctx.fillRect(screenX - size/2, screenY - size/2, size, size);
         }
     });
 }
 
 // Start game
-log("Game ready! Connect micro:bit to start.");
-gameLoop();
+log("<span style='color:#0af;font-weight:bold'>🎮 DOOM Controller Ready!</span>");
+log("Connect your micro:bit via USB to start playing.");
+gameLoop(performance.now());
 
 window.addEventListener('beforeunload', disconnect);
 </script>
