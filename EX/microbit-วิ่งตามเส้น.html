@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>micro:bit USB Controller</title>
-
 <style>
 body {
     margin: 0;
@@ -12,19 +11,16 @@ body {
     color: #00ff00;
     font-family: monospace;
 }
-
 button {
     padding: 8px 16px;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
 }
-
 #status {
     margin-left: 10px;
     font-weight: bold;
 }
-
 #log {
     margin-top: 20px;
     border: 1px solid #00ff00;
@@ -33,18 +29,16 @@ button {
     overflow-y: auto;
     white-space: pre-wrap;
 }
+.connected { color: #00ff00; }
+.disconnected { color: #ff0000; }
 </style>
 </head>
-
 <body>
-
 <h2>micro:bit USB Serial (NO BLUETOOTH)</h2>
-
 <button id="connectBtn">CONNECT USB</button>
-<span id="status">DISCONNECTED</span>
-
+<button id="disconnectBtn" disabled>DISCONNECT</button>
+<span id="status" class="disconnected">DISCONNECTED</span>
 <div id="log"></div>
-
 <script>
 /* =========================
    HARD CHECK
@@ -57,7 +51,8 @@ if (!("serial" in navigator)) {
 /* =========================
    UI
 ========================= */
-const btn = document.getElementById("connectBtn");
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
 const status = document.getElementById("status");
 const log = document.getElementById("log");
 
@@ -69,30 +64,115 @@ function writeLog(text) {
 /* =========================
    USB SERIAL
 ========================= */
-let port, reader;
+let port = null;
+let reader = null;
+let keepReading = true;
 
-btn.onclick = async () => {
+connectBtn.onclick = async () => {
     try {
-        port = await navigator.serial.requestPort();
+        // Request port with filters for micro:bit
+        port = await navigator.serial.requestPort({
+            filters: [
+                { usbVendorId: 0x0d28 } // micro:bit vendor ID
+            ]
+        });
+        
         await port.open({ baudRate: 115200 });
-
+        
         status.textContent = "CONNECTED (USB)";
+        status.className = "connected";
+        connectBtn.disabled = true;
+        disconnectBtn.disabled = false;
+        
         writeLog("[SYSTEM] USB CONNECTED");
-
-        const decoder = new TextDecoderStream();
-        port.readable.pipeTo(decoder.writable);
-        reader = decoder.readable.getReader();
-
+        writeLog("[SYSTEM] Baud rate: 115200");
+        
+        keepReading = true;
         readLoop();
+        
     } catch (err) {
-        writeLog("[ERROR] " + err);
+        writeLog("[ERROR] Connection failed: " + err.message);
+        status.textContent = "CONNECTION FAILED";
+        status.className = "disconnected";
     }
 };
 
+disconnectBtn.onclick = async () => {
+    await disconnect();
+};
+
+async function disconnect() {
+    keepReading = false;
+    
+    if (reader) {
+        try {
+            await reader.cancel();
+            await reader.releaseLock();
+        } catch (err) {
+            writeLog("[ERROR] Reader cleanup: " + err.message);
+        }
+        reader = null;
+    }
+    
+    if (port) {
+        try {
+            await port.close();
+        } catch (err) {
+            writeLog("[ERROR] Port close: " + err.message);
+        }
+        port = null;
+    }
+    
+    status.textContent = "DISCONNECTED";
+    status.className = "disconnected";
+    connectBtn.disabled = false;
+    disconnectBtn.disabled = true;
+    writeLog("[SYSTEM] DISCONNECTED");
+}
+
 async function readLoop() {
-    while (true) {
-        const { value } = await reader.read();
-        if (value) handleCommand(value.trim());
+    try {
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        reader = textDecoder.readable.getReader();
+        
+        let buffer = "";
+        
+        while (keepReading && port.readable) {
+            try {
+                const { value, done } = await reader.read();
+                
+                if (done) {
+                    writeLog("[SYSTEM] Stream ended");
+                    break;
+                }
+                
+                if (value) {
+                    // Add to buffer and process line by line
+                    buffer += value;
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || ""; // Keep incomplete line in buffer
+                    
+                    for (const line of lines) {
+                        const cmd = line.trim();
+                        if (cmd) {
+                            handleCommand(cmd);
+                        }
+                    }
+                }
+            } catch (readErr) {
+                writeLog("[ERROR] Read error: " + readErr.message);
+                break;
+            }
+        }
+        
+        // Clean up
+        await readableStreamClosed.catch(() => {});
+        
+    } catch (err) {
+        writeLog("[ERROR] Stream error: " + err.message);
+    } finally {
+        await disconnect();
     }
 }
 
@@ -101,45 +181,41 @@ async function readLoop() {
 ========================= */
 function handleCommand(cmd) {
     writeLog("[RX] " + cmd);
-
+    
     switch (cmd) {
         case "UP":
             console.log("MOVE UP");
             break;
-
         case "DOWN":
             console.log("MOVE DOWN");
             break;
-
         case "LEFT":
             console.log("TURN LEFT");
             break;
-
         case "RIGHT":
             console.log("TURN RIGHT");
             break;
-
         case "STRAFE_LEFT":
             console.log("STRAFE LEFT");
             break;
-
         case "STRAFE_RIGHT":
             console.log("STRAFE RIGHT");
             break;
-
         case "FIRE":
             console.log("ACTION FIRE");
             break;
-
         case "STOP":
             console.log("STOP");
             break;
-
         default:
-            console.log("UNKNOWN CMD:", cmd);
+            writeLog("[WARN] Unknown command: " + cmd);
     }
 }
-</script>
 
+// Handle page unload
+window.addEventListener('beforeunload', async () => {
+    await disconnect();
+});
+</script>
 </body>
 </html>
