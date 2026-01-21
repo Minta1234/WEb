@@ -1,89 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>DOOM + micro:bit (USB)</title>
+<meta charset="UTF-8">
+<title>micro:bit USB Serial TEST</title>
 
 <style>
 body {
-    margin: 0;
-    background: black;
+    background: #000;
     color: #0f0;
     font-family: monospace;
-}
-#bar {
-    padding: 6px;
-    background: #111;
+    padding: 20px;
 }
 button {
-    padding: 6px 12px;
-    font-weight: bold;
+    font-size: 16px;
+    padding: 6px 14px;
 }
-canvas {
-    display: block;
-    width: 1920px;
-    height: 1080px;
-    image-rendering: pixelated;
+#log {
+    margin-top: 20px;
+    white-space: pre;
+    border: 1px solid #0f0;
+    padding: 10px;
+    height: 300px;
+    overflow-y: auto;
 }
 </style>
-
-<script src="https://js-dos.com/6.22/current/js-dos.js"></script>
 </head>
 
 <body>
 
-<div id="bar">
-    <button onclick="connect()">CONNECT USB micro:bit</button>
-    <span id="state">DISCONNECTED</span>
-</div>
+<h2>micro:bit USB Serial (NO BLUETOOTH)</h2>
 
-<canvas id="screen" width="1920" height="1080"></canvas>
+<button id="btn">CONNECT USB</button>
+<span id="state">DISCONNECTED</span>
+
+<div id="log"></div>
 
 <script>
-let port, reader, doom;
+/* ===============================
+   HARD FAIL IF NO WEB SERIAL
+================================ */
+if (!("serial" in navigator)) {
+    alert("Web Serial NOT supported. Use Chrome or Edge.");
+    throw new Error("NO WEB SERIAL");
+}
 
-/* ================= DOOM ================= */
-Dos(document.getElementById("screen"), {
-    wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
-}).ready((fs, main) => {
-    doom = main;
-    fs.extract("https://js-dos.com/cdn/upload/DOOM-@evilution.zip").then(() => {
-        main(["-c", "doom.exe"], { fullscreen: true });
-    });
-});
+const btn   = document.getElementById("btn");
+const log   = document.getElementById("log");
+const state = document.getElementById("state");
 
-/* =============== USB SERIAL ============== */
-async function connect() {
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
+btn.onclick = async () => {
+    try {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
 
-    const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-    reader = decoder.readable.getReader();
+        state.textContent = "CONNECTED (USB)";
+        log.textContent += "USB CONNECTED\n";
 
-    document.getElementById("state").textContent = "CONNECTED";
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+        const reader = decoder.readable.getReader();
 
-    while (true) {
-        const { value } = await reader.read();
-        if (value) parse(value.trim());
+        while (true) {
+            const { value } = await reader.read();
+            if (value) {
+                log.textContent += value;
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+    } catch (e) {
+        log.textContent += "ERROR: " + e + "\n";
     }
-}
-
-/* ============== INPUT MAP =============== */
-function key(k) {
-    doom.simulateKeyPress(k);
-}
-
-function parse(cmd) {
-    console.log(cmd);
-    switch (cmd) {
-        case "UP":    key("ArrowUp"); break;
-        case "DOWN":  key("ArrowDown"); break;
-        case "LEFT":  key("ArrowLeft"); break;
-        case "RIGHT": key("ArrowRight"); break;
-        case "FIRE":  key("Control"); break;
-    }
-}
+};
 </script>
 
 </body>
