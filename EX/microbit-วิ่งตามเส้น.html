@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DOOM + micro:bit Controller (1080p)</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    color: #0f0;
+    font-family: monospace;
+}
+
+#topbar {
+    padding: 8px;
+    background: #111;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+button {
+    background: #0f0;
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#status {
+    color: #0f0;
+}
+
+#doom {
+    display: block;
+    width: 1920px;
+    height: 1080px;
+    image-rendering: pixelated;
+}
+</style>
+
+<!-- js-dos -->
+<script src="https://js-dos.com/6.22/current/js-dos.js"></script>
+</head>
+
+<body>
+
+<div id="topbar">
+    <button onclick="connectMicrobit()">CONNECT micro:bit</button>
+    <span id="status">DISCONNECTED</span>
+</div>
+
+<canvas id="doom" width="1920" height="1080"></canvas>
+
+<script>
+/* ===========================
+   DOOM ENGINE INIT
+=========================== */
+let doom;
+Dos(document.getElementById("doom"), {
+    wdosboxUrl: "https://js-dos.com/6.22/current/wdosbox.js",
+}).ready((fs, main) => {
+    doom = main;
+    // โหลด DOOM shareware (freedoom)
+    fs.extract("https://js-dos.com/cdn/upload/DOOM-@evilution.zip").then(() => {
+        main(["-c", "doom.exe"], {
+            fullscreen: true,
+            autolock: true
+        });
+    });
+});
+
+/* ===========================
+   KEY EMULATION LAYER
+=========================== */
+function press(key) {
+    doom.simulateKeyPress(key);
+}
+
+/* ===========================
+   MICROBIT SERIAL
+=========================== */
+let port, reader;
+const status = document.getElementById("status");
+
+async function connectMicrobit() {
+    try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        const decoder = new TextDecoderStream();
+        port.readable.pipeTo(decoder.writable);
+        reader = decoder.readable.getReader();
+
+        status.textContent = "CONNECTED";
+        status.style.color = "#0f0";
+
+        readLoop();
+    } catch (e) {
+        status.textContent = "ERROR";
+        status.style.color = "red";
+        console.error(e);
+    }
+}
+
+async function readLoop() {
+    while (true) {
+        const { value } = await reader.read();
+        if (!value) continue;
+
+        const cmd = value.trim();
+        handleInput(cmd);
+    }
+}
+
+/* ===========================
+   COMMAND MAP
+=========================== */
+function handleInput(cmd) {
+    console.log("CMD:", cmd);
+
+    switch (cmd) {
+        case "UP":
+            press("ArrowUp");
+            break;
+        case "DOWN":
+            press("ArrowDown");
+            break;
+        case "LEFT":
+            press("ArrowLeft");
+            break;
+        case "RIGHT":
+            press("ArrowRight");
+            break;
+        case "FIRE":
+            press("Control");
+            break;
+        case "USE":
+            press("Space");
+            break;
+    }
+}
+</script>
+
+</body>
+</html>
