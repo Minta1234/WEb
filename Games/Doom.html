@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Controlled DOOM Prototype</title>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            background-color: #111;
+            color: #0f0;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            border: 4px solid #444;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #webcam-feed {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 160px;
+            height: 120px;
+            border: 2px solid #0f0;
+            opacity: 0.7;
+            transform: scaleX(-1); /* กลับด้านกล้องให้เหมือนกระจก */
+            z-index: 10;
+        }
+
+        #ui-layer {
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 1px solid #0f0;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .gun {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 200px;
+            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Doom_shotgun.png/320px-Doom_shotgun.png') no-repeat bottom center;
+            background-size: contain;
+            z-index: 4;
+            filter: contrast(1.2) brightness(0.8);
+        }
+
+        .muzzle-flash {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, yellow, orange, transparent);
+            opacity: 0;
+            z-index: 6;
+        }
+
+        .status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            border: 1px solid #555;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">กำลังโหลดโมเดลจับมือ...<br><small>กรุณาอนุญาตให้ใช้กล้อง</small></div>
+
+    <div id="game-container">
+        <canvas id="gameCanvas" width="640" height="480"></canvas>
+        
+        <div class="gun" id="gun"></div>
+        <div class="muzzle-flash" id="flash"></div>
+
+        <video id="webcam-feed" autoplay playsinline></video>
+        
+        <div class="status">
+            Health: 100% | Armor: 50%<br>
+            Gesture: <span id="gesture-name" style="color:yellow">Waiting...</span>
+        </div>
+    </div>
+
+<script>
+    // --- 1. Mini-Doom Engine (Raycasting) ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const screenWidth = 640;
+    const screenHeight = 480;
+
+    // แผนที่ (1 = กำแพง, 0 = ทางเดิน)
+    const mapWidth = 24;
+    const mapHeight = 24;
+    const worldMap = [
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
+        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1],
+        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    let posX = 22, posY = 12;  // ตำแหน่งเริ่มต้น
+    let dirX = -1, dirY = 0;   // ทิศทางเริ่มต้น
+    let planeX = 0, planeY = 0.66; // ระนาบกล้อง (FOV)
+
+    // ตัวแปรควบคุมเกม
+    let moveSpeed = 0; 
+    let rotSpeed = 0;
+    let isShooting = false;
+
+    function gameLoop() {
+        // 1. เคลียร์หน้าจอ (พื้น + เพดาน)
+        ctx.fillStyle = "#333"; // เพดาน
+        ctx.fillRect(0, 0, screenWidth, screenHeight / 2);
+        ctx.fillStyle = "#555"; // พื้น
+        ctx.fillRect(0, screenHeight / 2, screenWidth, screenHeight / 2);
+
+        // 2. Raycasting Algorithm
+        for (let x = 0; x < screenWidth; x += 4) { // x+=4 เพื่อลดโหลด (Pixelate นิดๆ แบบ Retro)
+            let cameraX = 2 * x / screenWidth - 1;
+            let rayDirX = dirX + planeX * cameraX;
+            let rayDirY = dirY + planeY * cameraX;
+
+            let mapX = Math.floor(posX);
+            let mapY = Math.floor(posY);
+
+            let sideDistX, sideDistY;
+            let deltaDistX = Math.abs(1 / rayDirX);
+            let deltaDistY = Math.abs(1 / rayDirY);
+            let perpWallDist;
+            let stepX, stepY;
+            let hit = 0;
+            let side;
+
+            if (rayDirX < 0) { stepX = -1; sideDistX = (posX - mapX) * deltaDistX; }
+            else { stepX = 1; sideDistX = (mapX + 1.0 - posX) * deltaDistX; }
+
+            if (rayDirY < 0) { stepY = -1; sideDistY = (posY - mapY) * deltaDistY; }
+            else { stepY = 1; sideDistY = (mapY + 1.0 - posY) * deltaDistY; }
+
+            while (hit === 0) {
+                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
+                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                if (worldMap[mapX][mapY] > 0) hit = 1;
+            }
+
+            if (side === 0) perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
+            else perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
+
+            let lineHeight = Math.floor(screenHeight / perpWallDist);
+            let drawStart = -lineHeight / 2 + screenHeight / 2;
+            if (drawStart < 0) drawStart = 0;
+            let drawEnd = lineHeight / 2 + screenHeight / 2;
+            if (drawEnd >= screenHeight) drawEnd = screenHeight - 1;
+
+            // เลือกสีตามชนิดกำแพง
+            let color = '#888';
+            switch(worldMap[mapX][mapY]) {
+                case 1: color = '#a00'; break; // แดง
+                case 2: color = '#0a0'; break; // เขียว
+                case 3: color = '#00a'; break; // น้ำเงิน
+                case 4: color = '#aa0'; break; // เหลือง
+                case 5: color = '#fff'; break; // ขาว
+            }
+            if (side === 1) { // ทำให้ด้านหนึ่งมืดลงเพื่อให้ดูมีมิติ
+                 ctx.globalAlpha = 0.7;
+            }
+
+            ctx.fillStyle = color;
+            ctx.fillRect(x, drawStart, 4, drawEnd - drawStart); // วาดแถบกว้าง 4px
+            ctx.globalAlpha = 1.0;
+        }
+
+        // 3. คำนวณการเคลื่อนที่ (Movement Logic)
+        const frameMoveSpeed = moveSpeed * 0.05; // ความเร็วเดิน
+        const frameRotSpeed = rotSpeed * 0.05;   // ความเร็วหัน
+
+        // เดินหน้า
+        if (moveSpeed > 0) {
+            if(worldMap[Math.floor(posX + dirX * frameMoveSpeed)][Math.floor(posY)] === 0) posX += dirX * frameMoveSpeed;
+            if(worldMap[Math.floor(posX)][Math.floor(posY + dirY * frameMoveSpeed)] === 0) posY += dirY * frameMoveSpeed;
+        }
+
+        // หมุนกล้อง
+        if (rotSpeed !== 0) {
+            let oldDirX = dirX;
+            dirX = dirX * Math.cos(-frameRotSpeed) - dirY * Math.sin(-frameRotSpeed);
+            dirY = oldDirX * Math.sin(-frameRotSpeed) + dirY * Math.cos(-frameRotSpeed);
+            let oldPlaneX = planeX;
+            planeX = planeX * Math.cos(-frameRotSpeed) - planeY * Math.sin(-frameRotSpeed);
+            planeY = oldPlaneX * Math.sin(-frameRotSpeed) + planeY * Math.cos(-frameRotSpeed);
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    // เริ่มเกมลูป
+    requestAnimationFrame(gameLoop);
+
+
+    // --- 2. Hand Tracking Logic (MediaPipe) ---
+    const videoElement = document.getElementById('webcam-feed');
+    const gestureOutput = document.getElementById('gesture-name');
+    const gunElement = document.getElementById('gun');
+    const flashElement = document.getElementById('flash');
+
+    function onResults(results) {
+        // ซ่อน Loading เมื่อโมเดลโหลดเสร็จ
+        document.getElementById('loading').style.display = 'none';
+
+        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const landmarks = results.multiHandLandmarks[0];
+            
+            // --- วิเคราะห์ท่าทาง ---
+            
+            // 1. หาจุดศูนย์กลางมือ (ใช้ Wrist + Middle Finger Base)
+            const wrist = landmarks[0];
+            const middleBase = landmarks[9];
+            const handX = wrist.x; // 0.0 - 1.0
+            
+            // 2. ตรวจสอบการกำมือ (Fist Check)
+            // เช็คว่าปลายนิ้วอยู่ต่ำกว่าข้อนิ้วหรือไม่ (ง่ายๆ)
+            let fingersFolded = 0;
+            if (landmarks[8].y > landmarks[6].y) fingersFolded++; // ชี้
+            if (landmarks[12].y > landmarks[10].y) fingersFolded++; // กลาง
+            if (landmarks[16].y > landmarks[14].y) fingersFolded++; // นาง
+            if (landmarks[20].y > landmarks[18].y) fingersFolded++; // ก้อย
+            
+            const isFist = fingersFolded >= 3; 
+
+            // --- แมพเข้ากับเกม ---
+
+            // A. เลี้ยว (Steering)
+            // ถ้ามืออยู่ซ้าย (x > 0.6) เพราะกล้องกลับด้าน -> เลี้ยวซ้าย
+            // ถ้ามืออยู่ขวา (x < 0.4) -> เลี้ยวขวา
+            // หมายเหตุ: MediaPipe x=0 คือซ้ายสุดของภาพ (ขวาของเราเพราะกระจก)
+            
+            if (handX > 0.65) {
+                rotSpeed = -1; // เลี้ยวซ้าย
+                gestureOutput.innerText = "Turning LEFT";
+            } else if (handX < 0.35) {
+                rotSpeed = 1; // เลี้ยวขวา
+                gestureOutput.innerText = "Turning RIGHT";
+            } else {
+                rotSpeed = 0;
+            }
+
+            // B. ยิง หรือ เดิน (Action)
+            if (isFist) {
+                // กำมือ = ยิง / หยุดเดิน
+                moveSpeed = 0;
+                shootGun();
+                gestureOutput.innerText = "🔥 FIRING 🔥";
+            } else {
+                // แบมือ = เดินหน้า
+                moveSpeed = 1.5; // ความเร็วเดิน
+                if (rotSpeed === 0) gestureOutput.innerText = "Walking Forward";
+            }
+
+        } else {
+            // ไม่เจอมือ -> หยุดทุกอย่าง
+            moveSpeed = 0;
+            rotSpeed = 0;
+            gestureOutput.innerText = "No Hand Detected";
+            gestureOutput.style.color = "gray";
+        }
+    }
+
+    // ฟังก์ชันยิงปืน (Animation)
+    let canShoot = true;
+    function shootGun() {
+        if (!canShoot) return;
+        
+        canShoot = false;
+        flashElement.style.opacity = 1;
+        gunElement.style.bottom = "-20px"; // แรงดีดปืน
+
+        setTimeout(() => {
+            flashElement.style.opacity = 0;
+            gunElement.style.bottom = "0";
+            canShoot = true;
+        }, 150);
+    }
+
+    // ตั้งค่า MediaPipe
+    const hands = new Hands({locateFile: (file) => {
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+    }});
+
+    hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+
+    hands.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+        onFrame: async () => {
+            await hands.send({image: videoElement});
+        },
+        width: 320,
+        height: 240
+    });
+    
+    camera.start();
+
+</script>
+</body>
+  </html>
+  
