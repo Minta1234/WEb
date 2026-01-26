@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand Controlled DOOM Prototype</title>
+    <title>Hand Controlled DOOM - Enhanced</title>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
     <style>
-        body {
-            background-color: #111;
-            color: #0f0;
-            font-family: 'Courier New', Courier, monospace;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(180deg, #1a0000 0%, #000 100%);
+            color: #ff0000;
+            font-family: 'Impact', 'Arial Black', sans-serif;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -25,10 +30,11 @@
 
         #game-container {
             position: relative;
-            width: 640px;
-            height: 480px;
-            border: 4px solid #444;
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            width: 800px;
+            height: 600px;
+            border: 4px solid #8b0000;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.8);
+            background: #000;
         }
 
         canvas {
@@ -43,10 +49,11 @@
             right: 10px;
             width: 160px;
             height: 120px;
-            border: 2px solid #0f0;
-            opacity: 0.7;
-            transform: scaleX(-1); /* กลับด้านกล้องให้เหมือนกระจก */
+            border: 2px solid #ff0000;
+            opacity: 0.8;
+            transform: scaleX(-1);
             z-index: 10;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
 
         #ui-layer {
@@ -59,123 +66,271 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 24px;
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            border: 1px solid #0f0;
+            font-size: 28px;
+            background: rgba(139, 0, 0, 0.95);
+            padding: 30px 40px;
+            border: 3px solid #ff0000;
             text-align: center;
             z-index: 20;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        .gun {
+        #loading small {
+            display: block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ffaaaa;
+        }
+
+        .weapon-sprite {
             position: absolute;
-            bottom: 0;
+            bottom: -20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 200px;
-            height: 200px;
-            background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Doom_shotgun.png/320px-Doom_shotgun.png') no-repeat bottom center;
-            background-size: contain;
+            width: 400px;
+            height: 400px;
             z-index: 4;
-            filter: contrast(1.2) brightness(0.8);
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            image-rendering: pixelated;
+            transition: transform 0.05s;
         }
 
         .muzzle-flash {
             position: absolute;
-            bottom: 120px;
+            bottom: 200px;
             left: 50%;
             transform: translateX(-50%);
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, yellow, orange, transparent);
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, #ffff00 0%, #ff6600 30%, transparent 70%);
             opacity: 0;
             z-index: 6;
+            filter: blur(5px);
         }
 
-        .status {
+        .hud {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.5);
-            padding: 5px;
-            border: 1px solid #555;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to top, rgba(100, 0, 0, 0.9), transparent);
+            z-index: 8;
+            display: flex;
+            align-items: flex-end;
+            padding: 10px 20px;
+            gap: 30px;
+        }
+
+        .hud-item {
+            color: #ffff00;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px #000;
+            font-weight: bold;
+        }
+
+        .hud-health {
+            color: #ff0000;
+            font-size: 32px;
+        }
+
+        .hud-ammo {
+            margin-left: auto;
+            color: #00ff00;
+        }
+
+        .gesture-display {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 30px;
+            border: 2px solid #ff0000;
             z-index: 10;
+            font-size: 24px;
+            text-align: center;
+            min-width: 300px;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+
+        .finger-count {
+            color: #ffff00;
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            z-index: 7;
+            pointer-events: none;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        .crosshair::before {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair::after {
+            width: 2px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .damage-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, transparent 30%, rgba(255, 0, 0, 0.5));
+            opacity: 0;
+            z-index: 9;
+            pointer-events: none;
+            transition: opacity 0.2s;
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">กำลังโหลดโมเดลจับมือ...<br><small>กรุณาอนุญาตให้ใช้กล้อง</small></div>
+    <div id="loading">
+        🎮 DOOM LOADING 🎮
+        <small>กรุณาอนุญาตให้ใช้กล้อง</small>
+        <small style="margin-top: 5px;">1🖐️=เดินหน้า | 2🖐️=ถอย | 3🖐️=ซ้าย | 4🖐️=ขวา | ✊=ยิง</small>
+    </div>
 
     <div id="game-container">
-        <canvas id="gameCanvas" width="640" height="480"></canvas>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
         
-        <div class="gun" id="gun"></div>
+        <div class="weapon-sprite" id="weapon"></div>
         <div class="muzzle-flash" id="flash"></div>
+        <div class="crosshair"></div>
+        <div class="damage-overlay" id="damage"></div>
+
+        <div class="hud">
+            <div class="hud-item hud-health">❤️ <span id="health">100</span>%</div>
+            <div class="hud-item">🛡️ <span id="armor">50</span></div>
+            <div class="hud-item hud-ammo">🔫 <span id="ammo">50</span></div>
+        </div>
+
+        <div class="gesture-display">
+            <div>Gesture: <span id="gesture-name" style="color:#00ff00">Waiting...</span></div>
+            <div>Fingers: <span class="finger-count" id="finger-count">0</span></div>
+        </div>
 
         <video id="webcam-feed" autoplay playsinline></video>
-        
-        <div class="status">
-            Health: 100% | Armor: 50%<br>
-            Gesture: <span id="gesture-name" style="color:yellow">Waiting...</span>
-        </div>
     </div>
 
 <script>
-    // --- 1. Mini-Doom Engine (Raycasting) ---
+    // --- Game Engine Variables ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const screenWidth = 640;
-    const screenHeight = 480;
+    const screenWidth = 800;
+    const screenHeight = 600;
 
-    // แผนที่ (1 = กำแพง, 0 = ทางเดิน)
+    // Enhanced map with more variety
     const mapWidth = 24;
     const mapHeight = 24;
     const worldMap = [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,2,2,2,2,0,0,0,0,0,0,0,0,3,3,3,3,0,0,0,0,1],
+        [1,0,0,2,0,0,2,0,0,0,0,0,0,0,0,3,0,0,3,0,0,0,0,1],
+        [1,0,0,2,0,0,2,0,0,0,0,0,0,0,0,3,0,0,3,0,0,0,0,1],
+        [1,0,0,2,2,2,2,0,0,0,0,0,0,0,0,3,3,3,3,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,2,2,2,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
-        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,3,0,0,0,3,0,0,0,1],
-        [1,0,0,0,0,0,2,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,2,2,0,2,2,0,0,0,0,3,0,3,0,3,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,4,0,0,4,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,4,0,0,4,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,0,0,0,0,0,0,4,4,4,4,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+        [1,0,0,6,6,6,0,0,0,0,0,0,0,0,0,0,0,6,6,6,0,0,0,1],
+        [1,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,1],
+        [1,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,0,0,0,1],
+        [1,0,0,6,6,6,0,0,0,0,0,0,0,0,0,0,0,6,6,6,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,0,0,0,0,5,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,0,4,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,0,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
     ];
 
-    let posX = 22, posY = 12;  // ตำแหน่งเริ่มต้น
-    let dirX = -1, dirY = 0;   // ทิศทางเริ่มต้น
-    let planeX = 0, planeY = 0.66; // ระนาบกล้อง (FOV)
+    let posX = 12, posY = 12;
+    let dirX = -1, dirY = 0;
+    let planeX = 0, planeY = 0.66;
 
-    // ตัวแปรควบคุมเกม
-    let moveSpeed = 0; 
+    let moveSpeed = 0;
+    let strafeSpeed = 0;
     let rotSpeed = 0;
-    let isShooting = false;
+
+    // Game state
+    let health = 100;
+    let armor = 50;
+    let ammo = 50;
+
+    // Weapon rendering
+    const weaponEl = document.getElementById('weapon');
+    let weaponRecoil = 0;
+
+    // Simple shotgun sprite (using CSS gradient as placeholder)
+    weaponEl.style.background = `
+        linear-gradient(180deg, 
+            transparent 0%, 
+            transparent 40%,
+            #444 40%,
+            #666 45%,
+            #333 50%,
+            #222 55%,
+            #8b4513 60%,
+            #654321 80%,
+            transparent 80%
+        )
+    `;
 
     function gameLoop() {
-        // 1. เคลียร์หน้าจอ (พื้น + เพดาน)
-        ctx.fillStyle = "#333"; // เพดาน
-        ctx.fillRect(0, 0, screenWidth, screenHeight / 2);
-        ctx.fillStyle = "#555"; // พื้น
-        ctx.fillRect(0, screenHeight / 2, screenWidth, screenHeight / 2);
+        // Clear screen - ceiling and floor
+        const horizonLine = screenHeight / 2 + Math.sin(Date.now() / 1000) * 5;
+        
+        // Ceiling (darker gray/red)
+        const ceilGrad = ctx.createLinearGradient(0, 0, 0, horizonLine);
+        ceilGrad.addColorStop(0, '#2a0a0a');
+        ceilGrad.addColorStop(1, '#1a0000');
+        ctx.fillStyle = ceilGrad;
+        ctx.fillRect(0, 0, screenWidth, horizonLine);
+        
+        // Floor (brown/gray)
+        const floorGrad = ctx.createLinearGradient(0, horizonLine, 0, screenHeight);
+        floorGrad.addColorStop(0, '#3a2a1a');
+        floorGrad.addColorStop(1, '#1a1a1a');
+        ctx.fillStyle = floorGrad;
+        ctx.fillRect(0, horizonLine, screenWidth, screenHeight - horizonLine);
 
-        // 2. Raycasting Algorithm
-        for (let x = 0; x < screenWidth; x += 4) { // x+=4 เพื่อลดโหลด (Pixelate นิดๆ แบบ Retro)
+        // Raycasting
+        for (let x = 0; x < screenWidth; x += 2) {
             let cameraX = 2 * x / screenWidth - 1;
             let rayDirX = dirX + planeX * cameraX;
             let rayDirY = dirY + planeY * cameraX;
@@ -198,8 +353,15 @@
             else { stepY = 1; sideDistY = (mapY + 1.0 - posY) * deltaDistY; }
 
             while (hit === 0) {
-                if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
-                else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+                if (sideDistX < sideDistY) { 
+                    sideDistX += deltaDistX; 
+                    mapX += stepX; 
+                    side = 0; 
+                } else { 
+                    sideDistY += deltaDistY; 
+                    mapY += stepY; 
+                    side = 1; 
+                }
                 if (worldMap[mapX][mapY] > 0) hit = 1;
             }
 
@@ -212,35 +374,61 @@
             let drawEnd = lineHeight / 2 + screenHeight / 2;
             if (drawEnd >= screenHeight) drawEnd = screenHeight - 1;
 
-            // เลือกสีตามชนิดกำแพง
-            let color = '#888';
+            // Wall colors (DOOM-like palette)
+            let color;
             switch(worldMap[mapX][mapY]) {
-                case 1: color = '#a00'; break; // แดง
-                case 2: color = '#0a0'; break; // เขียว
-                case 3: color = '#00a'; break; // น้ำเงิน
-                case 4: color = '#aa0'; break; // เหลือง
-                case 5: color = '#fff'; break; // ขาว
-            }
-            if (side === 1) { // ทำให้ด้านหนึ่งมืดลงเพื่อให้ดูมีมิติ
-                 ctx.globalAlpha = 0.7;
+                case 1: color = '#8b0000'; break; // Dark red
+                case 2: color = '#654321'; break; // Brown
+                case 3: color = '#4a4a4a'; break; // Gray
+                case 4: color = '#2f4f2f'; break; // Dark green
+                case 5: color = '#8b7355'; break; // Tan
+                case 6: color = '#556b2f'; break; // Olive
+                default: color = '#666';
             }
 
-            ctx.fillStyle = color;
-            ctx.fillRect(x, drawStart, 4, drawEnd - drawStart); // วาดแถบกว้าง 4px
-            ctx.globalAlpha = 1.0;
+            // Shading for depth
+            let shade = Math.max(0.3, 1 - perpWallDist / 20);
+            if (side === 1) shade *= 0.7;
+
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+
+            ctx.fillStyle = `rgb(${r * shade}, ${g * shade}, ${b * shade})`;
+            ctx.fillRect(x, drawStart, 2, drawEnd - drawStart);
+
+            // Simple texture effect
+            if (perpWallDist < 10) {
+                for (let i = 0; i < 3; i++) {
+                    const y = drawStart + Math.random() * (drawEnd - drawStart);
+                    ctx.fillStyle = `rgba(0,0,0,${0.1 * shade})`;
+                    ctx.fillRect(x, y, 2, 2);
+                }
+            }
         }
 
-        // 3. คำนวณการเคลื่อนที่ (Movement Logic)
-        const frameMoveSpeed = moveSpeed * 0.05; // ความเร็วเดิน
-        const frameRotSpeed = rotSpeed * 0.05;   // ความเร็วหัน
+        // Movement
+        const frameMoveSpeed = moveSpeed * 0.08;
+        const frameRotSpeed = rotSpeed * 0.06;
+        const frameStrafeSpeed = strafeSpeed * 0.08;
 
-        // เดินหน้า
-        if (moveSpeed > 0) {
-            if(worldMap[Math.floor(posX + dirX * frameMoveSpeed)][Math.floor(posY)] === 0) posX += dirX * frameMoveSpeed;
-            if(worldMap[Math.floor(posX)][Math.floor(posY + dirY * frameMoveSpeed)] === 0) posY += dirY * frameMoveSpeed;
+        // Forward/Backward
+        if (moveSpeed !== 0) {
+            const newX = posX + dirX * frameMoveSpeed;
+            const newY = posY + dirY * frameMoveSpeed;
+            if (worldMap[Math.floor(newX)][Math.floor(posY)] === 0) posX = newX;
+            if (worldMap[Math.floor(posX)][Math.floor(newY)] === 0) posY = newY;
         }
 
-        // หมุนกล้อง
+        // Strafe
+        if (strafeSpeed !== 0) {
+            const newX = posX + planeX * frameStrafeSpeed;
+            const newY = posY + planeY * frameStrafeSpeed;
+            if (worldMap[Math.floor(newX)][Math.floor(posY)] === 0) posX = newX;
+            if (worldMap[Math.floor(posX)][Math.floor(newY)] === 0) posY = newY;
+        }
+
+        // Rotation
         if (rotSpeed !== 0) {
             let oldDirX = dirX;
             dirX = dirX * Math.cos(-frameRotSpeed) - dirY * Math.sin(-frameRotSpeed);
@@ -250,107 +438,139 @@
             planeY = oldPlaneX * Math.sin(-frameRotSpeed) + planeY * Math.cos(-frameRotSpeed);
         }
 
+        // Weapon recoil animation
+        if (weaponRecoil > 0) {
+            weaponEl.style.transform = `translateX(-50%) translateY(${weaponRecoil}px) scale(${1 + weaponRecoil / 100})`;
+            weaponRecoil *= 0.8;
+            if (weaponRecoil < 0.5) weaponRecoil = 0;
+        } else {
+            weaponEl.style.transform = 'translateX(-50%)';
+        }
+
         requestAnimationFrame(gameLoop);
     }
 
-    // เริ่มเกมลูป
     requestAnimationFrame(gameLoop);
 
-
-    // --- 2. Hand Tracking Logic (MediaPipe) ---
+    // --- Hand Tracking ---
     const videoElement = document.getElementById('webcam-feed');
     const gestureOutput = document.getElementById('gesture-name');
-    const gunElement = document.getElementById('gun');
+    const fingerCountEl = document.getElementById('finger-count');
     const flashElement = document.getElementById('flash');
 
+    function countFingers(landmarks) {
+        let count = 0;
+        
+        // Thumb (check x-axis for thumb)
+        if (landmarks[4].x < landmarks[3].x) count++;
+        
+        // Other fingers (check y-axis)
+        if (landmarks[8].y < landmarks[6].y) count++;   // Index
+        if (landmarks[12].y < landmarks[10].y) count++; // Middle
+        if (landmarks[16].y < landmarks[14].y) count++; // Ring
+        if (landmarks[20].y < landmarks[18].y) count++; // Pinky
+        
+        return count;
+    }
+
     function onResults(results) {
-        // ซ่อน Loading เมื่อโมเดลโหลดเสร็จ
         document.getElementById('loading').style.display = 'none';
 
         if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
             const landmarks = results.multiHandLandmarks[0];
+            const fingerCount = countFingers(landmarks);
             
-            // --- วิเคราะห์ท่าทาง ---
-            
-            // 1. หาจุดศูนย์กลางมือ (ใช้ Wrist + Middle Finger Base)
-            const wrist = landmarks[0];
-            const middleBase = landmarks[9];
-            const handX = wrist.x; // 0.0 - 1.0
-            
-            // 2. ตรวจสอบการกำมือ (Fist Check)
-            // เช็คว่าปลายนิ้วอยู่ต่ำกว่าข้อนิ้วหรือไม่ (ง่ายๆ)
-            let fingersFolded = 0;
-            if (landmarks[8].y > landmarks[6].y) fingersFolded++; // ชี้
-            if (landmarks[12].y > landmarks[10].y) fingersFolded++; // กลาง
-            if (landmarks[16].y > landmarks[14].y) fingersFolded++; // นาง
-            if (landmarks[20].y > landmarks[18].y) fingersFolded++; // ก้อย
-            
-            const isFist = fingersFolded >= 3; 
+            fingerCountEl.textContent = fingerCount;
 
-            // --- แมพเข้ากับเกม ---
+            // Reset controls
+            moveSpeed = 0;
+            strafeSpeed = 0;
+            rotSpeed = 0;
 
-            // A. เลี้ยว (Steering)
-            // ถ้ามืออยู่ซ้าย (x > 0.6) เพราะกล้องกลับด้าน -> เลี้ยวซ้าย
-            // ถ้ามืออยู่ขวา (x < 0.4) -> เลี้ยวขวา
-            // หมายเหตุ: MediaPipe x=0 คือซ้ายสุดของภาพ (ขวาของเราเพราะกระจก)
-            
-            if (handX > 0.65) {
-                rotSpeed = -1; // เลี้ยวซ้าย
-                gestureOutput.innerText = "Turning LEFT";
-            } else if (handX < 0.35) {
-                rotSpeed = 1; // เลี้ยวขวา
-                gestureOutput.innerText = "Turning RIGHT";
-            } else {
-                rotSpeed = 0;
-            }
-
-            // B. ยิง หรือ เดิน (Action)
-            if (isFist) {
-                // กำมือ = ยิง / หยุดเดิน
-                moveSpeed = 0;
-                shootGun();
-                gestureOutput.innerText = "🔥 FIRING 🔥";
-            } else {
-                // แบมือ = เดินหน้า
-                moveSpeed = 1.5; // ความเร็วเดิน
-                if (rotSpeed === 0) gestureOutput.innerText = "Walking Forward";
+            // Gesture mapping
+            switch(fingerCount) {
+                case 0: // Fist - SHOOT
+                    shootGun();
+                    gestureOutput.textContent = '🔥 FIRING 🔥';
+                    gestureOutput.style.color = '#ff0000';
+                    break;
+                    
+                case 1: // 1 finger - FORWARD
+                    moveSpeed = 1.5;
+                    gestureOutput.textContent = '⬆️ FORWARD';
+                    gestureOutput.style.color = '#00ff00';
+                    break;
+                    
+                case 2: // 2 fingers - BACKWARD
+                    moveSpeed = -1.5;
+                    gestureOutput.textContent = '⬇️ BACKWARD';
+                    gestureOutput.style.color = '#ffaa00';
+                    break;
+                    
+                case 3: // 3 fingers - STRAFE LEFT
+                    strafeSpeed = -1.5;
+                    gestureOutput.textContent = '⬅️ STRAFE LEFT';
+                    gestureOutput.style.color = '#00aaff';
+                    break;
+                    
+                case 4: // 4 fingers - STRAFE RIGHT
+                    strafeSpeed = 1.5;
+                    gestureOutput.textContent = '➡️ STRAFE RIGHT';
+                    gestureOutput.style.color = '#00aaff';
+                    break;
+                    
+                case 5: // 5 fingers - OPEN HAND (idle)
+                    gestureOutput.textContent = '✋ READY';
+                    gestureOutput.style.color = '#ffff00';
+                    break;
             }
 
         } else {
-            // ไม่เจอมือ -> หยุดทุกอย่าง
             moveSpeed = 0;
+            strafeSpeed = 0;
             rotSpeed = 0;
-            gestureOutput.innerText = "No Hand Detected";
-            gestureOutput.style.color = "gray";
+            gestureOutput.textContent = 'No Hand Detected';
+            gestureOutput.style.color = '#888';
+            fingerCountEl.textContent = '0';
         }
     }
 
-    // ฟังก์ชันยิงปืน (Animation)
     let canShoot = true;
     function shootGun() {
-        if (!canShoot) return;
+        if (!canShoot || ammo <= 0) return;
         
         canShoot = false;
+        ammo--;
+        document.getElementById('ammo').textContent = ammo;
+        
+        // Muzzle flash
         flashElement.style.opacity = 1;
-        gunElement.style.bottom = "-20px"; // แรงดีดปืน
-
+        
+        // Weapon recoil
+        weaponRecoil = 30;
+        
+        // Screen shake effect
+        canvas.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px)`;
+        
         setTimeout(() => {
             flashElement.style.opacity = 0;
-            gunElement.style.bottom = "0";
-            canShoot = true;
-        }, 150);
+            canvas.style.transform = 'translate(0, 0)';
+            setTimeout(() => {
+                canShoot = true;
+            }, 100);
+        }, 80);
     }
 
-    // ตั้งค่า MediaPipe
-    const hands = new Hands({locateFile: (file) => {
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-    }});
+    // MediaPipe setup
+    const hands = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
 
     hands.setOptions({
         maxNumHands: 1,
         modelComplexity: 1,
-        minDetectionConfidence: 0.5,
-        minTrackingConfidence: 0.5
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.7
     });
 
     hands.onResults(onResults);
@@ -367,5 +587,4 @@
 
 </script>
 </body>
-  </html>
-  
+    </html>
