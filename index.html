@@ -2,99 +2,117 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Minta Console</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+/* ===== RESET ===== */
 *{margin:0;padding:0;box-sizing:border-box}
+
+/* ===== BASE ===== */
 html,body{
   width:100%;
   height:100%;
   font-family:"Courier New",monospace;
-  background:linear-gradient(#e3f2ff,#fdfdff);
+  background:radial-gradient(circle at top,#241133,#050008);
+  color:#ffe9ff;
   overflow:hidden;
 }
 
-/* ===== APP LAYOUT ===== */
-#app{
-  width:100%;
-  height:100%;
+/* ===== SCANLINE ===== */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(
+    rgba(255,255,255,.03) 50%,
+    rgba(0,0,0,.05) 50%
+  );
+  background-size:100% 3px;
+  mix-blend-mode:overlay;
+  opacity:.35;
+}
+
+/* ===== CANVAS ===== */
+canvas{
+  position:fixed;
+  inset:0;
+  z-index:0;
+}
+
+/* ===== SCREENS ===== */
+#lock,#dashboard,#gameScreen{
+  position:fixed;
+  inset:0;
   display:flex;
+  flex-direction:column;
   justify-content:center;
   align-items:center;
+  z-index:1;
+}
+
+#dashboard,#gameScreen{display:none}
+
+/* ===== TITLE ===== */
+h1{
+  font-size:clamp(1.5rem,5vw,3.5rem);
+  margin-bottom:24px;
+  text-shadow:0 0 10px #ffb3ff,0 0 30px #c77dff;
+}
+
+/* ===== BUTTON ===== */
+button{
+  background:linear-gradient(145deg,#ffd6ff,#b983ff);
+  border:none;
+  padding:16px 48px;
+  font-size:1.2rem;
+  font-weight:800;
+  border-radius:999px;
+  cursor:pointer;
+  color:#2a0033;
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),0 0 25px rgba(199,125,255,.7);
 }
 
 /* ===== DASHBOARD ===== */
 #dashboard{
-  width:380px;
-  height:680px;
-  background:white;
-  border-radius:28px;
-  box-shadow:0 20px 40px rgba(0,0,0,.25);
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
+  padding:30px;
+  overflow-y:auto;
 }
 
-/* ===== HEADER ===== */
-#header{
-  background:linear-gradient(90deg,#2196f3,#f44336,#4caf50);
-  color:white;
-  text-align:center;
-  padding:18px;
-  font-size:1.4rem;
-  font-weight:900;
-  letter-spacing:2px;
+ul{
+  list-style:none;
+  width:100%;
+  max-width:600px;
+  margin-top:20px;
 }
 
-/* ===== HUD ===== */
-#hud{
-  display:flex;
-  justify-content:space-around;
-  background:#f3f3f3;
-  padding:12px;
-  font-weight:700;
-}
-
-/* ===== MAIN ===== */
-#main{
-  flex:1;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  gap:16px;
-}
-
-/* ===== BUTTON ===== */
-.btn{
-  padding:16px;
+li{
+  margin:14px 0;
+  padding:18px 26px;
   border-radius:18px;
-  border:none;
-  font-size:1.1rem;
-  font-weight:800;
+  background:linear-gradient(
+    135deg,
+    rgba(255,200,255,.18),
+    rgba(140,200,255,.08)
+  );
+  border:1px solid rgba(255,255,255,.35);
   cursor:pointer;
-  background:#2196f3;
-  color:white;
-  box-shadow:0 6px 0 #1565c0;
+  font-size:1.3rem;
+  font-weight:700;
+  display:flex;
+  justify-content:space-between;
+  box-shadow:0 0 20px rgba(255,160,255,.4);
 }
-.btn:active{
-  transform:translateY(4px);
-  box-shadow:0 2px 0 #1565c0;
-}
-.btn.red{background:#f44336;box-shadow:0 6px 0 #b71c1c}
-.btn.green{background:#4caf50;box-shadow:0 6px 0 #1b5e20}
 
-/* ===== GAME SCREEN ===== */
+/* ===== GAME ===== */
 #gameScreen{
-  position:absolute;
-  inset:0;
   background:#dff1ff;
-  display:none;
-  flex-direction:column;
+  color:#000;
 }
 
-/* ===== GAME HUD ===== */
 #gameHud{
+  width:100%;
   padding:14px;
   background:#2196f3;
   color:white;
@@ -103,13 +121,11 @@ html,body{
   font-weight:900;
 }
 
-/* ===== GAME AREA ===== */
 #game{
   flex:1;
   position:relative;
 }
 
-/* ===== ORB ===== */
 .orb{
   position:absolute;
   width:54px;
@@ -128,107 +144,136 @@ html,body{
 </head>
 
 <body>
+<audio id="bgm" src="Dream(Aoharu).mp3" loop preload="auto"></audio>
+<audio id="sndHit" src="hit.mp3" preload="auto"></audio>
+<audio id="sndUnlock" src="unlock.mp3" preload="auto"></audio>
+  
+<canvas id="bg"></canvas>
 
-<div id="app">
-
-  <!-- DASHBOARD -->
-  <div id="dashboard">
-
-    <div id="header">🎮 MINTA CONSOLE</div>
-
-    <div id="hud">
-      <div>MODE: Game</div>
-      <div id="time"></div>
-    </div>
-
-    <div id="main">
-      <button class="btn" onclick="openGame()">▶ PLAY ORB</button>
-      <button class="btn green" onclick="go('https://github.com/Minta1234')">GitHub</button>
-      <button class="btn red" onclick="go('https://minta0077.online')">Website</button>
-    </div>
-
-  </div>
-
-  <!-- GAME -->
-  <div id="gameScreen">
-    <div id="gameHud">
-      <div>SCORE: <span id="score">0</span></div>
-      <div onclick="closeGame()" style="cursor:pointer">❌ EXIT</div>
-    </div>
-    <div id="game"></div>
-  </div>
-
+<!-- LOCK SCREEN -->
+<div id="lock">
+  <h1>INSERT COIN</h1>
+  <button onclick="startGame()">PLAY TO UNLOCK</button>
 </div>
 
-<audio id="hit" src="assets/click.wav"></audio>
+<!-- GAME -->
+<div id="gameScreen">
+  <div id="gameHud">
+    <div>SCORE: <span id="score">0</span></div>
+    <div>NEED: <span id="need"></span></div>
+  </div>
+  <div id="game"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <h1>Minta DASHBOARD</h1>
+  <ul>
+    <li onclick="openLink('https://minta0077.online/minta0077', '_parent')">Minta Online ⏩</li> 
+    <li onclick="openLink('https://github.com/Minta1234', '_parent')">GitHub ⏩</li> 
+    <li onclick="openLink('https://www.tiktok.com/@minta1826', '_blank')">TikTok 📲</li> 
+    <li onclick="openLink('https://minta0077.online/Games/XO', '_parent')">XO Game ▶️</li> 
+    <li onclick="openLink('https://minta0077.online/Games/Chess-Optimize', '_parent')">Chess ▶️</li> 
+    <li onclick="openLink('https://minta0077.online/Games/Checkers', '_parent')">Checkers ▶️</li> 
+    <li onclick="openLink('https://minta0077.online/EX/AURA', '_parent')">AURA ▶️</li>
+  </ul>
+</div>
 
 <script>
-/* ===== CLOCK ===== */
-function tick(){
-  document.getElementById("time").textContent =
-    new Date().toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"});
-}
-setInterval(tick,1000); tick();
+/* ===== CONFIG ===== */
+const TARGET_SCORE = 10;
 
-/* ===== NAV ===== */
-function go(url){ window.open(url,"_blank"); }
-
-/* ===== GAME CORE ===== */
-const gameScreen = document.getElementById("gameScreen");
-const game = document.getElementById("game");
-const scoreText = document.getElementById("score");
-const hit = document.getElementById("hit");
-
+/* ===== STATE ===== */
 let score = 0;
-let timer = null;
 let playing = false;
 
-function openGame(){
-  gameScreen.style.display="flex";
-  startGame();
-}
+/* ===== ELEMENTS ===== */
+const lock = document.getElementById("lock");
+const dash = document.getElementById("dashboard");
+const gameScreen = document.getElementById("gameScreen");
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+const needEl = document.getElementById("need");
 
-function closeGame(){
-  playing=false;
-  clearTimeout(timer);
-  game.innerHTML="";
-  gameScreen.style.display="none";
-}
+/* ===== INIT ===== */
+needEl.textContent = TARGET_SCORE;
+if(localStorage.getItem("UNLOCKED")==="true") unlock();
 
+/* ===== GAME ===== */
 function startGame(){
   score=0;
-  scoreText.textContent=0;
+  scoreEl.textContent=0;
   game.innerHTML="";
   playing=true;
+  lock.style.display="none";
+  gameScreen.style.display="flex";
   spawn();
 }
 
 function spawn(){
   if(!playing) return;
-
-  const orb=document.createElement("div");
-  orb.className="orb";
-  orb.style.left=Math.random()*(game.clientWidth-54)+"px";
-  orb.style.top=Math.random()*(game.clientHeight-54)+"px";
-
-  orb.onclick=()=>{
+  const o=document.createElement("div");
+  o.className="orb";
+  o.style.left=Math.random()*(game.clientWidth-54)+"px";
+  o.style.top=Math.random()*(game.clientHeight-54)+"px";
+  o.onclick=()=>{
     score++;
-    scoreText.textContent=score;
-    hit.currentTime=0;
-    hit.play().catch(()=>{});
-    orb.remove();
-    clearTimeout(timer);
+    scoreEl.textContent=score;
+    o.remove();
+    if(score>=TARGET_SCORE) return unlock();
     spawn();
   };
-
-  game.appendChild(orb);
-  timer=setTimeout(endGame,2000);
+  game.appendChild(o);
+  setTimeout(()=>o.remove(),2000);
 }
 
-function endGame(){
+function unlock(){
   playing=false;
-  alert("GAME OVER\nSCORE: "+score);
+  localStorage.setItem("UNLOCKED","true");
+  gameScreen.style.display="none";
+  dash.style.display="flex";
 }
+
+/* ===== NAV ===== */
+function go(url){window.open(url,"_blank");}
+
+/* ===== PARTICLE BG ===== */
+const c=bg,ctx=c.getContext("2d");
+function resize(){c.width=innerWidth;c.height=innerHeight}
+resize();addEventListener("resize",resize);
+const P=[...Array(80)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3}));
+(function anim(){
+  ctx.clearRect(0,0,c.width,c.height);
+  P.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>c.width)p.vx*=-1;
+    if(p.y<0||p.y>c.height)p.vy*=-1;
+    ctx.fillStyle="rgba(255,220,255,.9)";
+    ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,Math.PI*2);ctx.fill();
+  });
+  requestAnimationFrame(anim);
+})();
+const bgm = document.getElementById("bgm");
+bgm.volume = 0.25;
+
+function playBGM(){
+  bgm.play().catch(()=>{});
+}
+
+function stopBGM(){
+  bgm.pause();
+  bgm.currentTime = 0;
+}
+
+function playSound(type){
+  let s = null;
+  if(type==="hit") s = sndHit;
+  if(type==="unlock") s = sndUnlock;
+  if(!s) return;
+  s.currentTime = 0;
+  s.play().catch(()=>{});
+}
+
 </script>
 
 </body>
