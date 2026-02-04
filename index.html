@@ -13,36 +13,24 @@
 html,body{
   width:100%;
   height:100%;
-  font-family:"Courier New",monospace;
-  background:radial-gradient(circle at top,#241133,#050008);
-  color:#ffe9ff;
+  font-family:"Comic Sans MS","Courier New",monospace;
+  background:linear-gradient(180deg,#ffd6ff,#cdb4ff,#bde0fe);
+  color:#3a005a;
   overflow:hidden;
 }
 
-/* ===== SCANLINE ===== */
+/* ===== OVERLAY ===== */
 body::after{
   content:"";
   position:fixed;
   inset:0;
   pointer-events:none;
-  background:linear-gradient(
-    rgba(255,255,255,.03) 50%,
-    rgba(0,0,0,.05) 50%
-  );
-  background-size:100% 3px;
-  mix-blend-mode:overlay;
-  opacity:.35;
-}
-
-/* ===== CANVAS ===== */
-canvas{
-  position:fixed;
-  inset:0;
-  z-index:0;
+  background:radial-gradient(circle at top,rgba(255,255,255,.7),transparent 60%);
+  opacity:.6;
 }
 
 /* ===== SCREENS ===== */
-#lock,#dashboard,#gameScreen{
+#gameScreen,#dashboard{
   position:fixed;
   inset:0;
   display:flex;
@@ -52,26 +40,103 @@ canvas{
   z-index:1;
 }
 
-#dashboard,#gameScreen{display:none}
+#dashboard{display:none}
 
 /* ===== TITLE ===== */
 h1{
-  font-size:clamp(1.5rem,5vw,3.5rem);
+  font-size:clamp(2rem,6vw,3.5rem);
   margin-bottom:24px;
-  text-shadow:0 0 10px #ffb3ff,0 0 30px #c77dff;
+  color:#ff4d9d;
+  text-shadow:0 4px 0 #fff,0 10px 20px rgba(0,0,0,.25);
 }
 
 /* ===== BUTTON ===== */
 button{
-  background:linear-gradient(145deg,#ffd6ff,#b983ff);
+  background:linear-gradient(145deg,#fff1a8,#ffb703);
   border:none;
-  padding:16px 48px;
-  font-size:1.2rem;
-  font-weight:800;
+  padding:18px 56px;
+  font-size:1.3rem;
+  font-weight:900;
   border-radius:999px;
   cursor:pointer;
-  color:#2a0033;
-  box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),0 0 25px rgba(199,125,255,.7);
+  color:#6a2c00;
+  box-shadow:0 6px 0 #ff9f1c,0 16px 30px rgba(0,0,0,.3);
+  transition:transform .1s;
+}
+
+button:hover{
+  transform:translateY(-2px);
+}
+
+button:active{
+  transform:translateY(6px);
+  box-shadow:0 2px 0 #ff9f1c;
+}
+
+button.secondary{
+  background:linear-gradient(145deg,#ffc6ff,#ff99e6);
+  color:#6a005a;
+  box-shadow:0 6px 0 #e066d8,0 16px 30px rgba(0,0,0,.3);
+  padding:14px 40px;
+  font-size:1.1rem;
+  margin-top:20px;
+}
+
+button.secondary:active{
+  box-shadow:0 2px 0 #e066d8;
+}
+
+/* ===== GAME ===== */
+#gameScreen{
+  background:linear-gradient(180deg,#bde0fe,#a2d2ff);
+  width:100%;
+  display:flex;
+}
+
+#hud{
+  width:100%;
+  padding:16px;
+  background:#ff4d9d;
+  color:white;
+  font-weight:900;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:1.2rem;
+  position:relative;
+  z-index:2;
+}
+
+#game{
+  flex:1;
+  width:100%;
+  position:relative;
+  overflow:hidden;
+}
+
+/* ===== BALL ===== */
+.ball{
+  position:absolute;
+  width:64px;
+  height:64px;
+  border-radius:50%;
+  background:radial-gradient(circle at top,#fff,#ff595e);
+  box-shadow:0 0 0 6px #ffd166,0 0 25px rgba(0,0,0,.35);
+  cursor:pointer;
+  animation:life 3s linear forwards;
+  transition:transform .1s;
+}
+
+.ball:hover{
+  transform:scale(1.1);
+}
+
+.ball:active{
+  transform:scale(.9);
+}
+
+@keyframes life{
+  to{opacity:0;transform:scale(.2)}
 }
 
 /* ===== DASHBOARD ===== */
@@ -83,199 +148,380 @@ button{
 ul{
   list-style:none;
   width:100%;
-  max-width:600px;
-  margin-top:20px;
+  max-width:520px;
 }
 
 li{
-  margin:14px 0;
-  padding:18px 26px;
-  border-radius:18px;
-  background:linear-gradient(
-    135deg,
-    rgba(255,200,255,.18),
-    rgba(140,200,255,.08)
-  );
-  border:1px solid rgba(255,255,255,.35);
-  cursor:pointer;
-  font-size:1.3rem;
-  font-weight:700;
-  display:flex;
-  justify-content:space-between;
-  box-shadow:0 0 20px rgba(255,160,255,.4);
-}
-
-/* ===== GAME ===== */
-#gameScreen{
-  background:#dff1ff;
-  color:#000;
-}
-
-#gameHud{
-  width:100%;
-  padding:14px;
-  background:#2196f3;
-  color:white;
-  display:flex;
-  justify-content:space-between;
+  margin:16px 0;
+  padding:22px;
+  border-radius:24px;
+  background:linear-gradient(135deg,#ffafcc,#cdb4ff);
+  border:3px dashed #fff;
+  font-size:1.4rem;
   font-weight:900;
-}
-
-#game{
-  flex:1;
-  position:relative;
-}
-
-.orb{
-  position:absolute;
-  width:54px;
-  height:54px;
-  border-radius:50%;
-  background:radial-gradient(circle,#fff,#ff5252);
-  box-shadow:0 0 12px rgba(0,0,0,.3);
   cursor:pointer;
-  animation:fade 2s linear forwards;
+  text-align:center;
+  box-shadow:0 12px 25px rgba(0,0,0,.3);
+  transition:transform .2s;
 }
 
-@keyframes fade{
-  to{opacity:0;transform:scale(.3)}
+li:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 30px rgba(0,0,0,.4);
+}
+
+li:active{
+  transform:translateY(2px);
+}
+
+/* ===== SOUND BUTTON ===== */
+#soundBtn{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:10;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  padding:0;
+  font-size:1.5rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 4px 0 #ff9f1c,0 8px 15px rgba(0,0,0,.3);
+}
+
+#soundBtn:active{
+  box-shadow:0 1px 0 #ff9f1c;
+}
+
+/* ===== GAME OVER SCREEN ===== */
+#gameOver{
+  position:fixed;
+  inset:0;
+  background:rgba(255,107,214,.95);
+  backdrop-filter:blur(10px);
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  z-index:5;
+}
+
+.stats{
+  background:rgba(255,255,255,.3);
+  border:4px solid #fff;
+  border-radius:30px;
+  padding:30px 50px;
+  margin:20px 0;
+  font-size:1.4rem;
+  text-align:center;
+}
+
+.stats div{
+  margin:10px 0;
+  font-weight:900;
 }
 </style>
 </head>
 
 <body>
-<audio id="bgm" src="/assest/Dream(Aoharu).mp3" loop preload="auto"></audio>
-<audio id="sndHit" src="/assesthit.mp3" preload="auto"></audio>
-<audio id="sndUnlock" src="/assest/unlock.mp3" preload="auto"></audio>
-  
-<canvas id="bg"></canvas>
 
-<!-- LOCK SCREEN -->
-<div id="lock">
-  <h1>INSERT COIN</h1>
-  <button onclick="startGame()">PLAY TO UNLOCK</button>
-</div>
+<!-- SOUND BUTTON -->
+<button id="soundBtn" title="Sound">🔊</button>
 
-<!-- GAME -->
+<!-- GAME SCREEN -->
 <div id="gameScreen">
-  <div id="gameHud">
-    <div>SCORE: <span id="score">0</span></div>
+  <div id="hud">
+    <div>
+      SCORE: <span id="score">0</span> |
+      TIME: <span id="clock">00/00/00/00/00/00/000</span>
+    </div>
     <div>NEED: <span id="need"></span></div>
   </div>
   <div id="game"></div>
+</div>
+
+<!-- GAME OVER SCREEN -->
+<div id="gameOver">
+  <h1>🎉 YOU WIN! 🎉</h1>
+  <div class="stats">
+    <div>⭐ FINAL SCORE: <span id="finalScore">0</span></div>
+    <div>⏱️ TIME: <span id="finalTime">0</span>s</div>
+  </div>
+  <button onclick="restartGame()">PLAY AGAIN</button>
+  <button class="secondary" onclick="backToDashboard()">GO TO DASHBOARD</button>
 </div>
 
 <!-- DASHBOARD -->
 <div id="dashboard">
   <h1>Minta DASHBOARD</h1>
   <ul>
-    <li onclick="openLink('https://minta0077.online/minta0077', '_parent')">Minta Online ⏩</li> 
-    <li onclick="openLink('https://github.com/Minta1234', '_parent')">GitHub ⏩</li> 
-    <li onclick="openLink('https://www.tiktok.com/@minta1826', '_blank')">TikTok 📲</li> 
-    <li onclick="openLink('https://minta0077.online/Games/XO', '_parent')">XO Game ▶️</li> 
-    <li onclick="openLink('https://minta0077.online/Games/Chess-Optimize', '_parent')">Chess ▶️</li> 
-    <li onclick="openLink('https://minta0077.online/Games/Checkers', '_parent')">Checkers ▶️</li> 
-    <li onclick="openLink('https://minta0077.online/EX/AURA', '_parent')">AURA ▶️</li>
+    <li onclick="go('https://github.com/Minta1234')">🔗 GitHub</li>
+    <li onclick="go('https://minta0077.online')">🌐 Website</li>
+    <li onclick="go('https://www.tiktok.com/@minta1826')">🎵 TikTok</li>
+    <li onclick="playAgain()">🎮 Play Game Again</li>
   </ul>
 </div>
 
+<!-- AUDIO -->
+<audio id="gameBgm" src="assets/someday,sometime.mp3" loop preload="auto"></audio>
+<audio id="dashBgm" src="assets/Dream(Aoharu).mp3" loop preload="auto"></audio>
+
 <script>
 /* ===== CONFIG ===== */
-const TARGET_SCORE = 10;
+const TARGET = 10;
+const SPAWN_INTERVAL = 800; // Spawn new ball every 800ms
+const BALL_LIFETIME = 3000; // Ball disappears after 3 seconds
 
 /* ===== STATE ===== */
 let score = 0;
 let playing = false;
+let gameStartTime = 0;
+let spawnTimer = null;
 
 /* ===== ELEMENTS ===== */
-const lock = document.getElementById("lock");
-const dash = document.getElementById("dashboard");
 const gameScreen = document.getElementById("gameScreen");
+const gameOver = document.getElementById("gameOver");
+const dash = document.getElementById("dashboard");
 const game = document.getElementById("game");
 const scoreEl = document.getElementById("score");
 const needEl = document.getElementById("need");
+const clockEl = document.getElementById("clock");
+const gameBgm = document.getElementById("gameBgm");
+const dashBgm = document.getElementById("dashBgm");
+const soundBtn = document.getElementById("soundBtn");
+
+/* ===== AUDIO CONTEXT ===== */
+let soundOn = true;
+const AudioCTX = new (window.AudioContext || window.webkitAudioContext)();
+
+async function unlockAudio(){
+  try{
+    await AudioCTX.resume();
+  }catch{}
+}
+
+/* ===== SOUND EFFECTS ===== */
+function playClickSound(){
+  if(!soundOn) return;
+  
+  const osc = AudioCTX.createOscillator();
+  const gain = AudioCTX.createGain();
+  
+  osc.connect(gain);
+  gain.connect(AudioCTX.destination);
+  
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, AudioCTX.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(1200, AudioCTX.currentTime + 0.1);
+  
+  gain.gain.setValueAtTime(0.3, AudioCTX.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, AudioCTX.currentTime + 0.1);
+  
+  osc.start(AudioCTX.currentTime);
+  osc.stop(AudioCTX.currentTime + 0.1);
+}
+
+function playWinSound(){
+  if(!soundOn) return;
+  
+  const notes = [523, 659, 784, 1047]; // C, E, G, C
+  notes.forEach((freq, i) => {
+    setTimeout(() => {
+      const osc = AudioCTX.createOscillator();
+      const gain = AudioCTX.createGain();
+      
+      osc.connect(gain);
+      gain.connect(AudioCTX.destination);
+      
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.2, AudioCTX.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, AudioCTX.currentTime + 0.3);
+      
+      osc.start();
+      osc.stop(AudioCTX.currentTime + 0.3);
+    }, i * 150);
+  });
+}
+
+/* ===== SOUND CONTROLS ===== */
+soundBtn.onclick = async () => {
+  await unlockAudio();
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "🔊" : "🔇";
+  
+  if(soundOn){
+    if(playing){
+      gameBgm.play().catch(()=>{});
+    } else if(dash.style.display === "flex"){
+      dashBgm.play().catch(()=>{});
+    }
+  } else {
+    gameBgm.pause();
+    dashBgm.pause();
+  }
+};
 
 /* ===== INIT ===== */
-needEl.textContent = TARGET_SCORE;
-if(localStorage.getItem("UNLOCKED")==="true") unlock();
+needEl.textContent = TARGET;
 
-/* ===== GAME ===== */
-function startGame(){
-  score=0;
-  scoreEl.textContent=0;
-  game.innerHTML="";
-  playing=true;
-  lock.style.display="none";
-  gameScreen.style.display="flex";
-  spawn();
+// Check if player has already won before
+if(localStorage.getItem("UNLOCKED") === "true"){
+  // Show dashboard if already unlocked
+  gameScreen.style.display = "none";
+  dash.style.display = "flex";
+  if(soundOn){
+    dashBgm.volume = 0.4;
+    dashBgm.play().catch(()=>{});
+  }
+} else {
+  // Auto-start game for first-time players
+  setTimeout(() => {
+    startGame();
+  }, 500);
 }
 
-function spawn(){
+/* ===== CLOCK ===== */
+function pad(n, len = 2) {
+  return n.toString().padStart(len, "0");
+}
+
+function updateClock() {
+  const d = new Date();
+  const YY = pad(d.getFullYear() % 100);
+  const MM = pad(d.getMonth() + 1);
+  const DD = pad(d.getDate());
+  const HH = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  const SS = pad(d.getSeconds());
+  const MS = pad(d.getMilliseconds(), 3);
+  
+  clockEl.textContent = `${YY}/${MM}/${DD}/${HH}/${mm}/${SS}/${MS}`;
+}
+
+setInterval(updateClock, 10);
+updateClock();
+
+/* ===== GAME FUNCTIONS ===== */
+async function startGame(){
+  await unlockAudio();
+  score = 0;
+  scoreEl.textContent = 0;
+  playing = true;
+  gameStartTime = Date.now();
+  
+  gameScreen.style.display = "flex";
+  gameOver.style.display = "none";
+  dash.style.display = "none";
+  
+  // Stop dashboard music, start game music
+  dashBgm.pause();
+  dashBgm.currentTime = 0;
+  
+  if(soundOn){
+    gameBgm.volume = 0.35;
+    gameBgm.play().catch(()=>{});
+  }
+  
+  // Start spawning balls continuously
+  spawnBall();
+  spawnTimer = setInterval(spawnBall, SPAWN_INTERVAL);
+}
+
+function spawnBall(){
   if(!playing) return;
-  const o=document.createElement("div");
-  o.className="orb";
-  o.style.left=Math.random()*(game.clientWidth-54)+"px";
-  o.style.top=Math.random()*(game.clientHeight-54)+"px";
-  o.onclick=()=>{
+  
+  const b = document.createElement("div");
+  b.className = "ball";
+  b.style.left = Math.random() * (game.clientWidth - 64) + "px";
+  b.style.top = Math.random() * (game.clientHeight - 64) + "px";
+  
+  b.onclick = () => {
+    playClickSound(); // Play click sound
     score++;
-    scoreEl.textContent=score;
-    o.remove();
-    if(score>=TARGET_SCORE) return unlock();
-    spawn();
+    scoreEl.textContent = score;
+    b.remove();
+    
+    if(score >= TARGET){
+      winGame();
+      return;
+    }
   };
-  game.appendChild(o);
-  setTimeout(()=>o.remove(),2000);
+  
+  game.appendChild(b);
+  
+  // Remove ball after lifetime expires
+  setTimeout(() => {
+    if(b.parentNode){
+      b.remove();
+    }
+  }, BALL_LIFETIME);
 }
 
-function unlock(){
-  playing=false;
-  localStorage.setItem("UNLOCKED","true");
-  gameScreen.style.display="none";
-  dash.style.display="flex";
+function winGame(){
+  playing = false;
+  clearInterval(spawnTimer);
+  
+  const finalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+  
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalTime").textContent = finalTime;
+  
+  localStorage.setItem("UNLOCKED", "true");
+  
+  playWinSound();
+  
+  // Clear remaining balls
+  game.innerHTML = "";
+  
+  // Stop game music
+  gameBgm.pause();
+  gameBgm.currentTime = 0;
+  
+  gameScreen.style.display = "none";
+  gameOver.style.display = "flex";
+}
+
+function stopGame(){
+  playing = false;
+  clearInterval(spawnTimer);
+  game.innerHTML = "";
+  gameBgm.pause();
+  gameBgm.currentTime = 0;
+  dashBgm.pause();
+  dashBgm.currentTime = 0;
+}
+
+function restartGame(){
+  gameOver.style.display = "none";
+  startGame();
+}
+
+function backToDashboard(){
+  stopGame();
+  gameOver.style.display = "none";
+  gameScreen.style.display = "none";
+  dash.style.display = "flex";
+  
+  // Play dashboard music
+  if(soundOn){
+    dashBgm.volume = 0.4;
+    dashBgm.play().catch(()=>{});
+  }
+}
+
+function playAgain(){
+  dashBgm.pause();
+  dashBgm.currentTime = 0;
+  startGame();
 }
 
 /* ===== NAV ===== */
-function go(url){window.open(url,"_blank");}
-
-/* ===== PARTICLE BG ===== */
-const c=bg,ctx=c.getContext("2d");
-function resize(){c.width=innerWidth;c.height=innerHeight}
-resize();addEventListener("resize",resize);
-const P=[...Array(80)].map(()=>({x:Math.random()*c.width,y:Math.random()*c.height,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3}));
-(function anim(){
-  ctx.clearRect(0,0,c.width,c.height);
-  P.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>c.width)p.vx*=-1;
-    if(p.y<0||p.y>c.height)p.vy*=-1;
-    ctx.fillStyle="rgba(255,220,255,.9)";
-    ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,Math.PI*2);ctx.fill();
-  });
-  requestAnimationFrame(anim);
-})();
-const bgm = document.getElementById("bgm");
-bgm.volume = 0.25;
-
-function playBGM(){
-  bgm.play().catch(()=>{});
+function go(u){
+  window.open(u, "_blank");
 }
-
-function stopBGM(){
-  bgm.pause();
-  bgm.currentTime = 0;
-}
-
-function playSound(type){
-  let s = null;
-  if(type==="hit") s = sndHit;
-  if(type==="unlock") s = sndUnlock;
-  if(!s) return;
-  s.currentTime = 0;
-  s.play().catch(()=>{});
-}
-
 </script>
 
 </body>
 </html>
-
