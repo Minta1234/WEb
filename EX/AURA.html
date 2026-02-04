@@ -136,33 +136,39 @@
     </audio>
 
     <script>
-        const startBtn = document.getElementById('startBtn');
-        const playAgainBtn = document.getElementById('playAgainBtn');
-        const startScreen = document.getElementById('startScreen');
-        const mainScreen = document.getElementById('mainScreen');
-        const auraNumber = document.getElementById('auraNumber');
-        const auraSound = document.getElementById('auraSound');
+    const startBtn = document.getElementById('startBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const startScreen = document.getElementById('startScreen');
+    const mainScreen = document.getElementById('mainScreen');
+    const auraNumber = document.getElementById('auraNumber');
+    const auraSound = document.getElementById('auraSound');
 
-        function generateAura() {
-            const randomAura = Math.floor(Math.random() * 1100001) - 100000;
-            auraNumber.textContent = randomAura.toLocaleString();
-            auraSound.volume = 1;
-            auraSound.play();
-        }
+    function playAuraSoundOnce() {
+        auraSound.pause();          
+        auraSound.currentTime = 0;  
+        auraSound.volume = 1;
+        auraSound.play();
+    }
 
-        startBtn.addEventListener('click', () => {
-            startScreen.style.display = 'none';
-            mainScreen.style.display = 'block';
-            generateAura();
-        });
+    function generateAura() {
+        const randomAura = Math.floor(Math.random() * 1100001) - 100000;
+        auraNumber.textContent = randomAura.toLocaleString();
+        playAuraSoundOnce();
+    }
 
-        playAgainBtn.addEventListener('click', () => {
-            generateAura();
-        });
+    startBtn.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        mainScreen.style.display = 'block';
+        generateAura(); 
+    });
 
-        document.getElementById('auraImage').addEventListener('error', function() {
-            this.style.display = 'none';
-        });
-    </script>
+    playAgainBtn.addEventListener('click', () => {
+        generateAura();
+    });
+
+    document.getElementById('auraImage').addEventListener('error', function () {
+        this.style.display = 'none';
+    });
+</script>
 </body>
 </html>
