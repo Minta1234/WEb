@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA+++</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .start-screen {
+            display: block;
+        }
+
+        .main-screen {
+            display: none;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            padding: 20px 50px;
+            font-size: 1.5em;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .aura-display {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .aura-image {
+            max-width: 300px;
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .aura-number {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0);
+            background: linear-gradient(45deg, #00FFFF, #DE3163);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .play-again {
+            margin-top: 30px;
+            background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+    </style>
+</head>
+<body>
+<img src="/Image/ribbon_top_right.png"
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none">    
+    <div class="container">
+        <div class="start-screen" id="startScreen">
+            <h1>AURA</h1>
+            <button class="btn" id="startBtn">Get AURA</button>
+        </div>
+
+        <div class="main-screen" id="mainScreen">
+            <h1>Your AURA</h1>
+            <div class="aura-display fade-in">
+                <img src="Image/1770265557196.gif" alt="AURA" class="aura-image" id="auraImage">
+                <div class="aura-number" id="auraNumber">0</div>
+            </div>
+            <button class="btn play-again" id="playAgainBtn">Get AURA</button>
+        </div>
+    </div>
+
+    <audio id="auraSound">
+        <source src="/assets/Pampakapam.mp3" type="audio/mp3">
+    </audio>
+
+    <script>
+    const startBtn = document.getElementById('startBtn');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const startScreen = document.getElementById('startScreen');
+    const mainScreen = document.getElementById('mainScreen');
+    const auraNumber = document.getElementById('auraNumber');
+    const auraSound = document.getElementById('auraSound');
+
+    function playAuraSoundOnce() {
+        auraSound.pause();          
+        auraSound.currentTime = 0;  
+        auraSound.volume = 1;
+        auraSound.play();
+    }
+
+    function generateAura() {
+        const randomAura = Math.floor(Math.random() * 1100001) - 100000;
+        auraNumber.textContent = randomAura.toLocaleString();
+        playAuraSoundOnce();
+    }
+
+    startBtn.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        mainScreen.style.display = 'block';
+        generateAura(); 
+    });
+
+    playAgainBtn.addEventListener('click', () => {
+        generateAura();
+    });
+
+    document.getElementById('auraImage').addEventListener('error', function () {
+        this.style.display = 'none';
+    });
+</script>
+</body>
+</html>
