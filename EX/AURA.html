@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA+++</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 16px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .start-screen { display: block; }
+        .main-screen  { display: none; }
+
+        h1 {
+            font-size: clamp(1.8em, 6vw, 3em);
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            padding: 14px 40px;
+            font-size: clamp(1em, 4vw, 1.4em);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+        }
+        .btn:hover  { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+        .btn:active { transform: translateY(-1px); }
+
+        .aura-display {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px 16px 16px;
+            margin: 16px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .aura-image {
+            max-width: min(240px, 75vw);
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .aura-number {
+            font-size: clamp(1.8em, 7vw, 2.8em);
+            font-weight: bold;
+            margin: 14px 0 6px;
+            background: linear-gradient(45deg, #00FFFF, #DE3163);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== LYRICS BOX ===== */
+        .lyrics-box {
+            background: #111;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            height: clamp(140px, 28vw, 200px);
+            margin-top: 14px;
+            mask-image: linear-gradient(to bottom,
+                transparent 0%, black 15%, black 85%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom,
+                transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+
+        .lyrics-inner {
+            padding: 0 16px;
+        }
+
+        .lyrics-line {
+            font-size: clamp(0.82em, 2.6vw, 1em);
+            line-height: 1.9;
+            color: #e0e0e0;
+            text-align: left;
+            font-style: italic;
+            letter-spacing: 0.02em;
+        }
+
+        .lyrics-spacer { display: block; }
+
+        /* ===== GIF OVERLAY ===== */
+        .lyrics-gif {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+            z-index: 10;
+            animation: gifFadeIn 0.8s ease;
+        }
+
+        @keyframes gifFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .play-again {
+            margin-top: 16px;
+            background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+    </style>
+</head>
+<body>
+
+<img src="Image/ribbon_top_right.png"
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none"
+     onerror="this.style.display='none'">
+
+<div class="container">
+    <div class="start-screen" id="startScreen">
+        <h1>Aura</h1>
+        <button class="btn" id="startBtn">Get AURA</button>
+    </div>
+
+    <div class="main-screen" id="mainScreen">
+        <h1>Your AURA</h1>
+        <div class="aura-display fade-in">
+
+            <img src="/Image/f4ccf95cea4909acf15233419804185b.jpg"
+                 alt="AURA"
+                 class="aura-image"
+                 onerror="this.style.display='none'">
+
+            <div class="aura-number" id="auraNumber">0</div>
+
+            <!-- LYRICS BOX -->
+            <div class="lyrics-box" id="lyricsBox">
+                <div class="lyrics-inner" id="lyricsInner"></div>
+                <!-- GIF shown after text ends -->
+                <img src="Image/1770265557196.gif"
+                     alt=""
+                     class="lyrics-gif"
+                     id="lyricsGif">
+            </div>
+        </div>
+        <button class="btn play-again" id="playAgainBtn">Get AURA</button>
+    </div>
+</div>
+
+<audio id="auraSound" preload="auto">
+    <source src="/assets/TOXIC FUNK.mp3" type="audio/mp3">
+</audio>
+
+<script>
+const LINES = [
+    "ท่ามกลางควันคลุ้ง ข้านั่งบูน",
+    "บัลลังก์ศักดิ์สิทธิ์",
+    "ดั่งเทพในเงามืด",
+    "ผู้เฝ้ามองวันสิ้นโลก",
+    "ภูเขาไฟคำรามราวกับคุกเข่า",
+    "ต่ออำนาจจิตของข้า",
+    "ลาวาไหลเหมือนเส้นเลือดของพิภพ",
+    "แต่ข้ากลับสงบนิ่งและเย็นชา",
+    "รอยยิ้มเบี้ยวปรากฏ",
+    "เมื่อข้าตระหนักว่า",
+    "ทุกความพินาศล้วนอยู่ใต้ฝ่าเท้าข้า",
+    "นี่คือพิธีกรรมแห่งราชันย์",
+    "ผู้ครองทั้งแสงและความมืดในคราวเดียว",
+    "แม้โลกแตกสลาย",
+    "เงาของข้าก็ยังทอดยาวเหนือกาลเวลา",
+    "และตำนานจะจารึกว่า...",
+    "เทพในเงามืด",
+    "ได้ตื่นขึ้นแล้ว",
+    "— ✦ —",
+];
+
+const lyricsInner = document.getElementById('lyricsInner');
+const lyricsBox   = document.getElementById('lyricsBox');
+const lyricsGif   = document.getElementById('lyricsGif');
+const auraSound   = document.getElementById('auraSound');
+const auraNumber  = document.getElementById('auraNumber');
+
+let gifTimer = null;
+
+function buildLyrics() {
+    lyricsInner.innerHTML = '';
+    lyricsGif.style.display = 'none';
+    if (gifTimer) { clearTimeout(gifTimer); gifTimer = null; }
+
+    const spacer = document.createElement('div');
+    spacer.className = 'lyrics-spacer';
+    spacer.id = 'lyricsSpacer';
+    lyricsInner.appendChild(spacer);
+
+    // Only ONE copy — no loop, so we know exactly when it ends
+    LINES.forEach(line => {
+        const p = document.createElement('p');
+        p.className = 'lyrics-line';
+        p.textContent = line;
+        lyricsInner.appendChild(p);
+    });
+
+    // Bottom spacer so last line scrolls fully out of view
+    const bottomSpacer = document.createElement('div');
+    bottomSpacer.style.height = lyricsBox.clientHeight + 'px';
+    lyricsInner.appendChild(bottomSpacer);
+}
+
+function startScroll(duration) {
+    lyricsInner.style.animation = 'none';
+    void lyricsInner.offsetWidth;
+
+    const spacerEl = document.getElementById('lyricsSpacer');
+    spacerEl.style.height = lyricsBox.clientHeight + 'px';
+
+    const totalH = lyricsInner.scrollHeight;
+    // Scroll distance = full inner height minus the box height
+    // (starts with spacer at top, ends with bottom spacer fully gone)
+    const scrollDist = totalH - lyricsBox.clientHeight;
+
+    const styleId = 'dynamic-scroll-style';
+    let styleEl = document.getElementById(styleId);
+    if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+        @keyframes scrollUpOnce {
+            from { transform: translateY(0); }
+            to   { transform: translateY(-${scrollDist}px); }
+        }
+    `;
+
+    // animation-fill-mode: forwards → stops at end position
+    lyricsInner.style.animation = `scrollUpOnce ${duration}s linear forwards`;
+
+    // Show GIF when scroll finishes
+    if (gifTimer) clearTimeout(gifTimer);
+    gifTimer = setTimeout(() => {
+        lyricsGif.style.display = 'block';
+    }, duration * 1000);
+}
+
+function playAura() {
+    auraNumber.textContent = (Math.floor(Math.random() * 1100001) - 100000).toLocaleString();
+    buildLyrics();
+
+    auraSound.pause();
+    auraSound.currentTime = 0;
+
+    const go = () => {
+        auraSound.play().catch(e => console.log(e));
+        const dur = (auraSound.duration && isFinite(auraSound.duration)) ? auraSound.duration : 35;
+        startScroll(dur);
+    };
+
+    if (auraSound.readyState >= 1 && isFinite(auraSound.duration)) {
+        go();
+    } else {
+        auraSound.addEventListener('loadedmetadata', go, { once: true });
+        go();
+    }
+}
+
+auraSound.addEventListener('loadedmetadata', () => {
+    if (!auraSound.paused) startScroll(auraSound.duration);
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display  = 'block';
+    playAura();
+});
+
+document.getElementById('playAgainBtn').addEventListener('click', playAura);
+</script>
+</body>
+</html>
