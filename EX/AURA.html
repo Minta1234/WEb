@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURA+++</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { overflow-x: hidden; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 16px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .start-screen { display: block; }
+        .main-screen  { display: none; }
+
+        h1 {
+            font-size: clamp(1.8em, 6vw, 3em);
+            margin-bottom: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            padding: 14px 40px;
+            font-size: clamp(1em, 4vw, 1.4em);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn:hover  { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+        .btn:active { transform: translateY(-1px); }
+
+        .aura-display {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 24px 16px 16px;
+            margin: 16px 0;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .aura-image {
+            max-width: min(240px, 75vw);
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+            margin: 0 auto 14px;
+            display: block;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .aura-number {
+            font-size: clamp(1.8em, 7vw, 2.8em);
+            font-weight: bold;
+            margin: 14px 0 6px;
+            background: linear-gradient(45deg, #00FFFF, #DE3163);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== LYRICS BOX ===== */
+        .lyrics-box {
+            background: #111;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            height: clamp(140px, 28vw, 190px);
+            margin-top: 14px;
+            -webkit-mask-image: linear-gradient(to bottom,
+                transparent 0%, black 18%, black 82%, transparent 100%);
+            mask-image: linear-gradient(to bottom,
+                transparent 0%, black 18%, black 82%, transparent 100%);
+        }
+
+        .lyrics-scroll {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            will-change: transform;
+        }
+
+        .lyrics-line {
+            font-size: clamp(0.83em, 2.8vw, 1em);
+            line-height: 2;
+            color: #dddddd;
+            text-align: center;
+            font-style: italic;
+            letter-spacing: 0.03em;
+            padding: 0 12px;
+        }
+
+        /* ===== GIF OVERLAY ===== */
+        .lyrics-gif {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.8s ease;
+        }
+        .lyrics-gif.visible { opacity: 1; }
+
+        .play-again {
+            margin-top: 16px;
+            background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+    </style>
+</head>
+<body>
+
+<img src="Image/ribbon_top_right.png"
+     style="position:fixed;top:0;right:0;width:80px;z-index:9999;pointer-events:none"
+     onerror="this.style.display='none'">
+
+<div class="container">
+    <div class="start-screen" id="startScreen">
+        <h1>Aura</h1>
+        <button class="btn" id="startBtn">Get AURA</button>
+    </div>
+
+    <div class="main-screen" id="mainScreen">
+        <h1>Your AURA</h1>
+        <div class="aura-display fade-in">
+
+            <img src="Image/f4ccf95cea4909acf15233419804185b.jpg"
+                 alt="AURA"
+                 class="aura-image"
+                 onerror="this.style.display='none'">
+
+            <div class="aura-number" id="auraNumber">0</div>
+
+            <div class="lyrics-box" id="lyricsBox">
+                <div class="lyrics-scroll" id="lyricsScroll"></div>
+                <img id="lyricsGif" class="lyrics-gif" alt=""
+                     onerror="this.style.display='none'">
+            </div>
+        </div>
+        <button class="btn play-again" id="playAgainBtn">Get AURA</button>
+    </div>
+</div>
+
+<audio id="auraSound" preload="auto">
+    <source src="assets/TOXIC FUNK.mp3" type="audio/mp3">
+</audio>
+
+<script>
+const LINES = [
+    "ท่ามกลางควันคลุ้ง",
+    "ข้านั่งบนบัลลังก์ศักดิ์สิทธิ์",
+    "ดั่งเทพในเงามืด",
+    "ผู้เฝ้ามองวันสิ้นโลก",
+    "— ✦ —",
+    "ภูเขาไฟคำรามราวกับคุกเข่า",
+    "ต่ออำนาจจิตของข้า",
+    "ลาวาไหลเหมือนเส้นเลือดของพิภพ",
+    "แต่ข้ากลับสงบนิ่งและเย็นชา",
+    "— ✦ —",
+    "รอยยิ้มเบี้ยวปรากฏ",
+    "เมื่อข้าตระหนักว่า",
+    "ทุกความพินาศ",
+    "ล้วนอยู่ใต้ฝ่าเท้าข้า",
+    "— ✦ —",
+    "นี่คือพิธีกรรมแห่งราชันย์",
+    "ผู้ครองทั้งแสงและความมืด",
+    "ในคราวเดียว",
+    "— ✦ —",
+    "แม้โลกแตกสลาย",
+    "เงาของข้าก็ยังทอดยาว",
+    "เหนือกาลเวลา",
+    "— ✦ —",
+    "และตำนานจะจารึกว่า...",
+    "เทพในเงามืด",
+    "ได้ตื่นขึ้นแล้ว",
+    "✦ ✦ ✦",
+];
+
+const lyricsScroll = document.getElementById('lyricsScroll');
+const lyricsBox    = document.getElementById('lyricsBox');
+const lyricsGif    = document.getElementById('lyricsGif');
+const auraSound    = document.getElementById('auraSound');
+const auraNumber   = document.getElementById('auraNumber');
+
+let rafId       = null;
+let scrollStart = null;
+let scrollDist  = 0;
+let scrollDur   = 0;
+
+function buildLyrics() {
+    lyricsGif.src = '';
+    lyricsGif.classList.remove('visible');
+    lyricsGif.style.display = '';
+
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+
+    lyricsScroll.style.transform = 'translateY(0)';
+    lyricsScroll.innerHTML = '';
+
+    const topSpacer = document.createElement('div');
+    topSpacer.style.height = lyricsBox.clientHeight + 'px';
+    lyricsScroll.appendChild(topSpacer);
+
+    LINES.forEach(line => {
+        const p = document.createElement('p');
+        p.className = 'lyrics-line';
+        p.textContent = line;
+        lyricsScroll.appendChild(p);
+    });
+
+    const botSpacer = document.createElement('div');
+    botSpacer.style.height = lyricsBox.clientHeight + 'px';
+    lyricsScroll.appendChild(botSpacer);
+}
+
+function animateScroll(duration) {
+    if (rafId) cancelAnimationFrame(rafId);
+    scrollStart = null;
+    scrollDist  = lyricsScroll.scrollHeight - lyricsBox.clientHeight;
+    scrollDur   = duration * 1000;
+
+    function step(ts) {
+        if (!scrollStart) scrollStart = ts;
+        const elapsed  = ts - scrollStart;
+        const progress = Math.min(elapsed / scrollDur, 1);
+
+        lyricsScroll.style.transform = `translateY(-${progress * scrollDist}px)`;
+
+        if (progress < 1) {
+            rafId = requestAnimationFrame(step);
+        } else {
+            lyricsGif.src = 'Image/1770265557196.gif';
+            requestAnimationFrame(() => lyricsGif.classList.add('visible'));
+        }
+    }
+
+    rafId = requestAnimationFrame(step);
+}
+
+function playAura() {
+    auraNumber.textContent = (Math.floor(Math.random() * 1100001) - 100000).toLocaleString();
+    buildLyrics();
+
+    auraSound.pause();
+    auraSound.currentTime = 0;
+
+    const go = () => {
+        auraSound.play().catch(e => console.log(e));
+        const dur = (auraSound.duration && isFinite(auraSound.duration)) ? auraSound.duration : 35;
+        requestAnimationFrame(() => requestAnimationFrame(() => animateScroll(dur)));
+    };
+
+    if (auraSound.readyState >= 1 && isFinite(auraSound.duration)) {
+        go();
+    } else {
+        auraSound.addEventListener('loadedmetadata', go, { once: true });
+        go();
+    }
+}
+
+auraSound.addEventListener('loadedmetadata', () => {
+    if (!auraSound.paused) animateScroll(auraSound.duration);
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('mainScreen').style.display  = 'block';
+    playAura();
+});
+
+document.getElementById('playAgainBtn').addEventListener('click', playAura);
+</script>
+</body>
+</html>
