@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DecompX — AI Decompiler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<style>
+  :root {
+    --bg:      #07090f;
+    --bg2:     #0b0e18;
+    --panel:   #0e1220;
+    --border:  #1a2235;
+    --border2: #243050;
+    --cyan:    #00d4ff;
+    --green:   #00ff9d;
+    --orange:  #ff6b35;
+    --red:     #ff3355;
+    --yellow:  #ffc947;
+    --text:    #b8cad8;
+    --muted:   #3a4a5e;
+    --mono:    'JetBrains Mono', monospace;
+    --display: 'Syne', sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--mono);
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    background:radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0,212,255,0.06), transparent),
+               radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,255,157,0.04), transparent);
+    pointer-events:none;z-index:0;
+  }
+  /* HEADER */
+  header{
+    position:relative;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+    background:rgba(7,9,15,0.95);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .logo{
+    font-family:var(--display);font-size:20px;font-weight:800;
+    letter-spacing:2px;
+    background:linear-gradient(135deg,var(--cyan),var(--green));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    display:flex;align-items:center;gap:10px;
+  }
+  .logo-mark{
+    width:32px;height:32px;
+    border:1.5px solid var(--cyan);
+    display:grid;place-items:center;
+    font-size:13px;font-weight:700;
+    -webkit-text-fill-color:var(--cyan);
+    clip-path:polygon(8% 0%,92% 0%,100% 8%,100% 92%,92% 100%,8% 100%,0% 92%,0% 8%);
+    animation:glow 3s ease-in-out infinite;
+    background:rgba(0,212,255,0.06);
+  }
+  @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(0,212,255,.25)}50%{box-shadow:0 0 22px rgba(0,212,255,.6)}}
+  .ai-badge{
+    display:flex;align-items:center;gap:6px;
+    padding:5px 12px;
+    border:1px solid rgba(0,255,157,.35);
+    border-radius:2px;
+    font-size:10px;letter-spacing:1.5px;color:var(--green);
+    background:rgba(0,255,157,.04);
+  }
+  .ai-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  /* LAYOUT */
+  .layout{
+    flex:1;display:grid;
+    grid-template-columns:260px 1fr;
+    overflow:hidden;position:relative;z-index:5;
+  }
+  /* SIDEBAR */
+  .sidebar{
+    border-right:1px solid var(--border);
+    background:var(--panel);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .slab{
+    padding:14px 16px;
+    border-bottom:1px solid var(--border);
+  }
+  .slabel{
+    font-size:8.5px;letter-spacing:2.5px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .slabel::after{content:'';flex:1;height:1px;background:var(--border);}
+  /* UPLOAD */
+  .dropzone{
+    border:1.5px dashed var(--border2);border-radius:3px;
+    padding:22px 12px;text-align:center;cursor:pointer;
+    transition:all .25s;
+  }
+  .dropzone:hover,.dropzone.over{
+    border-color:var(--cyan);
+    background:rgba(0,212,255,.04);
+    transform:scale(1.01);
+  }
+  .drop-icon{font-size:28px;display:block;margin-bottom:8px;filter:grayscale(.4);}
+  .drop-title{font-size:11px;color:var(--text);margin-bottom:3px;}
+  .drop-sub{font-size:9px;color:var(--muted);}
+  #fileInput{display:none;}
+  /* FILE LIST */
+  .file-scroll{flex:1;overflow-y:auto;padding:8px;}
+  .file-scroll::-webkit-scrollbar{width:3px;}
+  .file-scroll::-webkit-scrollbar-thumb{background:var(--border2);}
+  .fitem{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 10px;border-radius:3px;cursor:pointer;
+    transition:all .18s;border:1px solid transparent;margin-bottom:3px;
+  }
+  .fitem:hover{background:rgba(0,212,255,.04);border-color:var(--border);}
+  .fitem.active{background:rgba(0,212,255,.08);border-color:var(--cyan);}
+  .fext{
+    font-size:8.5px;padding:2px 5px;border-radius:2px;
+    font-weight:700;min-width:34px;text-align:center;white-space:nowrap;
+  }
+  .fname{font-size:10.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fstate{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  /* MAIN */
+  .main{display:flex;flex-direction:column;overflow:hidden;}
+  /* TOOLBAR */
+  .toolbar{
+    display:flex;align-items:center;gap:8px;
+    padding:9px 18px;
+    background:var(--bg2);
+    border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .btn{
+    padding:7px 15px;border:1px solid;background:transparent;
+    font-family:var(--mono);font-size:9.5px;letter-spacing:1px;
+    cursor:pointer;border-radius:2px;transition:all .2s;
+    text-transform:uppercase;display:flex;align-items:center;gap:6px;
+  }
+  .btn:disabled{opacity:.25;cursor:not-allowed;}
+  .btn-cyan{border-color:var(--cyan);color:var(--cyan);}
+  .btn-cyan:not(:disabled):hover{background:var(--cyan);color:var(--bg);box-shadow:0 0 18px rgba(0,212,255,.4);}
+  .btn-green{border-color:var(--green);color:var(--green);}
+  .btn-green:not(:disabled):hover{background:var(--green);color:var(--bg);}
+  .btn-red{border-color:var(--red);color:var(--red);}
+  .btn-red:not(:disabled):hover{background:var(--red);color:#fff;}
+  .btn-orange{border-color:var(--orange);color:var(--orange);}
+  .btn-orange:not(:disabled):hover{background:var(--orange);color:#fff;}
+  .tsep{flex:1;}
+  .tstatus{display:flex;align-items:center;gap:8px;font-size:9.5px;color:var(--muted);}
+  .sdot{width:7px;height:7px;border-radius:50%;}
+  /* TABS */
+  .tabs{
+    display:flex;overflow-x:auto;
+    background:var(--bg2);border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .tabs::-webkit-scrollbar{height:2px;}
+  .tabs::-webkit-scrollbar-thumb{background:var(--border2);}
+  .tab{
+    display:flex;align-items:center;gap:7px;
+    padding:9px 16px;font-size:9.5px;white-space:nowrap;
+    cursor:pointer;border-right:1px solid var(--border);
+    border-bottom:2px solid transparent;color:var(--muted);
+    transition:all .18s;min-width:0;
+  }
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--cyan);border-bottom-color:var(--cyan);background:rgba(0,212,255,.04);}
+  .tab-x{
+    background:none;border:none;color:inherit;cursor:pointer;
+    width:14px;height:14px;border-radius:50%;font-size:12px;
+    display:grid;place-items:center;transition:all .15s;line-height:1;
+  }
+  .tab-x:hover{background:var(--red);color:#fff;}
+  /* CODE AREA */
+  .code-area{flex:1;position:relative;overflow:hidden;display:flex;flex-direction:column;}
+  .code-scroll{flex:1;overflow:auto;background:var(--bg);}
+  .code-scroll::-webkit-scrollbar{width:7px;height:7px;}
+  .code-scroll::-webkit-scrollbar-track{background:var(--bg2);}
+  .code-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  .code-wrap{display:flex;min-height:100%;}
+  .linenos{
+    padding:20px 14px;background:var(--bg2);
+    color:var(--muted);font-size:12px;line-height:1.72;
+    text-align:right;user-select:none;
+    border-right:1px solid var(--border);
+    min-width:48px;flex-shrink:0;
+  }
+  pre.hljs{
+    margin:0;padding:20px 20px 20px 16px;
+    background:transparent!important;
+    font-size:12.5px;line-height:1.72;flex:1;
+  }
+  /* EMPTY */
+  .empty{
+    flex:1;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:14px;padding:40px;text-align:center;
+  }
+  .empty-icon{font-size:52px;opacity:.2;animation:bob 4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .empty-h{font-family:var(--display);font-size:16px;color:var(--border2);letter-spacing:3px;}
+  .empty-p{font-size:10.5px;color:var(--muted);max-width:280px;line-height:1.9;}
+  .ext-grid{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:4px;}
+  .etag{
+    font-size:8.5px;padding:3px 7px;border:1px solid var(--border2);
+    border-radius:2px;color:var(--muted);
+  }
+  /* PROGRESS */
+  .prog-overlay{
+    position:absolute;inset:0;
+    background:rgba(7,9,15,.96);
+    display:none;flex-direction:column;
+    align-items:center;justify-content:center;
+    gap:18px;z-index:50;
+  }
+  .prog-overlay.show{display:flex;}
+  .prog-title{
+    font-family:var(--display);font-size:13px;
+    color:var(--cyan);letter-spacing:3px;
+  }
+  .prog-spinner{
+    width:44px;height:44px;
+    border:2px solid var(--border2);
+    border-top-color:var(--cyan);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .prog-track{width:280px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--green));border-radius:2px;transition:width .3s;box-shadow:0 0 10px var(--cyan);}
+  .prog-log{font-size:10px;color:var(--muted);min-height:18px;}
+  /* STATS */
+  .statbar{
+    display:flex;align-items:center;padding:6px 18px;gap:18px;
+    border-top:1px solid var(--border);background:var(--bg2);
+    font-size:9.5px;color:var(--muted);flex-shrink:0;
+  }
+  .sv{color:var(--cyan);font-weight:600;}
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:18px;right:18px;
+    padding:10px 18px;background:var(--panel);
+    border:1px solid var(--green);color:var(--green);
+    font-size:10.5px;border-radius:3px;z-index:9999;
+    transform:translateX(130%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 0 16px rgba(0,255,157,.2);
+  }
+  .toast.show{transform:translateX(0);}
+  /* STREAMING */
+  .stream-cursor{
+    display:inline-block;width:8px;height:14px;
+    background:var(--cyan);margin-left:2px;
+    animation:blink-cur .6s step-end infinite;vertical-align:text-bottom;
+  }
+  @keyframes blink-cur{0%,100%{opacity:1}50%{opacity:0}}
+  /* ERROR */
+  .error-box{
+    padding:20px 24px;margin:20px;
+    border:1px solid var(--red);border-radius:3px;
+    background:rgba(255,51,85,.05);
+    color:var(--red);font-size:11px;line-height:1.8;
+  }
+  .error-box h3{margin-bottom:8px;font-size:13px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">⟨/⟩</div>
+    DecompX
+  </div>
+  <div class="ai-badge">
+    <div class="ai-dot"></div>
+    AI-POWERED · REAL DECOMPILATION
+  </div>
+</header>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="slab">
+      <div class="slabel">Upload File</div>
+      <div class="dropzone" id="dropzone">
+        <span class="drop-icon">📁</span>
+        <div class="drop-title">Drop any compiled file</div>
+        <div class="drop-sub">.jar .apk .pyc .exe .dll .dex .wasm .class …</div>
+        <input type="file" id="fileInput" accept="*/*" multiple>
+      </div>
+    </div>
+
+    <div class="slab" style="padding:10px 14px;">
+      <div class="slabel">Supported Formats</div>
+      <div class="ext-grid" id="extGrid">
+        <span class="etag">.class</span><span class="etag">.jar</span>
+        <span class="etag">.war</span><span class="etag">.apk</span>
+        <span class="etag">.dex</span><span class="etag">.aab</span>
+        <span class="etag">.exe</span><span class="etag">.dll</span>
+        <span class="etag">.pyc</span><span class="etag">.pyo</span>
+        <span class="etag">.elf</span><span class="etag">.so</span>
+        <span class="etag">.wasm</span><span class="etag">.swf</span>
+        <span class="etag">.luac</span><span class="etag">.min.js</span>
+      </div>
+    </div>
+
+    <div class="slabel" style="padding:10px 14px 4px;margin:0;">Open Files</div>
+    <div class="file-scroll" id="fileList"></div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar">
+      <button class="btn btn-cyan"   id="decompBtn"  disabled>⟨/⟩ Decompile with AI</button>
+      <button class="btn btn-green"  id="downloadBtn" disabled>↓ Download</button>
+      <button class="btn btn-orange" id="copyBtn"     disabled>⧉ Copy</button>
+      <button class="btn btn-red"    id="clearBtn">✕ Clear</button>
+      <div class="tsep"></div>
+      <div class="tstatus">
+        <div class="sdot" id="sdot" style="background:var(--muted)"></div>
+        <span id="stext">Ready</span>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabBar"></div>
+
+    <div class="code-area">
+      <!-- PROGRESS -->
+      <div class="prog-overlay" id="progOverlay">
+        <div class="prog-spinner"></div>
+        <div class="prog-title" id="progTitle">ANALYZING…</div>
+        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <div class="prog-log" id="progLog">Reading file headers…</div>
+      </div>
+
+      <!-- EMPTY -->
+      <div class="empty" id="emptyState">
+        <div class="empty-icon">⟨/⟩</div>
+        <div class="empty-h">AI DECOMPILER</div>
+        <div class="empty-p">Upload any compiled binary. The AI will actually analyze it and reconstruct the source code — no fake output.</div>
+        <div class="ext-grid">
+          <span class="etag" style="border-color:var(--cyan);color:var(--cyan)">.class / .jar</span>
+          <span class="etag" style="border-color:var(--green);color:var(--green)">.pyc</span>
+          <span class="etag" style="border-color:var(--orange);color:var(--orange)">.exe / .dll</span>
+          <span class="etag" style="border-color:var(--yellow);color:var(--yellow)">.apk / .dex</span>
+        </div>
+      </div>
+
+      <!-- CODE -->
+      <div class="code-scroll" id="codeScroll" style="display:none;">
+        <div class="code-wrap">
+          <div class="linenos" id="linenos"></div>
+          <pre class="hljs"><code id="codeEl"></code></pre>
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div id="errorBox" style="display:none;"></div>
+    </div>
+
+    <div class="statbar" id="statbar" style="display:none;">
+      Lines: <span class="sv" id="st-lines">—</span>
+      &nbsp;·&nbsp; Size: <span class="sv" id="st-size">—</span>
+      &nbsp;·&nbsp; Type: <span class="sv" id="st-type">—</span>
+      &nbsp;·&nbsp; Engine: <span class="sv">Claude AI</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── STATE ──────────────────────────────────────────────────── */
+let files = [];          // {id, name, ext, cat, raw, b64, text, size, result}
+let activeId = null;
+let streaming = false;
+
+/* ── DOM ────────────────────────────────────────────────────── */
+const dropzone   = document.getElementById('dropzone');
+const fileInput  = document.getElementById('fileInput');
+const fileList   = document.getElementById('fileList');
+const tabBar     = document.getElementById('tabBar');
+const decompBtn  = document.getElementById('decompBtn');
+const downloadBtn= document.getElementById('downloadBtn');
+const copyBtn    = document.getElementById('copyBtn');
+const clearBtn   = document.getElementById('clearBtn');
+const sdot       = document.getElementById('sdot');
+const stext      = document.getElementById('stext');
+const progOverlay= document.getElementById('progOverlay');
+const progFill   = document.getElementById('progFill');
+const progLog    = document.getElementById('progLog');
+const progTitle  = document.getElementById('progTitle');
+const emptyState = document.getElementById('emptyState');
+const codeScroll = document.getElementById('codeScroll');
+const codeEl     = document.getElementById('codeEl');
+const linenos    = document.getElementById('linenos');
+const statbar    = document.getElementById('statbar');
+const errorBox   = document.getElementById('errorBox');
+const toast      = document.getElementById('toast');
+
+/* ── FILE TYPE MAP ──────────────────────────────────────────── */
+const CATS = {
+  java:   { exts:['.class','.jar','.war','.ear','.aar'], color:'#ff6b35', label:'Java' },
+  android:{ exts:['.apk','.dex','.aab','.smali'],        color:'#a855f7', label:'Android' },
+  dotnet: { exts:['.exe','.dll','.msil','.il','.nupkg'], color:'#00d4ff', label:'.NET' },
+  python: { exts:['.pyc','.pyo','.pyd','.egg','.whl'],   color:'#ffc947', label:'Python' },
+  native: { exts:['.elf','.bin','.so','.o','.ko','.sys'],color:'#ff3355', label:'Native' },
+  web:    { exts:['.js','.mjs','.wasm','.ts'],            color:'#00ff9d', label:'Web' },
+  other:  { exts:['.swf','.luac','.beam'],                color:'#00d4ff', label:'Other' },
+};
+
+function getCat(name) {
+  const lower = name.toLowerCase();
+  for(const [k,v] of Object.entries(CATS))
+    if(v.exts.some(e => lower.endsWith(e))) return k;
+  return 'other';
+}
+function getExt(name) {
+  const parts = name.split('.');
+  return parts.length>1 ? '.'+parts[parts.length-1] : '';
+}
+
+/* ── UPLOAD ─────────────────────────────────────────────────── */
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => addFiles([...e.target.files]));
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('over'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('over'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault(); dropzone.classList.remove('over');
+  addFiles([...e.dataTransfer.files]);
+});
+
+async function addFiles(rawList) {
+  for(const raw of rawList) {
+    const id = crypto.randomUUID();
+    const cat = getCat(raw.name);
+    const ext = getExt(raw.name) || '.bin';
+    // Read as both base64 and text (best effort)
+    const [b64, text] = await Promise.all([readB64(raw), readText(raw)]);
+    files.push({ id, name: raw.name, ext, cat, raw, b64, text, size: raw.size, result: null });
+  }
+  renderSidebar(); renderTabs();
+  if(!activeId && files.length) activate(files[0].id);
+  updateToolbar();
+}
+
+function readB64(f) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => res(null);
+    r.readAsDataURL(f);
+  });
+}
+function readText(f) {
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => res(null);
+    r.readAsText(f);
+  });
+}
+
+/* ── SIDEBAR / TABS ─────────────────────────────────────────── */
+function renderSidebar() {
+  fileList.innerHTML = '';
+  files.forEach(f => {
+    const info = CATS[f.cat] || CATS.other;
+    const div = document.createElement('div');
+    div.className = 'fitem' + (f.id===activeId?' active':'');
+    div.innerHTML = `
+      <span class="fext" style="background:${info.color}18;color:${info.color};border:1px solid ${info.color}40">${f.ext}</span>
+      <span class="fname" title="${f.name}">${f.name}</span>
+      <span class="fstate" style="background:${f.result?'var(--green)':'var(--muted)'};${f.result?'box-shadow:0 0 5px var(--green)':''}"></span>
+    `;
+    div.addEventListener('click', () => activate(f.id));
+    fileList.appendChild(div);
+  });
+}
+function renderTabs() {
+  tabBar.innerHTML = '';
+  files.forEach(f => {
+    const info = CATS[f.cat] || CATS.other;
+    const div = document.createElement('div');
+    div.className = 'tab' + (f.id===activeId?' active':'');
+    div.innerHTML = `
+      <span style="color:${info.color}">${f.ext}</span>
+      <span>${f.name}</span>
+      <button class="tab-x" data-id="${f.id}">×</button>
+    `;
+    div.addEventListener('click', e => { if(!e.target.classList.contains('tab-x')) activate(f.id); });
+    tabBar.appendChild(div);
+  });
+  document.querySelectorAll('.tab-x').forEach(b =>
+    b.addEventListener('click', e => { e.stopPropagation(); removeFile(b.dataset.id); })
+  );
+}
+function activate(id) {
+  activeId = id;
+  renderSidebar(); renderTabs();
+  const f = files.find(f=>f.id===id);
+  if(f?.result) showResult(f.result);
+  else showEmpty();
+  updateToolbar();
+}
+function removeFile(id) {
+  files = files.filter(f=>f.id!==id);
+  if(activeId===id) activeId = files.length ? files[0].id : null;
+  renderSidebar(); renderTabs();
+  if(activeId) activate(activeId); else showEmpty();
+  updateToolbar();
+}
+
+/* ── TOOLBAR STATE ──────────────────────────────────────────── */
+function updateToolbar() {
+  const f = files.find(f=>f.id===activeId);
+  decompBtn.disabled  = !activeId || streaming;
+  downloadBtn.disabled= !f?.result;
+  copyBtn.disabled    = !f?.result;
+}
+function setStatus(t, color='var(--muted)') {
+  stext.textContent=t;
+  sdot.style.background=color;
+  sdot.style.boxShadow=color==='var(--muted)'?'none':`0 0 6px ${color}`;
+}
+
+/* ── DISPLAY ────────────────────────────────────────────────── */
+function showEmpty() {
+  emptyState.style.display='';
+  codeScroll.style.display='none';
+  statbar.style.display='none';
+  errorBox.style.display='none';
+}
+function showResult(code) {
+  emptyState.style.display='none';
+  codeScroll.style.display='';
+  statbar.style.display='flex';
+  errorBox.style.display='none';
+  renderCode(code);
+  const f = files.find(f=>f.id===activeId);
+  if(f){
+    document.getElementById('st-lines').textContent = code.split('\n').length;
+    document.getElementById('st-size').textContent  = fmt(f.size);
+    document.getElementById('st-type').textContent  = (CATS[f.cat]||CATS.other).label;
+  }
+}
+function showError(msg) {
+  emptyState.style.display='none';
+  codeScroll.style.display='none';
+  statbar.style.display='none';
+  errorBox.style.display='block';
+  errorBox.innerHTML = `<div class="error-box"><h3>⚠ Decompilation Error</h3>${msg}</div>`;
+}
+function renderCode(code) {
+  codeEl.className=''; codeEl.textContent=code;
+  hljs.highlightElement(codeEl);
+  const lines = code.split('\n');
+  linenos.innerHTML = lines.map((_,i)=>`<div>${i+1}</div>`).join('');
+}
+
+/* ── AI DECOMPILE ───────────────────────────────────────────── */
+decompBtn.addEventListener('click', doDecompile);
+async function doDecompile() {
+  const f = files.find(f=>f.id===activeId);
+  if(!f||streaming) return;
+
+  streaming = true;
+  updateToolbar();
+  setStatus('Analyzing…','var(--yellow)');
+  progOverlay.classList.add('show');
+
+  // Animate progress
+  const steps = [
+    [10,'Reading file structure…'],
+    [25,'Parsing binary headers…'],
+    [40,'Identifying bytecode patterns…'],
+    [60,'Reconstructing control flow…'],
+    [75,'Resolving symbols…'],
+    [90,'Generating source output…'],
+  ];
+  let si=0;
+  const pint = setInterval(()=>{
+    if(si<steps.length){ progFill.style.width=steps[si][0]+'%'; progLog.textContent=steps[si][1]; si++; }
+  },600);
+
+  try {
+    const prompt = buildPrompt(f);
+    const result = await callClaude(prompt, f);
+    clearInterval(pint);
+    progFill.style.width='100%';
+    progLog.textContent='Done!';
+    await sleep(400);
+    progOverlay.classList.remove('show');
+
+    f.result = result;
+    renderSidebar();
+    showResult(result);
+    setStatus('Complete','var(--green)');
+  } catch(err) {
+    clearInterval(pint);
+    progOverlay.classList.remove('show');
+    setStatus('Error','var(--red)');
+    showError(`<p>${err.message}</p><p style="margin-top:8px;font-size:9px;color:var(--muted)">Check your file and try again.</p>`);
+  }
+  streaming=false;
+  updateToolbar();
+}
+
+function buildPrompt(f) {
+  const info = CATS[f.cat]||CATS.other;
+  const isText = f.text && /^[\x00-\x7F]*$/.test(f.text.slice(0,200));
+  let content = '';
+
+  if(isText && f.text) {
+    // Send raw text content (minified JS, smali, etc.)
+    content = f.text.slice(0, 24000);
+  } else if(f.b64) {
+    // Binary: send hex dump of first bytes
+    const bytes = atob(f.b64.slice(0,2048)).split('').map(c=>c.charCodeAt(0));
+    const hexDump = bytes.slice(0,512).map((b,i)=>{
+      const h = b.toString(16).padStart(2,'0');
+      const addr = (Math.floor(i/16)*16).toString(16).padStart(8,'0');
+      return i%16===0 ? `\n${addr}: ${h}` : ` ${h}`;
+    }).join('');
+    content = `HEX DUMP (first 512 bytes):\n${hexDump}\n\nBase64 snippet (first 4KB):\n${f.b64.slice(0,4096)}`;
+  }
+
+  return `You are an expert decompiler and reverse engineering AI.
+
+The user has uploaded a compiled binary file with the following properties:
+- Filename: ${f.name}
+- File extension: ${f.ext}
+- Platform category: ${info.label}
+- File size: ${fmt(f.size)}
+
+FILE CONTENT:
+${content}
+
+Your task: Analyze this file and produce the best possible decompiled/reconstructed source code.
+
+Instructions:
+1. Identify the exact file format, bytecode version, and platform from the binary data.
+2. Reconstruct meaningful, well-structured source code in the appropriate language.
+3. Add comments explaining what each section does and any reconstruction notes.
+4. If it's minified JS/TS, beautify and annotate it.
+5. If binary (exe/dll/elf), produce pseudo-C or pseudo-code with assembly annotations.
+6. If Java bytecode, reconstruct Java source.
+7. If Python pyc, reconstruct Python source.
+8. For unrecognized formats, extract all readable strings, constants, and produce the best possible reconstruction.
+9. Begin with a header comment block: file info, detected format, decompiler notes.
+10. Be thorough — produce real, useful output, not a placeholder.
+
+Output ONLY the decompiled source code (with comments). No prose explanation outside of code comments.`;
+}
+
+async function callClaude(prompt, f) {
+  const messages = [{ role:'user', content: prompt }];
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:4096,
+      messages,
+    })
+  });
+  if(!resp.ok) {
+    const err = await resp.json().catch(()=>({}));
+    throw new Error(err.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const text = (data.content||[]).map(b=>b.type==='text'?b.text:'').join('');
+  if(!text) throw new Error('Empty response from AI.');
+  return text;
+}
+
+/* ── DOWNLOAD ───────────────────────────────────────────────── */
+downloadBtn.addEventListener('click', () => {
+  const f = files.find(f=>f.id===activeId);
+  if(!f?.result) return;
+  const extMap={java:'java',android:'java',dotnet:'cs',python:'py',native:'c',web:'js',other:'txt'};
+  const out = f.name.replace(/\.[^.]+$/,'')+'_decompiled.'+(extMap[f.cat]||'txt');
+  const blob = new Blob([f.result],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=out; a.click();
+  URL.revokeObjectURL(a.href);
+  notify('📥 Downloaded: '+out);
+});
+
+/* ── COPY ───────────────────────────────────────────────────── */
+copyBtn.addEventListener('click', () => {
+  const f = files.find(f=>f.id===activeId);
+  if(!f?.result) return;
+  navigator.clipboard.writeText(f.result).then(()=>notify('✓ Copied to clipboard!'));
+});
+
+/* ── CLEAR ──────────────────────────────────────────────────── */
+clearBtn.addEventListener('click', () => {
+  files=[]; activeId=null;
+  renderSidebar(); renderTabs();
+  showEmpty(); updateToolbar();
+  setStatus('Ready');
+});
+
+/* ── UTILS ──────────────────────────────────────────────────── */
+function fmt(b){
+  if(b<1024) return b+'B';
+  if(b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function notify(msg){
+  toast.textContent=msg; toast.classList.add('show');
+  setTimeout(()=>toast.classList.remove('show'),2800);
+}
+</script>
+</body>
+</html>
