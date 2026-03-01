@@ -1,6 +1,6 @@
 # 🌐 My Web Project
 
-[![Visit Website](https://img.shields.io/badge/Visit-Minta0077.online-blue?style=for-the-badge&logo=web)](https://minta0077.online)
+[![Visit Website](https://img.shields.io/badge/Visit-Minta0077.online-blue?style=for-the-badge&logo=web)](https://minta1234.github.io/WEb)
 
 ---
 
@@ -12,7 +12,7 @@ Welcome to my project! Click the badges below or expand the description
 <summary>📖 Click to See Description & Stats</summary>
 
 ### 🔗 QR Code to Website
-[![QR Code](Image/QR.png)](https://minta0077.online)
+[![QR Code](Image/QR.png)](https://minta1234.github.io/WEb)
 
 ---
 
