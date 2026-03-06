@@ -88,6 +88,17 @@
   select:focus{border-color:var(--accent);}
   canvas{display:none;}
 
+  /* CROP UI */
+  .crop-container{margin-top:20px;border:1px solid var(--border);padding:16px;background:var(--surface);}
+  .crop-preview{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
+  .crop-original{flex:1;min-width:200px;position:relative;}
+  .crop-original img{max-width:100%;max-height:300px;border:1px solid var(--border);cursor:crosshair;}
+  .crop-selection{border:2px dashed var(--accent);background:rgba(255,77,0,0.1);position:absolute;pointer-events:none;}
+  .crop-handle{width:10px;height:10px;background:var(--accent);position:absolute;border-radius:50%;pointer-events:none;}
+  .crop-info{flex:1;min-width:200px;}
+  .crop-coords{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin:10px 0;}
+  .crop-buttons{display:flex;gap:8px;margin-top:12px;}
+  
   /* AUDIO */
   .audplayer{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-top:12px;display:none;}
   .audplayer.on{display:block;}
@@ -128,10 +139,6 @@
   .pnav button{padding:6px 14px;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;cursor:pointer;}
   .pnav button:hover{border-color:var(--accent);color:var(--accent);}
 
-  label.icosz{font-family:var(--mono);font-size:12px;color:var(--text-dim);background:var(--surface);border:1px solid var(--border);padding:8px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;user-select:none;}
-  label.icosz:hover{border-color:var(--accent);color:var(--text);}
-  label.icosz input[type=checkbox]{accent-color:var(--accent);}
-  label.icosz:has(input:checked){border-color:var(--accent);color:var(--accent);background:rgba(255,77,0,.08);}
   ::-webkit-scrollbar{width:4px;height:4px;}
   ::-webkit-scrollbar-track{background:var(--bg);}
   ::-webkit-scrollbar-thumb{background:var(--border);}
@@ -181,6 +188,29 @@
       <div class="stat"><div class="stlbl">Size</div><div class="stval" id="ss">—</div></div>
       <div class="stat"><div class="stlbl">Format</div><div class="stval" id="st">—</div></div>
     </div>
+    
+    <!-- CROP UI -->
+    <div class="crop-container" id="cropContainer" style="display:none">
+      <div class="slabel">Crop Image</div>
+      <div class="crop-preview">
+        <div class="crop-original" id="cropOriginalContainer">
+          <img id="cropImg" src="" alt="Crop preview" style="max-width:100%; max-height:300px;">
+          <div id="cropSelection" class="crop-selection" style="display:none;"></div>
+        </div>
+        <div class="crop-info">
+          <div class="crop-coords" id="cropCoords">Selection: 0×0</div>
+          <div class="crop-buttons">
+            <button class="abtn" onclick="resetCrop()">↺ Reset</button>
+            <button class="abtn" onclick="applyCrop()">✂ Apply Crop</button>
+            <button class="abtn g" onclick="toggleCropMode()">✓ Done Cropping</button>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:10px">
+            Click and drag to select crop area
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div style="margin-top:22px"><div class="slabel">Output Format</div>
     <div class="fmtgrid">
       <button class="fb sel" onclick="selImgFmt(this,'image/png','png')">PNG</button>
@@ -188,53 +218,10 @@
       <button class="fb" onclick="selImgFmt(this,'image/webp','webp')">WEBP</button>
       <button class="fb" onclick="selImgFmt(this,'image/gif','gif')">GIF</button>
       <button class="fb" onclick="selImgFmt(this,'image/bmp','bmp')">BMP</button>
-      <button class="fb" onclick="selImgFmt(this,'ico','ico')">ICO</button>
+      <button class="fb" onclick="selImgFmt(this,'image/x-icon','ico')">ICO</button>
       <button class="fb" onclick="selImgFmt(this,'image/avif','avif')">AVIF</button>
       <button class="fb" onclick="selImgFmt(this,'image/tiff','tiff')">TIFF</button>
     </div></div>
-
-    <!-- ICO SIZE PANEL -->
-    <div id="icopanel" style="display:none;margin-top:18px">
-      <div class="slabel">ICO Size Settings</div>
-      <div style="background:var(--surface2);border:1px solid var(--border);padding:18px">
-        <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
-          <label style="font-family:var(--mono);font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:7px;cursor:pointer">
-            <input type="radio" name="icomode" id="icoauto" value="auto" checked onchange="toggleIcoMode()" style="accent-color:var(--accent)">
-            <span style="color:var(--text)">Auto</span> <span style="color:var(--text-dim)">(include standard sizes)</span>
-          </label>
-          <label style="font-family:var(--mono);font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:7px;cursor:pointer">
-            <input type="radio" name="icomode" id="icomanual" value="manual" onchange="toggleIcoMode()" style="accent-color:var(--accent)">
-            <span style="color:var(--text)">Manual</span> <span style="color:var(--text-dim)">(pick sizes)</span>
-          </label>
-        </div>
-        <!-- Auto mode info -->
-        <div id="icoautoinfo" style="font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.8">
-          Will embed: <span style="color:var(--accent)">16×16 · 32×32 · 48×48 · 64×64 · 128×128 · 256×256</span><br>
-          The .ico file contains all 6 sizes — Windows/macOS picks the best one automatically.
-        </div>
-        <!-- Manual mode -->
-        <div id="icomanualbox" style="display:none">
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:10px">SELECT SIZES TO INCLUDE:</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap" id="icosizebtns">
-            <label class="icosz"><input type="checkbox" value="16" checked> 16×16</label>
-            <label class="icosz"><input type="checkbox" value="24" checked> 24×24</label>
-            <label class="icosz"><input type="checkbox" value="32" checked> 32×32</label>
-            <label class="icosz"><input type="checkbox" value="48" checked> 48×48</label>
-            <label class="icosz"><input type="checkbox" value="64"> 64×64</label>
-            <label class="icosz"><input type="checkbox" value="96"> 96×96</label>
-            <label class="icosz"><input type="checkbox" value="128"> 128×128</label>
-            <label class="icosz"><input type="checkbox" value="256"> 256×256</label>
-          </div>
-          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">OR CUSTOM SIZE:</span>
-            <input type="number" id="icocustom" placeholder="px (e.g. 72)" min="1" max="512" style="width:120px">
-            <button class="abtn" style="padding:7px 14px;font-size:10px" onclick="addCustomIcoSize()">+ Add</button>
-          </div>
-          <div id="icosizelist" style="margin-top:10px;font-family:var(--mono);font-size:11px;color:var(--green)"></div>
-        </div>
-      </div>
-    </div>
-
     <div style="margin-top:16px"><div class="slabel">Quality (JPG/WEBP)</div>
     <div class="sldr"><span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">LOW</span><input type="range" id="qsl" min="1" max="100" value="90" oninput="document.getElementById('qv').textContent=this.value+'%'"><span style="font-family:var(--mono);font-size:11px;color:var(--text-dim)">HIGH</span><span class="sval" id="qv">90%</span></div></div>
     <div style="margin-top:14px"><div class="slabel">Resize (Optional)</div>
@@ -243,6 +230,9 @@
       <input type="number" id="rh" placeholder="Height px" style="width:126px">
       <label style="font-family:var(--mono);font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kr" checked style="accent-color:var(--accent)"> Keep ratio</label>
     </div></div>
+    <div class="brow" style="margin-top:10px">
+      <button class="abtn" id="cropBtn" onclick="toggleCropMode()" style="display:none">✂ Crop Image</button>
+    </div>
     <div class="progbar" id="imgpb"><div class="progfill" id="imgpf"></div></div>
     <button class="cvt-btn" id="imgcvt" onclick="convertImg()" disabled>Convert Image</button>
     <div id="imgresult" style="display:none;margin-top:22px">
@@ -504,137 +494,213 @@ function copyOut(id){navigator.clipboard.writeText(document.getElementById(id).v
 function dlTxt(id,nm,ext){const v=document.getElementById(id).value;if(!v){T('Nothing to download','err');return;}const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(v);a.download=nm+'.'+ext;a.click();T('✓ Downloaded');}
 function SW(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('panel-'+id).classList.add('active');}
 
-// IMAGE
-let iFile=null,iMime='image/png',iExt='png';
-function loadImg(e){iFile=e.target.files[0];if(!iFile)return;const fi=document.getElementById('imgfi');fi.classList.add('on');document.getElementById('imgbadge').textContent=iFile.type.split('/')[1]?.toUpperCase()||'IMG';document.getElementById('imgname').textContent=iFile.name;document.getElementById('imgsize').textContent=fmtSz(iFile.size);document.getElementById('imgcvt').disabled=false;const r=new FileReader();r.onload=ev=>{const img=new Image();img.onload=()=>{document.getElementById('sw').textContent=img.width;document.getElementById('sh').textContent=img.height;document.getElementById('ss').textContent=fmtSz(iFile.size);document.getElementById('st').textContent=iFile.type.split('/')[1]?.toUpperCase()||'?';document.getElementById('imgstats').style.display='flex';document.getElementById('pvorig').src=ev.target.result;};img.src=ev.target.result;};r.readAsDataURL(iFile);}
-let icoCustomSizes=[];
-function selImgFmt(btn,m,e){
-  document.querySelectorAll('#panel-image .fb').forEach(b=>b.classList.remove('sel'));
-  btn.classList.add('sel');iMime=m;iExt=e;
-  document.getElementById('icopanel').style.display=(e==='ico')?'block':'none';
-}
-function toggleIcoMode(){
-  const manual=document.getElementById('icomanual').checked;
-  document.getElementById('icoautoinfo').style.display=manual?'none':'block';
-  document.getElementById('icomanualbox').style.display=manual?'block':'none';
-}
-function addCustomIcoSize(){
-  const v=parseInt(document.getElementById('icocustom').value);
-  if(!v||v<1||v>512){T('Enter a value 1–512','err');return;}
-  if(icoCustomSizes.includes(v)){T('Already added','err');return;}
-  icoCustomSizes.push(v);
-  document.getElementById('icosizelist').textContent='Custom: '+icoCustomSizes.join('px, ')+'px';
-  document.getElementById('icocustom').value='';
-  T('✓ Added '+v+'×'+v);
-}
-function getIcoSizes(srcW,srcH){
-  if(document.getElementById('icoauto')?.checked!==false){
-    return [16,32,48,64,128,256].filter(s=>s<=Math.max(srcW,srcH)*2||s<=256);
+// IMAGE CROP
+let cropMode = false;
+let cropStart = null;
+let cropEnd = null;
+let cropImgElement = null;
+let originalImgData = null;
+let croppedImgData = null;
+
+function toggleCropMode() {
+  if (!iFile) {
+    T('Load an image first', 'err');
+    return;
   }
-  const checked=Array.from(document.querySelectorAll('#icosizebtns input:checked')).map(cb=>parseInt(cb.value));
-  return [...new Set([...checked,...icoCustomSizes])].sort((a,b)=>a-b);
+  cropMode = !cropMode;
+  const cropContainer = document.getElementById('cropContainer');
+  const cropBtn = document.getElementById('cropBtn');
+  
+  if (cropMode) {
+    cropContainer.style.display = 'block';
+    cropBtn.textContent = '✕ Close Crop';
+    initCrop();
+  } else {
+    cropContainer.style.display = 'none';
+    cropBtn.textContent = '✂ Crop Image';
+    resetCrop();
+  }
 }
 
-// Real ICO encoder — builds a proper binary .ico with multiple PNG-compressed frames
-function buildIco(img,sizes){
-  // Each frame = PNG data URL → raw bytes
-  const frames=sizes.map(sz=>{
-    const c=document.createElement('canvas');c.width=sz;c.height=sz;
-    c.getContext('2d').drawImage(img,0,0,sz,sz);
-    const b64=c.toDataURL('image/png').split(',')[1];
-    const bin=atob(b64);
-    const bytes=new Uint8Array(bin.length);
-    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
-    return bytes;
-  });
-  // ICO header: 6 bytes
-  // Directory entries: 16 bytes each
-  // PNG data appended after directory
-  const n=frames.length;
-  const headerSize=6+n*16;
-  let totalSize=headerSize;
-  const offsets=[];
-  frames.forEach(f=>{offsets.push(totalSize);totalSize+=f.length;});
-  const buf=new ArrayBuffer(totalSize);
-  const v=new DataView(buf);
-  // Reserved=0, Type=1(ico), Count=n
-  v.setUint16(0,0,true);v.setUint16(2,1,true);v.setUint16(4,n,true);
-  // Directory entries
-  frames.forEach((f,i)=>{
-    const base=6+i*16;
-    const sz=sizes[i];
-    v.setUint8(base,sz>=256?0:sz);   // width  (0=256)
-    v.setUint8(base+1,sz>=256?0:sz); // height (0=256)
-    v.setUint8(base+2,0);  // color palette
-    v.setUint8(base+3,0);  // reserved
-    v.setUint16(base+4,1,true); // color planes
-    v.setUint16(base+6,32,true); // bits per pixel
-    v.setUint32(base+8,f.length,true); // size of image data
-    v.setUint32(base+12,offsets[i],true); // offset of image data
-  });
-  // Write PNG frames
-  const u8=new Uint8Array(buf);
-  frames.forEach((f,i)=>u8.set(f,offsets[i]));
-  return new Blob([buf],{type:'image/x-icon'});
+function initCrop() {
+  const img = document.getElementById('cropImg');
+  if (!img.src && originalImgData) {
+    img.src = originalImgData;
+  }
+  
+  const container = document.getElementById('cropOriginalContainer');
+  const selection = document.getElementById('cropSelection');
+  
+  // Remove old listeners
+  container.removeEventListener('mousedown', startCrop);
+  container.removeEventListener('mousemove', updateCrop);
+  container.removeEventListener('mouseup', endCrop);
+  
+  // Add new listeners
+  container.addEventListener('mousedown', startCrop);
+  container.addEventListener('mousemove', updateCrop);
+  container.addEventListener('mouseup', endCrop);
+  container.addEventListener('mouseleave', endCrop);
 }
 
-function convertImg(){
-  if(!iFile)return;
-  const pb=document.getElementById('imgpb'),pf=document.getElementById('imgpf');
-  pb.classList.add('on');pf.style.width='30%';
-  const r=new FileReader();
-  r.onload=ev=>{
-    pf.style.width='60%';
-    const img=new Image();
-    img.onload=()=>{
-      pf.style.width='80%';
+function startCrop(e) {
+  if (!cropMode) return;
+  e.preventDefault();
+  const rect = document.getElementById('cropImg').getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  
+  if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+    cropStart = { x, y };
+    cropEnd = { x, y };
+    updateCropSelection();
+  }
+}
 
-      // --- ICO path ---
-      if(iExt==='ico'){
-        const sizes=getIcoSizes(img.width,img.height);
-        if(!sizes.length){T('Select at least one size','err');pb.classList.remove('on');return;}
-        const blob=buildIco(img,sizes);
-        const url=URL.createObjectURL(blob);
-        pf.style.width='100%';
-        setTimeout(()=>{pb.classList.remove('on');pf.style.width='0%';},600);
-        // Preview: show first frame (16px) as PNG
-        const pc=document.createElement('canvas');pc.width=sizes[0];pc.height=sizes[0];
-        pc.getContext('2d').drawImage(img,0,0,sizes[0],sizes[0]);
-        document.getElementById('pvconv').src=pc.toDataURL('image/png');
-        const dl=document.getElementById('imgdl');
-        dl.href=url;dl.download=iFile.name.replace(/\.[^.]+$/,'')+'.ico';
-        document.getElementById('imgresult').style.display='block';
-        document.getElementById('rorig').textContent=fmtSz(iFile.size);
-        document.getElementById('rnew').textContent=fmtSz(blob.size);
-        const sv=iFile.size-blob.size;
-        document.getElementById('rsaved').textContent=(sv>0?'-':'+')+fmtSz(Math.abs(sv));
-        document.getElementById('rdims').textContent=sizes.map(s=>s+'×'+s).join(', ');
-        T('✓ ICO created — '+sizes.length+' size(s): '+sizes.join(', ')+'px');
-        return;
-      }
+function updateCrop(e) {
+  if (!cropStart || !cropMode) return;
+  e.preventDefault();
+  
+  const rect = document.getElementById('cropImg').getBoundingClientRect();
+  let x = e.clientX - rect.left;
+  let y = e.clientY - rect.top;
+  
+  // Constrain to image bounds
+  x = Math.max(0, Math.min(rect.width, x));
+  y = Math.max(0, Math.min(rect.height, y));
+  
+  cropEnd = { x, y };
+  updateCropSelection();
+}
 
-      // --- Normal image path ---
-      const c=document.getElementById('cvs');
-      let w=img.width,h=img.height;
-      const rw=parseInt(document.getElementById('rw').value)||0,rh=parseInt(document.getElementById('rh').value)||0,kr=document.getElementById('kr').checked;
-      if(rw&&rh){w=rw;h=rh;}else if(rw&&kr){h=Math.round(img.height*(rw/img.width));w=rw;}else if(rh&&kr){w=Math.round(img.width*(rh/img.height));h=rh;}else if(rw)w=rw;else if(rh)h=rh;
-      c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
-      const q=parseInt(document.getElementById('qsl').value)/100;
-      let du;try{du=c.toDataURL(iMime,q);}catch(err){du=c.toDataURL('image/png');}
-      pf.style.width='100%';setTimeout(()=>{pb.classList.remove('on');pf.style.width='0%';},600);
-      document.getElementById('pvconv').src=du;
-      const dl=document.getElementById('imgdl');dl.href=du;dl.download=iFile.name.replace(/\.[^.]+$/,'')+'.'+iExt;
-      document.getElementById('imgresult').style.display='block';
-      const nb=Math.round((du.length-'data:image/png;base64,'.length)*3/4);
-      const sv=iFile.size-nb;
-      document.getElementById('rorig').textContent=fmtSz(iFile.size);document.getElementById('rnew').textContent=fmtSz(Math.max(nb,0));
-      document.getElementById('rsaved').textContent=(sv>0?'-':'+')+fmtSz(Math.abs(sv));document.getElementById('rdims').textContent=w+'×'+h;
-      T('✓ Converted to '+iExt.toUpperCase());
-    };
-    img.src=ev.target.result;
+function endCrop(e) {
+  if (!cropStart || !cropMode) return;
+  
+  // Check if crop area is valid
+  if (cropStart && cropEnd) {
+    const width = Math.abs(cropEnd.x - cropStart.x);
+    const height = Math.abs(cropEnd.y - cropStart.y);
+    
+    if (width > 5 && height > 5) {
+      // Valid crop
+      const coords = document.getElementById('cropCoords');
+      coords.textContent = `Selection: ${Math.round(width)}×${Math.round(height)}`;
+    } else {
+      // Too small, cancel crop
+      cropStart = null;
+      cropEnd = null;
+      document.getElementById('cropSelection').style.display = 'none';
+      document.getElementById('cropCoords').textContent = 'Selection: 0×0';
+    }
+  }
+  
+  cropStart = null;
+}
+
+function updateCropSelection() {
+  if (!cropStart || !cropEnd) {
+    document.getElementById('cropSelection').style.display = 'none';
+    return;
+  }
+  
+  const selection = document.getElementById('cropSelection');
+  const img = document.getElementById('cropImg');
+  const rect = img.getBoundingClientRect();
+  const container = document.getElementById('cropOriginalContainer');
+  
+  const left = Math.min(cropStart.x, cropEnd.x);
+  const top = Math.min(cropStart.y, cropEnd.y);
+  const width = Math.abs(cropEnd.x - cropStart.x);
+  const height = Math.abs(cropEnd.y - cropStart.y);
+  
+  if (width === 0 || height === 0) {
+    selection.style.display = 'none';
+    return;
+  }
+  
+  selection.style.display = 'block';
+  selection.style.left = (container.offsetLeft + left) + 'px';
+  selection.style.top = (container.offsetTop + top) + 'px';
+  selection.style.width = width + 'px';
+  selection.style.height = height + 'px';
+}
+
+function resetCrop() {
+  cropStart = null;
+  cropEnd = null;
+  document.getElementById('cropSelection').style.display = 'none';
+  document.getElementById('cropCoords').textContent = 'Selection: 0×0';
+  if (originalImgData) {
+    document.getElementById('cropImg').src = originalImgData;
+  }
+}
+
+function applyCrop() {
+  if (!cropStart || !cropEnd) {
+    T('Draw a selection first', 'err');
+    return;
+  }
+  
+  const img = document.getElementById('cropImg');
+  const rect = img.getBoundingClientRect();
+  const naturalWidth = img.naturalWidth;
+  const naturalHeight = img.naturalHeight;
+  
+  // Calculate crop coordinates in original image scale
+  const left = Math.min(cropStart.x, cropEnd.x) / rect.width * naturalWidth;
+  const top = Math.min(cropStart.y, cropEnd.y) / rect.height * naturalHeight;
+  const width = Math.abs(cropEnd.x - cropStart.x) / rect.width * naturalWidth;
+  const height = Math.abs(cropEnd.y - cropStart.y) / rect.height * naturalHeight;
+  
+  // Create canvas and perform crop
+  const canvas = document.getElementById('cvs');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  
+  // Draw cropped image
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    ctx.drawImage(tempImg, left, top, width, height, 0, 0, width, height);
+    
+    // Store cropped data
+    croppedImgData = canvas.toDataURL('image/png');
+    document.getElementById('cropImg').src = croppedImgData;
+    
+    // Update file data for conversion
+    const file = dataURLtoFile(croppedImgData, 'cropped_' + iFile.name);
+    iFile = file;
+    
+    // Update display
+    document.getElementById('pvorig').src = croppedImgData;
+    document.getElementById('sw').textContent = Math.round(width);
+    document.getElementById('sh').textContent = Math.round(height);
+    
+    T('✓ Crop applied');
+    
+    // Reset crop selection
+    resetCrop();
   };
-  r.readAsDataURL(iFile);
+  tempImg.src = originalImgData;
 }
+
+function dataURLtoFile(dataurl, filename) {
+  const arr = dataurl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
+
+let iFile=null,iMime='image/png',iExt='png';
+function loadImg(e){iFile=e.target.files[0];if(!iFile)return;const fi=document.getElementById('imgfi');fi.classList.add('on');document.getElementById('imgbadge').textContent=iFile.type.split('/')[1]?.toUpperCase()||'IMG';document.getElementById('imgname').textContent=iFile.name;document.getElementById('imgsize').textContent=fmtSz(iFile.size);document.getElementById('imgcvt').disabled=false;document.getElementById('cropBtn').style.display='inline-block';const r=new FileReader();r.onload=ev=>{originalImgData = ev.target.result;document.getElementById('cropImg').src = ev.target.result;const img=new Image();img.onload=()=>{document.getElementById('sw').textContent=img.width;document.getElementById('sh').textContent=img.height;document.getElementById('ss').textContent=fmtSz(iFile.size);document.getElementById('st').textContent=iFile.type.split('/')[1]?.toUpperCase()||'?';document.getElementById('imgstats').style.display='flex';document.getElementById('pvorig').src=ev.target.result;};img.src=ev.target.result;};r.readAsDataURL(iFile);}
+
+function selImgFmt(btn,m,e){document.querySelectorAll('#panel-image .fb').forEach(b=>b.classList.remove('sel'));btn.classList.add('sel');iMime=m;iExt=e;}
+function convertImg(){if(!iFile)return;const pb=document.getElementById('imgpb'),pf=document.getElementById('imgpf');pb.classList.add('on');pf.style.width='30%';const r=new FileReader();r.onload=ev=>{pf.style.width='60%';const img=new Image();img.onload=()=>{pf.style.width='80%';const c=document.getElementById('cvs');let w=img.width,h=img.height;const rw=parseInt(document.getElementById('rw').value)||0,rh=parseInt(document.getElementById('rh').value)||0,kr=document.getElementById('kr').checked;if(rw&&rh){w=rw;h=rh;}else if(rw&&kr){h=Math.round(img.height*(rw/img.width));w=rw;}else if(rh&&kr){w=Math.round(img.width*(rh/img.height));h=rh;}else if(rw)w=rw;else if(rh)h=rh;c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);const q=parseInt(document.getElementById('qsl').value)/100;let du;try{du=c.toDataURL(iMime,q);}catch(err){du=c.toDataURL('image/png');}pf.style.width='100%';setTimeout(()=>{pb.classList.remove('on');pf.style.width='0%';},600);document.getElementById('pvconv').src=du;const dl=document.getElementById('imgdl');dl.href=du;dl.download=iFile.name.replace(/\.[^.]+$/,'')+'.'+iExt;document.getElementById('imgresult').style.display='block';const nb=Math.round((du.length-'data:image/png;base64,'.length)*3/4);const sv=iFile.size-nb;document.getElementById('rorig').textContent=fmtSz(iFile.size);document.getElementById('rnew').textContent=fmtSz(Math.max(nb,0));document.getElementById('rsaved').textContent=(sv>0?'-':'+')+fmtSz(Math.abs(sv));document.getElementById('rdims').textContent=w+'×'+h;T('✓ Converted to '+iExt.toUpperCase());};img.src=ev.target.result;};r.readAsDataURL(iFile);}
 const idz=document.getElementById('imgdz');idz.addEventListener('dragover',e=>{e.preventDefault();idz.classList.add('drag');});idz.addEventListener('dragleave',()=>idz.classList.remove('drag'));idz.addEventListener('drop',e=>{e.preventDefault();idz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f?.type.startsWith('image/')){document.getElementById('imginp').files=e.dataTransfer.files;loadImg({target:{files:e.dataTransfer.files}});}});
 
 // AUDIO
