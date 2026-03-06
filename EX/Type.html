@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Type - Plana Archive</title>
+    <link rel="icon" href="https://minta1234.github.io/WEb/favicon.ico">
+    <style>
+        :root {
+            --hair: #F7F7FB;
+            --hair-sh: #D9DCE5;
+            --eye: #F03C72;
+            --jacket: #323842;
+            --lining: #E83D6F;
+            --tie: #2DBBEB;
+            --halo: #FFB6C1;
+            --bg-sky: #A9C9E2;
+            --bg-body: var(--hair);
+            --bg-gradient: linear-gradient(135deg, var(--hair) 0%, var(--bg-sky) 100%);
+            --text-main: var(--jacket);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-text: var(--jacket);
+            --card-border: var(--tie);
+            --btn-toggle: var(--jacket);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: var(--jacket);
+            --bg-gradient: linear-gradient(135deg, var(--jacket) 0%, #1a1e24 100%);
+            --text-main: var(--hair);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-text: var(--hair);
+            --card-border: var(--lining);
+            --btn-toggle: var(--tie);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 60px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.4s ease;
+        }
+
+        .theme-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--btn-toggle);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: 0.3s;
+        }
+        .theme-switch:hover { transform: scale(1.1); filter: brightness(1.2); }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px var(--halo);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        p {
+            color: var(--eye);
+            font-weight: bold;
+            background: white;
+            padding: 5px 20px;
+            border-radius: 50px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .link-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--card-text);
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            font-weight: 700;
+            text-align: center;
+            border-left: 6px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        a:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: var(--tie);
+            color: white;
+            border-left-color: var(--eye);
+            box-shadow: 0 15px 30px rgba(45, 187, 235, 0.4);
+        }
+
+        [data-theme="dark"] a:hover {
+            background: var(--lining);
+            box-shadow: 0 15px 30px rgba(232, 61, 111, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="theme-switch" onclick="toggleTheme()">CHANGE TONE</button>
+
+    <h1>My Type</h1>
+    <p>This Is My Learn</p>    
+
+    <div class="link-container">
+        <a href="https://github.com/">Github</a>
+        <a href="https://learnrussian.rt.com/grammar-tables/index.html">Russia Grammar</a>
+        <a href="https://www.namecheap.com/">Domain</a>
+        <a href="https://www.virustotal.com/gui/home/upload">Virus Scanning</a>
+        <a href="https://python.microbit.org/v/3/reference/">Micro:Bit</a>
+        <a href="https://www.freecodecamp.org/learn/python-v9">FreeCodeCamp</a>
+        <a href="https://translate.google.co.th/">Translate</a>
+        <a href="https://password.youfiles.net/">Encryption File</a>
+        <a href="https://dogbolt.org/">Decompiler</a>
+        <a href="https://www.skills.google/">Google Learning</a>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.documentElement;
+            const currentTheme = body.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                body.removeAttribute('data-theme');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+            }
+        }
+    </script>
+</body>
+</html>
