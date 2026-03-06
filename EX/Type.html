@@ -7,6 +7,7 @@
     <link rel="icon" href="https://minta1234.github.io/WEb/favicon.ico">
     <style>
         :root {
+            /* Palette Colors */
             --hair: #F7F7FB;
             --hair-sh: #D9DCE5;
             --eye: #F03C72;
@@ -15,23 +16,26 @@
             --tie: #2DBBEB;
             --halo: #FFB6C1;
             --bg-sky: #A9C9E2;
+
+            /* Light Mode */
             --bg-body: var(--hair);
             --bg-gradient: linear-gradient(135deg, var(--hair) 0%, var(--bg-sky) 100%);
             --text-main: var(--jacket);
             --card-bg: rgba(255, 255, 255, 0.8);
             --card-text: var(--jacket);
             --card-border: var(--tie);
-            --btn-toggle: var(--jacket);
+            --btn-bg: var(--jacket);
         }
 
         [data-theme="dark"] {
+            /* Dark Mode */
             --bg-body: var(--jacket);
             --bg-gradient: linear-gradient(135deg, var(--jacket) 0%, #1a1e24 100%);
             --text-main: var(--hair);
             --card-bg: rgba(255, 255, 255, 0.05);
             --card-text: var(--hair);
             --card-border: var(--lining);
-            --btn-toggle: var(--tie);
+            --btn-bg: var(--tie);
         }
 
         body {
@@ -40,7 +44,7 @@
             color: var(--text-main);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            padding: 60px 20px;
+            padding: 80px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -48,22 +52,28 @@
             transition: all 0.4s ease;
         }
 
-        .theme-switch {
+        /* Group ปุ่มควบคุม */
+        .controls {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--btn-toggle);
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: var(--btn-bg);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 50px;
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
             transition: 0.3s;
         }
-        .theme-switch:hover { transform: scale(1.1); filter: brightness(1.2); }
+        .control-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
 
         h1 {
             font-size: 3rem;
@@ -71,6 +81,7 @@
             text-shadow: 3px 3px 0px var(--halo);
             text-transform: uppercase;
             letter-spacing: 4px;
+            text-align: center;
         }
 
         p {
@@ -117,12 +128,16 @@
             background: var(--lining);
             box-shadow: 0 15px 30px rgba(232, 61, 111, 0.4);
         }
-
     </style>
 </head>
-<body>
+<body onclick="initAudio()"> <div class="controls">
+        <button class="control-btn" id="musicBtn" onclick="toggleMusic()">🎵 Play Music</button>
+        <button class="control-btn" onclick="toggleTheme()">🌓 Change Tone</button>
+    </div>
 
-    <button class="theme-switch" onclick="toggleTheme()">CHANGE TONE</button>
+    <audio id="bgMusic" loop>
+        <source src="https://minta1234.github.io/WEb/assets/Dream(Aoharu).mp3" type="audio/mpeg">
+    </audio>
 
     <h1>My Type</h1>
     <p>This Is My Learn</p>    
@@ -141,13 +156,42 @@
     </div>
 
     <script>
+        const music = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        let isPlaying = false;
+        function initAudio() {
+            if (!isPlaying) {
+            }
+        }
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicBtn.innerText = "🔇 Mute Music";
+                isPlaying = true;
+            } else {
+                music.pause();
+                musicBtn.innerText = "🎵 Play Music";
+                isPlaying = false;
+            }
+        }
+
         function toggleTheme() {
             const body = document.documentElement;
-            const currentTheme = body.getAttribute('data-theme');
-            if (currentTheme === 'dark') {
+            if (body.getAttribute('data-theme') === 'dark') {
                 body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
             } else {
                 body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // โหลดค่า Theme ที่เคยบันทึกไว้
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
             }
         }
     </script>
