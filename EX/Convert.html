@@ -88,17 +88,170 @@
   select:focus{border-color:var(--accent);}
   canvas{display:none;}
 
-  /* CROP UI */
-  .crop-container{margin-top:20px;border:1px solid var(--border);padding:16px;background:var(--surface);}
-  .crop-preview{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start;}
-  .crop-original{flex:1;min-width:200px;position:relative;}
-  .crop-original img{max-width:100%;max-height:300px;border:1px solid var(--border);cursor:crosshair;}
-  .crop-selection{border:2px dashed var(--accent);background:rgba(255,77,0,0.1);position:absolute;pointer-events:none;}
-  .crop-handle{width:10px;height:10px;background:var(--accent);position:absolute;border-radius:50%;pointer-events:none;}
-  .crop-info{flex:1;min-width:200px;}
-  .crop-coords{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin:10px 0;}
-  .crop-buttons{display:flex;gap:8px;margin-top:12px;}
-  
+  /* ENHANCED CROP UI */
+  .crop-container{
+    margin-top:20px;
+    border:1px solid var(--border);
+    padding:20px;
+    background:var(--surface);
+    position:relative;
+  }
+  .crop-preview{
+    display:flex;
+    gap:20px;
+    flex-wrap:wrap;
+    align-items:flex-start;
+  }
+  .crop-original{
+    flex:2;
+    min-width:300px;
+    position:relative;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    overflow:hidden;
+  }
+  .crop-original img{
+    display:block;
+    max-width:100%;
+    max-height:400px;
+    object-fit:contain;
+    cursor:crosshair;
+    user-select:none;
+  }
+  .crop-overlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+  }
+  .crop-dim-overlay{
+    position:absolute;
+    background:rgba(0,0,0,0.5);
+    pointer-events:none;
+  }
+  .crop-selection{
+    position:absolute;
+    border:2px solid var(--accent);
+    box-shadow:0 0 0 9999px rgba(0,0,0,0.5);
+    pointer-events:none;
+    z-index:10;
+  }
+  .crop-handle{
+    position:absolute;
+    width:12px;
+    height:12px;
+    background:var(--accent);
+    border:2px solid var(--text-bright);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:11;
+  }
+  .crop-handle.nw{ top:-6px; left:-6px; cursor:nw-resize; }
+  .crop-handle.ne{ top:-6px; right:-6px; cursor:ne-resize; }
+  .crop-handle.sw{ bottom:-6px; left:-6px; cursor:sw-resize; }
+  .crop-handle.se{ bottom:-6px; right:-6px; cursor:se-resize; }
+  .crop-handle.n{ top:-6px; left:50%; transform:translateX(-50%); cursor:n-resize; }
+  .crop-handle.s{ bottom:-6px; left:50%; transform:translateX(-50%); cursor:s-resize; }
+  .crop-handle.e{ right:-6px; top:50%; transform:translateY(-50%); cursor:e-resize; }
+  .crop-handle.w{ left:-6px; top:50%; transform:translateY(-50%); cursor:w-resize; }
+
+  .crop-ruler{
+    position:absolute;
+    pointer-events:none;
+    z-index:12;
+  }
+  .crop-ruler.horizontal{
+    width:100%;
+    height:1px;
+    background:rgba(255,77,0,0.3);
+    left:0;
+  }
+  .crop-ruler.vertical{
+    width:1px;
+    height:100%;
+    background:rgba(255,77,0,0.3);
+    top:0;
+  }
+  .crop-coord-label{
+    position:absolute;
+    background:var(--accent);
+    color:#000;
+    font-family:var(--mono);
+    font-size:10px;
+    padding:2px 6px;
+    border-radius:2px;
+    white-space:nowrap;
+    z-index:13;
+    pointer-events:none;
+    font-weight:bold;
+  }
+
+  .crop-info{
+    flex:1;
+    min-width:200px;
+    background:var(--surface2);
+    padding:16px;
+    border:1px solid var(--border);
+  }
+  .crop-stats{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin:15px 0;
+  }
+  .crop-stat-item{
+    background:var(--surface);
+    padding:10px;
+    border:1px solid var(--border);
+    text-align:center;
+  }
+  .crop-stat-label{
+    font-family:var(--mono);
+    font-size:9px;
+    color:var(--text-dim);
+    letter-spacing:1px;
+    margin-bottom:5px;
+  }
+  .crop-stat-value{
+    font-family:'Bebas Neue',sans-serif;
+    font-size:24px;
+    color:var(--accent);
+  }
+  .crop-ratio{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    margin:10px 0;
+    padding:10px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    font-family:var(--mono);
+    font-size:14px;
+    color:var(--text);
+  }
+  .crop-ratio button{
+    padding:4px 10px;
+    background:var(--surface2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--mono);
+    font-size:11px;
+    cursor:pointer;
+    transition:all .15s;
+  }
+  .crop-ratio button:hover{
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .crop-ratio button.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#000;
+  }
+
   /* AUDIO */
   .audplayer{background:var(--surface2);border:1px solid var(--border);padding:16px;margin-top:12px;display:none;}
   .audplayer.on{display:block;}
@@ -189,23 +342,76 @@
       <div class="stat"><div class="stlbl">Format</div><div class="stval" id="st">—</div></div>
     </div>
     
-    <!-- CROP UI -->
+    <!-- ENHANCED CROP UI -->
     <div class="crop-container" id="cropContainer" style="display:none">
-      <div class="slabel">Crop Image</div>
+      <div class="slabel">✂ Smart Crop Tool</div>
       <div class="crop-preview">
         <div class="crop-original" id="cropOriginalContainer">
-          <img id="cropImg" src="" alt="Crop preview" style="max-width:100%; max-height:300px;">
+          <img id="cropImg" src="" alt="Crop preview" style="width:100%; height:auto;">
+          <div id="cropOverlay" class="crop-overlay"></div>
           <div id="cropSelection" class="crop-selection" style="display:none;"></div>
+          <div id="cropHandles" style="display:none;">
+            <div class="crop-handle nw"></div>
+            <div class="crop-handle ne"></div>
+            <div class="crop-handle sw"></div>
+            <div class="crop-handle se"></div>
+            <div class="crop-handle n"></div>
+            <div class="crop-handle s"></div>
+            <div class="crop-handle e"></div>
+            <div class="crop-handle w"></div>
+          </div>
+          <div id="cropRulerHorizontal" class="crop-ruler horizontal" style="display:none;"></div>
+          <div id="cropRulerVertical" class="crop-ruler vertical" style="display:none;"></div>
+          <div id="cropCoordLabel" class="crop-coord-label" style="display:none;"></div>
         </div>
         <div class="crop-info">
-          <div class="crop-coords" id="cropCoords">Selection: 0×0</div>
-          <div class="crop-buttons">
-            <button class="abtn" onclick="resetCrop()">↺ Reset</button>
-            <button class="abtn" onclick="applyCrop()">✂ Apply Crop</button>
-            <button class="abtn g" onclick="toggleCropMode()">✓ Done Cropping</button>
+          <div class="crop-stats">
+            <div class="crop-stat-item">
+              <div class="crop-stat-label">SELECTION</div>
+              <div class="crop-stat-value" id="cropSize">0×0</div>
+            </div>
+            <div class="crop-stat-item">
+              <div class="crop-stat-label">ASPECT</div>
+              <div class="crop-stat-value" id="cropAspect">—</div>
+            </div>
           </div>
-          <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:10px">
-            Click and drag to select crop area
+          
+          <div class="crop-ratio">
+            <span>Aspect Ratio:</span>
+            <button onclick="setCropAspect('free')" id="aspectFree" class="active">Free</button>
+            <button onclick="setCropAspect('1:1')" id="aspect1x1">1:1</button>
+            <button onclick="setCropAspect('4:3')" id="aspect4x3">4:3</button>
+            <button onclick="setCropAspect('16:9')" id="aspect16x9">16:9</button>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:15px;">
+            <div>
+              <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">X</label>
+              <input type="number" id="cropX" value="0" min="0" style="width:100%;" onchange="updateCropFromInputs()">
+            </div>
+            <div>
+              <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">Y</label>
+              <input type="number" id="cropY" value="0" min="0" style="width:100%;" onchange="updateCropFromInputs()">
+            </div>
+            <div>
+              <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">Width</label>
+              <input type="number" id="cropW" value="0" min="1" style="width:100%;" onchange="updateCropFromInputs()">
+            </div>
+            <div>
+              <label style="font-family:var(--mono);font-size:10px;color:var(--text-dim)">Height</label>
+              <input type="number" id="cropH" value="0" min="1" style="width:100%;" onchange="updateCropFromInputs()">
+            </div>
+          </div>
+          
+          <div class="crop-buttons" style="margin-top:20px; display:flex; gap:8px; justify-content:space-between;">
+            <button class="abtn" onclick="resetCrop()" style="flex:1">↺ Reset</button>
+            <button class="abtn" onclick="applyCrop()" style="flex:1; background:var(--accent); color:#000; border-color:var(--accent);">✓ Apply Crop</button>
+            <button class="abtn g" onclick="toggleCropMode()" style="flex:1">✕ Close</button>
+          </div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:15px;text-align:center; border-top:1px solid var(--border); padding-top:10px;">
+            ⬤ Click & drag to draw selection<br>
+            ⬤ Drag handles to resize<br>
+            ⬤ Shift+drag to constrain aspect ratio
           </div>
         </div>
       </div>
@@ -231,7 +437,7 @@
       <label style="font-family:var(--mono);font-size:11px;color:var(--text-dim);display:flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" id="kr" checked style="accent-color:var(--accent)"> Keep ratio</label>
     </div></div>
     <div class="brow" style="margin-top:10px">
-      <button class="abtn" id="cropBtn" onclick="toggleCropMode()" style="display:none">✂ Crop Image</button>
+      <button class="abtn g" id="cropBtn" onclick="toggleCropMode()" style="display:none">✂ Crop Image</button>
     </div>
     <div class="progbar" id="imgpb"><div class="progfill" id="imgpf"></div></div>
     <button class="cvt-btn" id="imgcvt" onclick="convertImg()" disabled>Convert Image</button>
@@ -494,13 +700,16 @@ function copyOut(id){navigator.clipboard.writeText(document.getElementById(id).v
 function dlTxt(id,nm,ext){const v=document.getElementById(id).value;if(!v){T('Nothing to download','err');return;}const a=document.createElement('a');a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(v);a.download=nm+'.'+ext;a.click();T('✓ Downloaded');}
 function SW(id,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));btn.classList.add('active');document.getElementById('panel-'+id).classList.add('active');}
 
-// IMAGE CROP
+// ENHANCED IMAGE CROP
 let cropMode = false;
 let cropStart = null;
 let cropEnd = null;
 let cropImgElement = null;
 let originalImgData = null;
 let croppedImgData = null;
+let cropAspect = null;
+let cropDragging = false;
+let dragHandle = null;
 
 function toggleCropMode() {
   if (!iFile) {
@@ -529,36 +738,46 @@ function initCrop() {
   }
   
   const container = document.getElementById('cropOriginalContainer');
-  const selection = document.getElementById('cropSelection');
   
   // Remove old listeners
-  container.removeEventListener('mousedown', startCrop);
-  container.removeEventListener('mousemove', updateCrop);
-  container.removeEventListener('mouseup', endCrop);
+  container.removeEventListener('mousedown', startCropDrag);
+  container.removeEventListener('mousemove', updateCropDrag);
+  container.removeEventListener('mouseup', endCropDrag);
+  container.removeEventListener('mouseleave', endCropDrag);
   
   // Add new listeners
-  container.addEventListener('mousedown', startCrop);
-  container.addEventListener('mousemove', updateCrop);
-  container.addEventListener('mouseup', endCrop);
-  container.addEventListener('mouseleave', endCrop);
+  container.addEventListener('mousedown', startCropDrag);
+  container.addEventListener('mousemove', updateCropDrag);
+  container.addEventListener('mouseup', endCropDrag);
+  container.addEventListener('mouseleave', endCropDrag);
 }
 
-function startCrop(e) {
+function startCropDrag(e) {
   if (!cropMode) return;
   e.preventDefault();
+  
+  const target = e.target;
+  if (target.classList.contains('crop-handle')) {
+    // Start handle drag
+    cropDragging = true;
+    dragHandle = Array.from(target.classList).find(c => ['nw','ne','sw','se','n','s','e','w'].includes(c));
+    return;
+  }
+  
   const rect = document.getElementById('cropImg').getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
   
   if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+    cropDragging = true;
     cropStart = { x, y };
     cropEnd = { x, y };
     updateCropSelection();
   }
 }
 
-function updateCrop(e) {
-  if (!cropStart || !cropMode) return;
+function updateCropDrag(e) {
+  if (!cropDragging || !cropMode) return;
   e.preventDefault();
   
   const rect = document.getElementById('cropImg').getBoundingClientRect();
@@ -569,37 +788,167 @@ function updateCrop(e) {
   x = Math.max(0, Math.min(rect.width, x));
   y = Math.max(0, Math.min(rect.height, y));
   
-  cropEnd = { x, y };
+  if (dragHandle) {
+    // Handle drag logic
+    if (cropStart && cropEnd) {
+      const { left, top, right, bottom } = getCropBounds();
+      
+      switch(dragHandle) {
+        case 'nw':
+          cropStart.x = x;
+          cropStart.y = y;
+          break;
+        case 'ne':
+          cropEnd.x = x;
+          cropStart.y = y;
+          break;
+        case 'sw':
+          cropStart.x = x;
+          cropEnd.y = y;
+          break;
+        case 'se':
+          cropEnd.x = x;
+          cropEnd.y = y;
+          break;
+        case 'n':
+          cropStart.y = y;
+          break;
+        case 's':
+          cropEnd.y = y;
+          break;
+        case 'e':
+          cropEnd.x = x;
+          break;
+        case 'w':
+          cropStart.x = x;
+          break;
+      }
+      
+      // Apply aspect ratio constraint if set
+      if (cropAspect && cropStart && cropEnd) {
+        applyAspectConstraint();
+      }
+      
+      // Ensure bounds
+      ensureValidBounds();
+    }
+  } else if (cropStart) {
+    // Normal drag to create selection
+    cropEnd = { x, y };
+    
+    // Apply aspect ratio constraint if set
+    if (cropAspect && cropStart && cropEnd) {
+      applyAspectConstraint();
+    }
+  }
+  
   updateCropSelection();
 }
 
-function endCrop(e) {
-  if (!cropStart || !cropMode) return;
+function endCropDrag(e) {
+  if (!cropDragging) return;
   
-  // Check if crop area is valid
+  cropDragging = false;
+  dragHandle = null;
+  
   if (cropStart && cropEnd) {
     const width = Math.abs(cropEnd.x - cropStart.x);
     const height = Math.abs(cropEnd.y - cropStart.y);
     
     if (width > 5 && height > 5) {
       // Valid crop
-      const coords = document.getElementById('cropCoords');
-      coords.textContent = `Selection: ${Math.round(width)}×${Math.round(height)}`;
+      updateCropInfo();
+      showHandles(true);
     } else {
       // Too small, cancel crop
       cropStart = null;
       cropEnd = null;
       document.getElementById('cropSelection').style.display = 'none';
-      document.getElementById('cropCoords').textContent = 'Selection: 0×0';
+      showHandles(false);
+      updateCropInfo();
     }
   }
+}
+
+function getCropBounds() {
+  if (!cropStart || !cropEnd) return null;
   
-  cropStart = null;
+  return {
+    left: Math.min(cropStart.x, cropEnd.x),
+    top: Math.min(cropStart.y, cropEnd.y),
+    right: Math.max(cropStart.x, cropEnd.x),
+    bottom: Math.max(cropStart.y, cropEnd.y)
+  };
+}
+
+function ensureValidBounds() {
+  const rect = document.getElementById('cropImg').getBoundingClientRect();
+  const bounds = getCropBounds();
+  if (!bounds) return;
+  
+  // Ensure within image bounds
+  bounds.left = Math.max(0, bounds.left);
+  bounds.top = Math.max(0, bounds.top);
+  bounds.right = Math.min(rect.width, bounds.right);
+  bounds.bottom = Math.min(rect.height, bounds.bottom);
+  
+  cropStart.x = bounds.left;
+  cropStart.y = bounds.top;
+  cropEnd.x = bounds.right;
+  cropEnd.y = bounds.bottom;
+}
+
+function applyAspectConstraint() {
+  if (!cropAspect || !cropStart || !cropEnd) return;
+  
+  const [ratioW, ratioH] = cropAspect.split(':').map(Number);
+  const aspect = ratioW / ratioH;
+  
+  let width = Math.abs(cropEnd.x - cropStart.x);
+  let height = Math.abs(cropEnd.y - cropStart.y);
+  
+  // Adjust based on which is larger relative to aspect
+  if (width / height > aspect) {
+    // Width too large
+    height = width / aspect;
+  } else {
+    // Height too large
+    width = height * aspect;
+  }
+  
+  // Update cropEnd based on drag direction
+  if (cropEnd.x > cropStart.x) {
+    cropEnd.x = cropStart.x + width;
+  } else {
+    cropStart.x = cropEnd.x - width;
+  }
+  
+  if (cropEnd.y > cropStart.y) {
+    cropEnd.y = cropStart.y + height;
+  } else {
+    cropStart.y = cropEnd.y - height;
+  }
+}
+
+function setCropAspect(aspect) {
+  cropAspect = aspect === 'free' ? null : aspect;
+  
+  // Update button states
+  document.getElementById('aspectFree').classList.toggle('active', aspect === 'free');
+  document.getElementById('aspect1x1').classList.toggle('active', aspect === '1:1');
+  document.getElementById('aspect4x3').classList.toggle('active', aspect === '4:3');
+  document.getElementById('aspect16x9').classList.toggle('active', aspect === '16:9');
+  
+  if (cropStart && cropEnd && cropAspect) {
+    applyAspectConstraint();
+    updateCropSelection();
+  }
 }
 
 function updateCropSelection() {
   if (!cropStart || !cropEnd) {
     document.getElementById('cropSelection').style.display = 'none';
+    showHandles(false);
     return;
   }
   
@@ -615,6 +964,7 @@ function updateCropSelection() {
   
   if (width === 0 || height === 0) {
     selection.style.display = 'none';
+    showHandles(false);
     return;
   }
   
@@ -623,13 +973,93 @@ function updateCropSelection() {
   selection.style.top = (container.offsetTop + top) + 'px';
   selection.style.width = width + 'px';
   selection.style.height = height + 'px';
+  
+  // Position handles
+  const handles = document.getElementById('cropHandles');
+  handles.style.display = 'block';
+  handles.style.left = (container.offsetLeft + left) + 'px';
+  handles.style.top = (container.offsetTop + top) + 'px';
+  handles.style.width = width + 'px';
+  handles.style.height = height + 'px';
+  
+  // Update rulers
+  const rulerH = document.getElementById('cropRulerHorizontal');
+  const rulerV = document.getElementById('cropRulerVertical');
+  rulerH.style.display = 'block';
+  rulerH.style.top = (container.offsetTop + top + height/2) + 'px';
+  rulerV.style.display = 'block';
+  rulerV.style.left = (container.offsetLeft + left + width/2) + 'px';
+  
+  // Update coordinate label
+  const label = document.getElementById('cropCoordLabel');
+  label.style.display = 'block';
+  label.style.left = (container.offsetLeft + left + width + 10) + 'px';
+  label.style.top = (container.offsetTop + top + height + 10) + 'px';
+  label.textContent = `${Math.round(width)}×${Math.round(height)}`;
+  
+  // Update input fields
+  document.getElementById('cropX').value = Math.round(left);
+  document.getElementById('cropY').value = Math.round(top);
+  document.getElementById('cropW').value = Math.round(width);
+  document.getElementById('cropH').value = Math.round(height);
+  
+  updateCropInfo();
+}
+
+function showHandles(show) {
+  document.getElementById('cropHandles').style.display = show ? 'block' : 'none';
+  document.getElementById('cropRulerHorizontal').style.display = show ? 'block' : 'none';
+  document.getElementById('cropRulerVertical').style.display = show ? 'block' : 'none';
+  document.getElementById('cropCoordLabel').style.display = show ? 'block' : 'none';
+}
+
+function updateCropInfo() {
+  if (!cropStart || !cropEnd) {
+    document.getElementById('cropSize').textContent = '0×0';
+    document.getElementById('cropAspect').textContent = '—';
+    return;
+  }
+  
+  const width = Math.abs(cropEnd.x - cropStart.x);
+  const height = Math.abs(cropEnd.y - cropStart.y);
+  
+  document.getElementById('cropSize').textContent = `${Math.round(width)}×${Math.round(height)}`;
+  
+  // Calculate aspect ratio
+  if (width > 0 && height > 0) {
+    const gcd = (a, b) => b ? gcd(b, a % b) : a;
+    const w = Math.round(width);
+    const h = Math.round(height);
+    const divisor = gcd(w, h);
+    const aspectW = w / divisor;
+    const aspectH = h / divisor;
+    document.getElementById('cropAspect').textContent = `${aspectW}:${aspectH}`;
+  }
+}
+
+function updateCropFromInputs() {
+  if (!cropMode) return;
+  
+  const x = parseInt(document.getElementById('cropX').value) || 0;
+  const y = parseInt(document.getElementById('cropY').value) || 0;
+  const w = parseInt(document.getElementById('cropW').value) || 1;
+  const h = parseInt(document.getElementById('cropH').value) || 1;
+  
+  const rect = document.getElementById('cropImg').getBoundingClientRect();
+  
+  cropStart = { x, y };
+  cropEnd = { x: x + w, y: y + h };
+  
+  ensureValidBounds();
+  updateCropSelection();
 }
 
 function resetCrop() {
   cropStart = null;
   cropEnd = null;
   document.getElementById('cropSelection').style.display = 'none';
-  document.getElementById('cropCoords').textContent = 'Selection: 0×0';
+  showHandles(false);
+  updateCropInfo();
   if (originalImgData) {
     document.getElementById('cropImg').src = originalImgData;
   }
