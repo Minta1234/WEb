@@ -34,7 +34,7 @@
             --text-main: var(--hair);
             --card-bg: rgba(255, 255, 255, 0.05);
             --card-text: var(--hair);
-            --card-border: var(--lining);
+            --card-border: var(--tie);
             --btn-bg: var(--tie);
         }
 
@@ -52,7 +52,6 @@
             transition: all 0.4s ease;
         }
 
-        /* Group ปุ่มควบคุม */
         .controls {
             position: fixed;
             top: 20px;
@@ -111,7 +110,6 @@
             font-weight: 700;
             text-align: center;
             border-left: 6px solid var(--card-border);
-            backdrop-filter: blur(10px);
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         }
@@ -126,7 +124,7 @@
 
         [data-theme="dark"] a:hover {
             background: var(--lining);
-            box-shadow: 0 15px 30px rgba(232, 61, 111, 0.4);
+            box-shadow: 0 15px 30px rgb(16, 219, 255);
         }
     </style>
 </head>
@@ -143,16 +141,16 @@
     <p>This Is My Learn</p>    
 
     <div class="link-container">
-        <a href="https://github.com/">Github</a>
-        <a href="https://learnrussian.rt.com/grammar-tables/index.html">Russia Grammar</a>
-        <a href="https://www.namecheap.com/">Domain</a>
-        <a href="https://www.virustotal.com/gui/home/upload">Virus Scanning</a>
-        <a href="https://python.microbit.org/v/3/reference/">Micro:Bit</a>
-        <a href="https://www.freecodecamp.org/learn/python-v9">FreeCodeCamp</a>
-        <a href="https://translate.google.co.th/">Translate</a>
-        <a href="https://password.youfiles.net/">Encryption File</a>
-        <a href="https://dogbolt.org/">Decompiler</a>
-        <a href="https://www.skills.google/">Google Learning</a>
+        <a href="https://github.com/" target="_blank">Github</a>
+        <a href="https://learnrussian.rt.com/grammar-tables/index.html" target="_blank">Russia Grammar</a>
+        <a href="https://www.namecheap.com/" target="_blank">Domain</a>
+        <a href="https://www.virustotal.com/gui/home/upload" target="_blank">Virus Scanning</a>
+        <a href="https://python.microbit.org/v/3/reference/" target="_blank">Micro:Bit</a>
+        <a href="https://www.freecodecamp.org/learn/python-v9" target="_blank">FreeCodeCamp</a>
+        <a href="https://translate.google.co.th/" target="_blank">Translate</a>
+        <a href="https://password.youfiles.net/" target="_blank">Encryption File</a>
+        <a href="https://dogbolt.org/" target="_blank">Decompiler</a>
+        <a href="https://www.skills.google/" target="_blank">Google Learning</a>
     </div>
 
     <script>
@@ -186,8 +184,6 @@
                 localStorage.setItem('theme', 'dark');
             }
         }
-
-        // โหลดค่า Theme ที่เคยบันทึกไว้
         window.onload = () => {
             const savedTheme = localStorage.getItem('theme');
             if (savedTheme === 'dark') {
