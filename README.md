@@ -12,7 +12,7 @@ Welcome to my project! Click the badges below or expand the description
 <summary>📖 Click to See Description & Stats</summary>
 
 ### 🔗 QR Code to Website
-[![QR Code](Image/QR-Code.png)](https://minta1234.github.io/WEb)
+[![QR Code](Image/Qr-Code.png)](https://minta1234.github.io/WEb)
 
 ---
 
