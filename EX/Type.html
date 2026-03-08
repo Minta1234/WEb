@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://minta1234.github.io/WEb/">
+    <meta property="og:title" content="Minta Console">
+    <meta property="og:description" content="Welcome to my Web">
+    <meta property="og:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+    <meta property="og:image:secure_url" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+    <meta property="og:image:type" content="image/jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="fb:app_id" content="2350981502081867">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Minta Console">
+    <meta name="twitter:description" content="Welcome to my Web">
+    <meta name="twitter:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+    <title>Type</title>
+    <link rel="icon" href="https://minta1234.github.io/WEb/favicon.ico">
+    <style>
+        :root {
+            /* Palette Colors */
+            --hair: #F7F7FB;
+            --hair-sh: #D9DCE5;
+            --eye: #F03C72;
+            --jacket: #323842;
+            --lining: #E83D6F;
+            --tie: #2DBBEB;
+            --halo: #FFB6C1;
+            --bg-sky: #A9C9E2;
+
+            /* Light Mode */
+            --bg-body: var(--hair);
+            --bg-gradient: linear-gradient(135deg, var(--hair) 0%, var(--bg-sky) 100%);
+            --text-main: var(--jacket);
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --card-text: var(--jacket);
+            --card-border: var(--tie);
+            --btn-bg: var(--jacket);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Mode */
+            --bg-body: var(--jacket);
+            --bg-gradient: linear-gradient(135deg, var(--jacket) 0%, #1a1e24 100%);
+            --text-main: var(--hair);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-text: var(--hair);
+            --card-border: var(--tie);
+            --btn-bg: var(--tie);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 80px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.4s ease;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: var(--btn-bg);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: 0.3s;
+        }
+        .control-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px var(--halo);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-align: center;
+        }
+
+        p {
+            color: var(--eye);
+            font-weight: bold;
+            background: white;
+            padding: 5px 20px;
+            border-radius: 50px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .link-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        a {
+            text-decoration: none;
+            color: var(--card-text);
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            font-weight: 700;
+            text-align: center;
+            border-left: 6px solid var(--card-border);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+
+        a:hover {
+            transform: translateY(-10px) scale(1.02);
+            background: var(--tie);
+            color: white;
+            border-left-color: var(--eye);
+            box-shadow: 0 15px 30px rgba(45, 187, 235, 0.4);
+        }
+
+        [data-theme="dark"] a:hover {
+            background: var(--lining);
+            box-shadow: 0 15px 30px rgb(16, 219, 255);
+        }
+    </style>
+</head>
+<body onclick="initAudio()"> <div class="controls">
+        <button class="control-btn" id="musicBtn" onclick="toggleMusic()">🎵 Play Music</button>
+        <button class="control-btn" onclick="toggleTheme()">🌓 Change Tone</button>
+    </div>
+
+    <audio id="bgMusic" loop>
+        <source src="https://minta1234.github.io/WEb/assets/Dream(Aoharu).mp3" type="audio/mpeg">
+    </audio>
+
+    <h1>My Type</h1>
+    <p>This Is My Learn</p>    
+
+    <div class="link-container">
+        <a href="https://github.com/" target="_blank">Github</a>
+        <a href="https://learnrussian.rt.com/grammar-tables/index.html" target="_blank">Russia Grammar</a>
+        <a href="https://www.namecheap.com/" target="_blank">Domain</a>
+        <a href="https://www.virustotal.com/gui/home/upload" target="_blank">Virus Scanning</a>
+        <a href="https://python.microbit.org/v/3/reference/" target="_blank">Micro:Bit</a>
+        <a href="https://www.freecodecamp.org/learn/python-v9" target="_blank">FreeCodeCamp</a>
+        <a href="https://translate.google.co.th/" target="_blank">Translate</a>
+        <a href="https://password.youfiles.net/" target="_blank">Encryption File</a>
+        <a href="https://dogbolt.org/" target="_blank">Decompiler</a>
+        <a href="https://www.skills.google/" target="_blank">Google Learning</a>
+        <a href="https://mail.google.com/mail/u/0/" target="_blank">Mail</a>
+    </div>
+
+    <script>
+        const music = document.getElementById('bgMusic');
+        const musicBtn = document.getElementById('musicBtn');
+        let isPlaying = false;
+        function initAudio() {
+            if (!isPlaying) {
+            }
+        }
+
+        function toggleMusic() {
+            if (music.paused) {
+                music.play();
+                musicBtn.innerText = "🔇 Mute Music";
+                isPlaying = true;
+            } else {
+                music.pause();
+                musicBtn.innerText = "🎵 Play Music";
+                isPlaying = false;
+            }
+        }
+
+        function toggleTheme() {
+            const body = document.documentElement;
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.removeAttribute('data-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        }
+    </script>
+</body>
+</html>

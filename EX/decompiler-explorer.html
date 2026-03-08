@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="icon" href="https://minta1234.github.io/WEb/favicon.ico">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://minta1234.github.io/WEb/">
+<meta property="og:title" content="Decomplier">
+<meta property="og:description" content="Welcome to my Web">
+<meta property="og:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+<meta property="og:image:secure_url" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+<meta property="og:image:type" content="image/jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="fb:app_id" content="2350981502081867">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Decomplier">
+<meta name="twitter:description" content="Welcome to my Web">
+<meta name="twitter:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+<title>DecompX Explorer — Multi-Engine Decompiler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #0a0c0f;
+  --bg2:      #0f1318;
+  --bg3:      #141820;
+  --panel:    #0d1017;
+  --border:   #1c2333;
+  --border2:  #283045;
+  --accent:   #e8ff47;
+  --cyan:     #3df0c2;
+  --red:      #ff4757;
+  --blue:     #4a9eff;
+  --orange:   #ff8c42;
+  --text:     #c0cad8;
+  --muted:    #3d4d62;
+  --mono:     'IBM Plex Mono', monospace;
+  --display:  'Bebas Neue', sans-serif;
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* scanline effect */
+body::after {
+  content:'';
+  position:fixed;inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* ── HEADER ── */
+header {
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;
+  height:52px;
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:100;
+}
+.logo {
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--display);font-size:24px;letter-spacing:2px;
+  color:var(--accent);text-shadow:0 0 20px rgba(232,255,71,0.3);
+}
+.logo-mark {
+  width:30px;height:30px;
+  background:var(--accent);
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:grid;place-items:center;
+  font-size:11px;font-weight:700;color:#000;font-family:var(--mono);
+}
+.header-right {
+  display:flex;align-items:center;gap:16px;font-size:10px;
+}
+.live-badge {
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border:1px solid rgba(61,240,194,0.3);
+  border-radius:2px;color:var(--cyan);font-size:9px;letter-spacing:1.5px;
+}
+.live-dot { width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:blink 1.2s ease-in-out infinite; }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── UPLOAD BAR ── */
+.upload-bar {
+  flex-shrink:0;
+  display:flex;align-items:center;gap:12px;
+  padding:10px 24px;
+  background:var(--bg3);
+  border-bottom:1px solid var(--border);
+}
+.drop-area {
+  display:flex;align-items:center;gap:10px;
+  padding:8px 16px;
+  border:1.5px dashed var(--border2);
+  border-radius:3px;cursor:pointer;
+  transition:all .2s;flex:1;max-width:400px;
+  font-size:11px;color:var(--muted);
+}
+.drop-area:hover,.drop-area.over { border-color:var(--accent);color:var(--accent);background:rgba(232,255,71,.04); }
+.drop-area span { font-size:16px; }
+#fileInput { display:none; }
+.samples-select {
+  background:var(--bg2);border:1px solid var(--border2);
+  color:var(--text);font-family:var(--mono);font-size:10px;
+  padding:7px 10px;border-radius:2px;cursor:pointer;
+}
+.samples-select:focus{outline:none;border-color:var(--accent);}
+.engine-toggles {
+  display:flex;align-items:center;gap:6px;margin-left:auto;
+  font-size:9px;
+}
+.etog {
+  padding:5px 9px;border:1px solid var(--border2);border-radius:2px;
+  cursor:pointer;transition:all .15s;color:var(--muted);
+  white-space:nowrap;
+}
+.etog.on { color:var(--bg);font-weight:600; }
+.decomp-btn {
+  padding:7px 20px;
+  background:var(--accent);border:none;
+  color:#000;font-family:var(--display);font-size:16px;
+  letter-spacing:1px;cursor:pointer;border-radius:2px;
+  transition:all .2s;flex-shrink:0;
+}
+.decomp-btn:hover:not(:disabled) { box-shadow:0 0 20px rgba(232,255,71,.5);transform:translateY(-1px); }
+.decomp-btn:disabled { opacity:.3;cursor:not-allowed; }
+
+/* ── ENGINES HEADER ROW ── */
+.engines-row {
+  flex-shrink:0;
+  display:flex;
+  background:var(--bg2);
+  border-bottom:2px solid var(--border);
+  overflow-x:auto;min-height:36px;
+}
+.engines-row::-webkit-scrollbar{height:3px;}
+.engines-row::-webkit-scrollbar-thumb{background:var(--border2);}
+.engine-tab {
+  display:flex;align-items:center;gap:6px;
+  padding:0 16px;
+  border-right:1px solid var(--border);
+  white-space:nowrap;font-size:10px;
+  color:var(--muted);min-height:36px;
+  position:relative;cursor:pointer;
+  transition:color .15s;
+}
+.engine-tab:hover { color:var(--text); }
+.engine-tab.active { color:var(--accent); }
+.engine-tab.active::after {
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:var(--accent);
+}
+.engine-tab.loading .etab-dot { background:var(--orange);animation:blink .6s ease-in-out infinite; }
+.engine-tab.done    .etab-dot { background:var(--cyan); }
+.engine-tab.error   .etab-dot { background:var(--red); }
+.etab-dot { width:5px;height:5px;border-radius:50%;background:var(--muted); }
+.etab-name { font-weight:600; }
+.etab-ver  { font-size:8px;color:var(--muted); }
+
+/* ── PANELS ── */
+.panels-area {
+  flex:1;display:flex;overflow:hidden;
+}
+/* Split view: all panels side by side OR single selected */
+.panels-container {
+  flex:1;
+  display:flex;
+  overflow-x:auto;overflow-y:hidden;
+}
+.panels-container::-webkit-scrollbar{height:6px;}
+.panels-container::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+.engine-panel {
+  min-width:420px;flex:1;
+  display:flex;flex-direction:column;
+  border-right:1px solid var(--border);
+  overflow:hidden;
+}
+.engine-panel.hidden { display:none; }
+.engine-panel.solo { min-width:100%;flex:none;width:100%; }
+
+.panel-head {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;
+  background:var(--bg3);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.panel-head-left { display:flex;align-items:center;gap:8px; }
+.ph-name {
+  font-family:var(--display);font-size:17px;letter-spacing:1px;color:var(--text);
+}
+.ph-ver { font-size:9px;color:var(--muted); }
+.ph-link {
+  font-size:9px;padding:2px 7px;border:1px solid var(--border2);
+  border-radius:2px;color:var(--muted);text-decoration:none;
+  transition:all .15s;
+}
+.ph-link:hover{border-color:var(--cyan);color:var(--cyan);}
+.panel-actions { display:flex;gap:5px; }
+.pact {
+  padding:3px 8px;background:none;border:1px solid var(--border);
+  color:var(--muted);font-family:var(--mono);font-size:9px;
+  cursor:pointer;border-radius:2px;transition:all .15s;
+}
+.pact:hover{border-color:var(--accent);color:var(--accent);}
+
+.panel-body {
+  flex:1;overflow:auto;
+  background:var(--bg);
+  position:relative;
+}
+.panel-body::-webkit-scrollbar{width:6px;height:6px;}
+.panel-body::-webkit-scrollbar-track{background:var(--bg2);}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+
+/* Code output */
+.code-out {
+  font-family:var(--mono);font-size:12px;line-height:1.75;
+  padding:16px 0;
+  display:flex;min-height:100%;
+}
+.code-nums {
+  padding:0 12px;
+  color:var(--muted);
+  text-align:right;
+  user-select:none;
+  border-right:1px solid var(--border);
+  background:var(--bg2);
+  min-width:44px;
+  flex-shrink:0;
+}
+.code-nums div,.code-text div { line-height:1.75;font-size:12px; }
+.code-text { padding:0 16px;flex:1;white-space:pre;overflow-x:auto; }
+
+/* Syntax coloring */
+.c-kw  { color:#c678dd; }
+.c-fn  { color:#61afef; }
+.c-ty  { color:#e5c07b; }
+.c-str { color:#98c379; }
+.c-num { color:#d19a66; }
+.c-cmt { color:#5c6370;font-style:italic; }
+.c-op  { color:#56b6c2; }
+.c-pp  { color:#e06c75; }
+
+/* States */
+.panel-state {
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;font-size:11px;color:var(--muted);
+}
+.spin {
+  width:32px;height:32px;
+  border:2px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.state-label{font-size:10px;letter-spacing:1px;}
+.err-box{
+  margin:20px;padding:14px 18px;
+  border:1px solid var(--red);border-radius:2px;
+  background:rgba(255,71,87,.05);
+  color:var(--red);font-size:11px;line-height:1.7;
+}
+
+/* ── EMPTY STATE ── */
+.empty-full {
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:16px;text-align:center;
+}
+.empty-ascii {
+  font-family:var(--mono);font-size:11px;
+  color:var(--border2);line-height:1.4;
+  white-space:pre;
+}
+.empty-h { font-family:var(--display);font-size:32px;color:var(--border2);letter-spacing:3px; }
+.empty-p { font-size:10.5px;color:var(--muted);max-width:360px;line-height:1.9; }
+.empty-engines {
+  display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px;
+}
+.ee { padding:3px 9px;border:1px solid var(--border2);border-radius:2px;font-size:9px;color:var(--muted); }
+
+/* ── STATUS BAR ── */
+.statusbar {
+  flex-shrink:0;
+  display:flex;align-items:center;gap:0;
+  height:24px;
+  background:var(--bg3);border-top:1px solid var(--border);
+  font-size:9px;color:var(--muted);
+  overflow:hidden;
+}
+.sb-item {
+  padding:0 14px;border-right:1px solid var(--border);
+  height:100%;display:flex;align-items:center;gap:5px;
+  white-space:nowrap;
+}
+.sb-val { color:var(--text); }
+.sb-accent { color:var(--accent); }
+
+/* TOAST */
+.toast {
+  position:fixed;bottom:32px;right:24px;
+  padding:9px 16px;
+  background:var(--bg3);border:1px solid var(--cyan);
+  color:var(--cyan);font-size:10px;border-radius:2px;
+  transform:translateY(20px);opacity:0;
+  transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:none;z-index:9998;
+}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* FOCUS MODE OVERLAY */
+.focus-toggle {
+  position:fixed;top:52px;right:0;
+  display:flex;align-items:center;gap:4px;
+  padding:5px 10px;font-size:9px;
+  background:var(--bg3);border:1px solid var(--border);border-right:none;
+  color:var(--muted);cursor:pointer;
+  border-radius:2px 0 0 2px;z-index:200;
+  transition:all .15s;
+}
+.focus-toggle:hover{color:var(--accent);border-color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">⟨/⟩</div>
+    DECOMPX EXPLORER
+  </div>
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      REAL ENGINES · DOGBOLT API
+    </div>
+    <span style="font-size:9px;color:var(--muted)">angr · Ghidra · Hex-Rays · BinaryNinja · +8 more</span>
+  </div>
+</header>
+
+<!-- UPLOAD BAR -->
+<div class="upload-bar">
+  <div class="drop-area" id="dropArea">
+    <span>📁</span>
+    <span id="dropLabel">Drop binary or click to upload (max 2MB)</span>
+    <input type="file" id="fileInput" accept="*/*">
+  </div>
+
+  <select class="samples-select" id="samplesSelect">
+    <option value="">— Load Sample —</option>
+    <option value="c7aee806-d0c8-4ef1-9867-281a69c1fe33">CTF Challenge (x86 Linux)</option>
+    <option value="8f1e28f5-3bfc-4d41-8be2-82c12f54487f">Hello World (ARM Linux)</option>
+    <option value="5111f0f5-a5ac-4529-bd45-c2a6f30bfcb9">Megatest arm64 FreeBSD</option>
+    <option value="83223f52-0461-41cf-89b2-54db8aad3b7e">Megatest arm64 macOS</option>
+    <option value="8aae5fd7-8c48-40b3-a66d-4b23231bc9ed">Megatest x86 Windows</option>
+    <option value="f4fbe795-0956-4f25-aab5-27aeb7db171d">Ping6 (x86_64 Linux)</option>
+    <option value="cff4a849-831b-49dc-8659-b9872a9c168d">VTables (x86 Windows)</option>
+    <option value="ef01886f-417a-4194-9b99-a58d1e900605">CTF Challenge #2 (x86 Linux)</option>
+  </select>
+
+  <div class="engine-toggles" id="engineToggles">
+    <!-- populated by JS -->
+  </div>
+
+  <button class="decomp-btn" id="decompBtn" disabled>DECOMPILE</button>
+</div>
+
+<!-- ENGINE TABS -->
+<div class="engines-row" id="enginesRow">
+  <div class="engine-tab" id="tab-all" style="color:var(--accent);border-bottom:2px solid var(--accent);">
+    <div class="etab-dot" style="background:var(--accent)"></div>
+    <span class="etab-name">ALL ENGINES</span>
+  </div>
+  <!-- engine tabs populated by JS -->
+</div>
+
+<!-- PANELS -->
+<div class="panels-area">
+  <div class="panels-container" id="panelsContainer">
+    <div class="empty-full" id="emptyFull">
+      <div class="empty-ascii">
+ ██████╗ ███████╗ ██████╗ ██████╗ ███╗   ███╗██╗  ██╗
+ ██╔══██╗██╔════╝██╔════╝██╔═══██╗████╗ ████║╚██╗██╔╝
+ ██║  ██║█████╗  ██║     ██║   ██║██╔████╔██║ ╚███╔╝ 
+ ██║  ██║██╔══╝  ██║     ██║   ██║██║╚██╔╝██║ ██╔██╗ 
+ ██████╔╝███████╗╚██████╗╚██████╔╝██║ ╚═╝ ██║██╔╝ ██╗
+ ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝</div>
+      <div class="empty-h">EXPLORER</div>
+      <div class="empty-p">Upload any native binary (.exe, .elf, .dll, .so, .bin) and run it through real decompilers via the Dogbolt API — Ghidra, Hex-Rays IDA, Binary Ninja, angr, RetDec, and more.</div>
+      <div class="empty-engines">
+        <span class="ee">angr 9.2</span>
+        <span class="ee">BinaryNinja 5.2</span>
+        <span class="ee">Ghidra 12.0</span>
+        <span class="ee">Hex-Rays 9.2</span>
+        <span class="ee">RetDec 5.0</span>
+        <span class="ee">Reko 0.11</span>
+        <span class="ee">Snowman</span>
+        <span class="ee">dewolf</span>
+        <span class="ee">rev.ng</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="statusbar" id="statusbar">
+  <div class="sb-item">DecompX Explorer</div>
+  <div class="sb-item">Engine: <span class="sb-val" id="sb-engine">—</span></div>
+  <div class="sb-item">File: <span class="sb-val" id="sb-file">—</span></div>
+  <div class="sb-item">Lines: <span class="sb-val" id="sb-lines">—</span></div>
+  <div class="sb-item" style="margin-left:auto;border-left:1px solid var(--border);border-right:none;">
+    API: <span class="sb-accent">dogbolt.org</span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DECOMPILER REGISTRY (from dogbolt source) ──────────────────────────────
+const ENGINES = {
+  angr:        { name:'angr',        version:'9.2.203',    url:'https://angr.io/',                                    featured:true,  color:'#4a9eff' },
+  BinaryNinja: { name:'BinaryNinja', version:'5.2.8722',   url:'https://binary.ninja/',                               featured:true,  color:'#e8ff47' },
+  Boomerang:   { name:'Boomerang',   version:'0.5.2',      url:'https://github.com/BoomerangDecompiler/boomerang',    featured:false, color:'#ff8c42' },
+  dewolf:      { name:'dewolf',      version:'2026-01-01', url:'https://github.com/fkie-cad/dewolf',                  featured:false, color:'#c678dd' },
+  Ghidra:      { name:'Ghidra',      version:'12.0.1',     url:'https://ghidra-sre.org',                              featured:true,  color:'#3df0c2' },
+  'Hex-Rays':  { name:'Hex-Rays',    version:'9.2.0',      url:'https://hex-rays.com/ida-pro/',                       featured:true,  color:'#ff4757' },
+  RecStudio:   { name:'RecStudio',   version:'4.1',        url:'https://www.backerstreet.com/rec/rec.htm',            featured:false, color:'#ff8c42' },
+  Reko:        { name:'Reko',        version:'0.11.6.0',   url:'https://github.com/uxmal/reko',                       featured:false, color:'#56b6c2' },
+  Relyze:      { name:'Relyze',      version:'4.0.0',      url:'https://www.relyze.com/',                             featured:false, color:'#98c379' },
+  RetDec:      { name:'RetDec',      version:'5.0',        url:'https://github.com/avast/retdec',                     featured:false, color:'#e5c07b' },
+  'rev.ng':    { name:'rev.ng',      version:'5f5877c',    url:'https://rev.ng/',                                     featured:false, color:'#61afef' },
+  Snowman:     { name:'Snowman',     version:'0.1.2-21',   url:'https://github.com/yegord/snowman',                   featured:false, color:'#c9d4e0' },
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let selectedEngines = new Set(Object.keys(ENGINES).filter(k=>ENGINES[k].featured));
+let uploadedFile = null;
+let binaryId = null;
+let results = {}; // engineName → {status:'loading'|'done'|'error', code, error}
+let activeView = 'all'; // 'all' or engine name
+let currentFileName = null;
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+function init() {
+  buildEngineToggles();
+  setupUpload();
+  setupSamples();
+
+  document.getElementById('tab-all').addEventListener('click', () => setView('all'));
+  document.getElementById('decompBtn').addEventListener('click', runDecompilation);
+}
+
+// ── ENGINE TOGGLES ─────────────────────────────────────────────────────────
+function buildEngineToggles() {
+  const container = document.getElementById('engineToggles');
+  container.innerHTML = '<span style="font-size:9px;color:var(--muted);margin-right:4px;">Engines:</span>';
+  for(const [key, eng] of Object.entries(ENGINES)) {
+    const btn = document.createElement('div');
+    btn.className = 'etog' + (selectedEngines.has(key)?' on':'');
+    btn.textContent = eng.name;
+    btn.style.borderColor = selectedEngines.has(key) ? eng.color : '';
+    btn.style.background  = selectedEngines.has(key) ? eng.color : '';
+    btn.style.color       = selectedEngines.has(key) ? '#000' : '';
+    btn.dataset.key = key;
+    btn.addEventListener('click', () => {
+      if(selectedEngines.has(key)) selectedEngines.delete(key);
+      else selectedEngines.add(key);
+      buildEngineToggles();
+    });
+    container.appendChild(btn);
+  }
+}
+
+// ── UPLOAD ─────────────────────────────────────────────────────────────────
+function setupUpload() {
+  const drop = document.getElementById('dropArea');
+  const inp  = document.getElementById('fileInput');
+  const lbl  = document.getElementById('dropLabel');
+
+  drop.addEventListener('click', () => inp.click());
+  inp.addEventListener('change', e => {
+    if(e.target.files[0]) setFile(e.target.files[0]);
+  });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('over');
+    if(e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+
+  function setFile(f) {
+    if(f.size > 2*1024*1024) { notify('⚠ File too large (max 2MB)','var(--red)'); return; }
+    uploadedFile = f;
+    binaryId = null;
+    lbl.textContent = '📎 ' + f.name + ' (' + fmtSize(f.size) + ')';
+    document.getElementById('samplesSelect').value = '';
+    document.getElementById('decompBtn').disabled = false;
+    currentFileName = f.name;
+  }
+}
+
+function setupSamples() {
+  document.getElementById('samplesSelect').addEventListener('change', e => {
+    if(e.target.value) {
+      uploadedFile = null;
+      binaryId = e.target.value;
+      document.getElementById('dropLabel').textContent = '📎 Sample: ' + e.target.options[e.target.selectedIndex].text;
+      document.getElementById('decompBtn').disabled = false;
+      currentFileName = e.target.options[e.target.selectedIndex].text;
+    }
+  });
+}
+
+// ── MAIN DECOMPILE FLOW ────────────────────────────────────────────────────
+async function runDecompilation() {
+  if(selectedEngines.size === 0) { notify('Select at least one engine','var(--red)'); return; }
+
+  results = {};
+  document.getElementById('decompBtn').disabled = true;
+  document.getElementById('emptyFull').style.display = 'none';
+
+  // Initialize all panels
+  for(const eng of selectedEngines) {
+    results[eng] = { status:'loading', code:null, error:null };
+  }
+  renderAllPanels();
+  renderEngineTabs();
+  setView('all');
+
+  try {
+    let id = binaryId;
+
+    // Upload file if needed
+    if(uploadedFile && !id) {
+      setStatusMsg('Uploading binary...');
+      id = await uploadBinary(uploadedFile);
+      binaryId = id;
+    }
+
+    setStatusMsg('Querying decompilers...');
+
+    // Fetch results for each selected engine in parallel
+    const promises = [...selectedEngines].map(eng => fetchEngineResult(id, eng));
+    await Promise.allSettled(promises);
+
+  } catch(err) {
+    notify('Upload failed: ' + err.message, 'var(--red)');
+  }
+
+  document.getElementById('decompBtn').disabled = false;
+  setStatusMsg('Done');
+  document.getElementById('sb-file').textContent = currentFileName || '—';
+}
+
+// ── API CALLS ──────────────────────────────────────────────────────────────
+async function uploadBinary(file) {
+  const form = new FormData();
+  form.append('file', file);
+
+  const resp = await fetch('https://dogbolt.org/api/binaries/', {
+    method: 'POST',
+    body: form,
+  });
+
+  if(!resp.ok) {
+    const txt = await resp.text().catch(()=>'');
+    throw new Error(`Upload failed (${resp.status}): ${txt.slice(0,200)}`);
+  }
+
+  const data = await resp.json();
+  return data.id || data.hash || data.slug || (() => { throw new Error('No ID in response: '+JSON.stringify(data).slice(0,200)); })();
+}
+
+async function fetchEngineResult(binaryId, engineName) {
+  try {
+    // Poll the dogbolt API for this engine's result
+    const url = `https://dogbolt.org/api/binaries/${binaryId}/decompilations/?decompiler=${engineName}`;
+    
+    let code = null;
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    while(attempts < maxAttempts) {
+      const resp = await fetch(url);
+      
+      if(!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const results_arr = data.results || data;
+
+      if(Array.isArray(results_arr) && results_arr.length > 0) {
+        const item = results_arr[0];
+        // Check if completed
+        if(item.error) {
+          throw new Error(item.error);
+        }
+        if(item.output || item.code) {
+          code = item.output || item.code;
+          break;
+        }
+        // If pending/processing, wait and retry
+        if(item.status === 'failed' || item.state === 'failed') {
+          throw new Error(item.error_message || 'Decompilation failed');
+        }
+      }
+
+      attempts++;
+      await sleep(2000);
+    }
+
+    if(!code) throw new Error('Timeout waiting for result');
+
+    results[engineName] = { status:'done', code, error:null };
+    updatePanel(engineName);
+    updateEngineTab(engineName);
+
+  } catch(err) {
+    results[engineName] = { status:'error', code:null, error: err.message };
+    updatePanel(engineName);
+    updateEngineTab(engineName);
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function renderAllPanels() {
+  const container = document.getElementById('panelsContainer');
+  container.innerHTML = '';
+
+  for(const eng of selectedEngines) {
+    const panel = buildPanel(eng);
+    container.appendChild(panel);
+  }
+}
+
+function buildPanel(eng) {
+  const info = ENGINES[eng] || { name:eng, version:'', url:'#', color:'#888' };
+  const res  = results[eng] || { status:'loading' };
+
+  const panel = document.createElement('div');
+  panel.className = 'engine-panel' + (activeView!=='all' && activeView!==eng ? ' hidden' : '') + (activeView===eng ? ' solo' : '');
+  panel.id = 'panel-'+eng;
+
+  panel.innerHTML = `
+    <div class="panel-head">
+      <div class="panel-head-left">
+        <div class="ph-name" style="color:${info.color}">${info.name}</div>
+        <div class="ph-ver">v${info.version}</div>
+        <a class="ph-link" href="${info.url}" target="_blank">↗ site</a>
+      </div>
+      <div class="panel-actions">
+        <button class="pact" onclick="copyPanel('${eng}')">Copy</button>
+        <button class="pact" onclick="downloadPanel('${eng}')">↓ Save</button>
+        <button class="pact" onclick="setView('${eng}')">Focus</button>
+      </div>
+    </div>
+    <div class="panel-body" id="body-${eng}">
+      ${renderPanelBody(res)}
+    </div>
+  `;
+  return panel;
+}
+
+function renderPanelBody(res) {
+  if(res.status === 'loading') {
+    return `<div class="panel-state"><div class="spin"></div><div class="state-label">DECOMPILING…</div></div>`;
+  }
+  if(res.status === 'error') {
+    return `<div class="err-box">⚠ ${escHtml(res.error)}</div>`;
+  }
+  if(res.status === 'done' && res.code) {
+    return renderCodeHtml(res.code);
+  }
+  return `<div class="panel-state"><div class="state-label">No output</div></div>`;
+}
+
+function updatePanel(eng) {
+  const body = document.getElementById('body-'+eng);
+  if(body) body.innerHTML = renderPanelBody(results[eng]);
+}
+
+function renderEngineTabs() {
+  const row = document.getElementById('enginesRow');
+  // Remove old engine tabs (keep #tab-all)
+  row.querySelectorAll('.engine-tab:not(#tab-all)').forEach(t=>t.remove());
+
+  for(const eng of selectedEngines) {
+    const info = ENGINES[eng] || { name:eng, color:'#888' };
+    const tab = document.createElement('div');
+    tab.className = 'engine-tab loading';
+    tab.id = 'etab-'+eng;
+    tab.innerHTML = `<div class="etab-dot" style="background:${info.color}"></div><span class="etab-name">${info.name}</span>`;
+    tab.addEventListener('click', () => setView(eng));
+    row.appendChild(tab);
+  }
+}
+
+function updateEngineTab(eng) {
+  const tab = document.getElementById('etab-'+eng);
+  if(!tab) return;
+  const res = results[eng];
+  tab.classList.remove('loading','done','error');
+  tab.classList.add(res.status);
+}
+
+function setView(view) {
+  activeView = view;
+
+  // Update tab-all highlight
+  const tabAll = document.getElementById('tab-all');
+  tabAll.style.color = view==='all' ? 'var(--accent)' : '';
+  tabAll.style.borderBottom = view==='all' ? '2px solid var(--accent)' : '';
+
+  // Update engine tabs
+  for(const eng of selectedEngines) {
+    const tab = document.getElementById('etab-'+eng);
+    if(tab) { tab.classList.toggle('active', view===eng); }
+    const panel = document.getElementById('panel-'+eng);
+    if(panel) {
+      panel.classList.remove('hidden','solo');
+      if(view==='all') { /* show all */ }
+      else if(view===eng) { panel.classList.add('solo'); }
+      else { panel.classList.add('hidden'); }
+    }
+  }
+
+  // Update status bar
+  const focusEng = ENGINES[view];
+  if(focusEng && view!=='all') {
+    document.getElementById('sb-engine').textContent = focusEng.name + ' v' + focusEng.version;
+    const res = results[view];
+    if(res?.code) document.getElementById('sb-lines').textContent = res.code.split('\n').length;
+  } else {
+    document.getElementById('sb-engine').textContent = selectedEngines.size + ' engines';
+    document.getElementById('sb-lines').textContent = '—';
+  }
+}
+
+// ── SYNTAX HIGHLIGHT (simple C/C++ colorizer) ──────────────────────────────
+const C_KEYWORDS = new Set(['int','void','char','unsigned','long','short','float','double',
+  'struct','union','enum','typedef','return','if','else','while','for','do','switch',
+  'case','break','continue','static','const','extern','volatile','sizeof','NULL',
+  'true','false','auto','register','goto','default','include','define','ifdef',
+  'endif','pragma','uint8_t','uint16_t','uint32_t','uint64_t','int8_t','int16_t',
+  'int32_t','int64_t','size_t','bool','string','class','public','private','new',
+  'delete','namespace','using','template','typename','virtual','override']);
+
+function renderCodeHtml(code) {
+  const lines = code.split('\n');
+  const nums = lines.map((_,i)=>`<div>${i+1}</div>`).join('');
+  const highlighted = lines.map(line => highlightLine(line)).join('\n');
+  return `<div class="code-out">
+    <div class="code-nums">${nums}</div>
+    <div class="code-text">${highlighted}</div>
+  </div>`;
+}
+
+function highlightLine(line) {
+  // Escape first
+  let s = escHtml(line);
+
+  // Comments
+  s = s.replace(/(\/\/[^\n]*)$/, '<span class="c-cmt">$1</span>');
+  s = s.replace(/(\/\*[\s\S]*?\*\/)/, '<span class="c-cmt">$1</span>');
+
+  // Preprocessor
+  s = s.replace(/^(\s*)(#\w+)/, '$1<span class="c-pp">$2</span>');
+
+  // Strings
+  s = s.replace(/(&quot;[^&]*?&quot;)/g, '<span class="c-str">$1</span>');
+
+  // Numbers
+  s = s.replace(/\b(0x[0-9a-fA-F]+|[0-9]+(?:\.[0-9]+)?(?:[uUlL]*))\b/g, '<span class="c-num">$1</span>');
+
+  // Keywords
+  s = s.replace(/\b([a-zA-Z_]\w*)\b/g, (m) => C_KEYWORDS.has(m) ? `<span class="c-kw">${m}</span>` : m);
+
+  // Function calls: word followed by (
+  s = s.replace(/\b([a-zA-Z_]\w*)(?=\s*\()(?!<\/span>)/g, '<span class="c-fn">$1</span>');
+
+  return s;
+}
+
+// ── COPY / DOWNLOAD ────────────────────────────────────────────────────────
+function copyPanel(eng) {
+  const res = results[eng];
+  if(res?.code) {
+    navigator.clipboard.writeText(res.code).then(()=>notify('✓ Copied ' + eng + ' output'));
+  }
+}
+
+function downloadPanel(eng) {
+  const res = results[eng];
+  if(!res?.code) return;
+  const blob = new Blob([res.code],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (currentFileName||'binary').replace(/\.[^.]+$/,'') + '_' + eng + '.c';
+  a.click(); URL.revokeObjectURL(a.href);
+  notify('↓ Downloaded ' + eng + ' output');
+}
+
+// ── UTILS ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtSize(b) {
+  if(b<1024) return b+'B';
+  if(b<1048576) return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function setStatusMsg(msg){
+  document.getElementById('sb-engine').textContent = msg;
+}
+function notify(msg, color='var(--cyan)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.style.color = color;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+init();
+</script>
+</body>
+</html>
