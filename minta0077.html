@@ -4,22 +4,30 @@
 <meta charset="utf-8">
 <link rel="icon" href="https://minta1234.github.io/WEb/favicon.ico">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <meta property="og:type" content="website">
+
 <meta property="og:url" content="https://minta1234.github.io/WEb/">
+
 <meta property="og:title" content="Minta Console">
+
 <meta property="og:description" content="Welcome to my Web">
+
 <meta property="og:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+
 <meta property="og:image:secure_url" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
+
 <meta property="og:image:type" content="image/jpg">
+
 <meta property="og:image:width" content="1200">
+
 <meta property="og:image:height" content="630">
+
 <meta property="fb:app_id" content="2350981502081867">
 
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Minta Console">
-<meta name="twitter:description" content="Welcome to my Web">
-<meta name="twitter:image" content="https://minta1234.github.io/WEb/Image/KEI/Kei0.jpg">
-<title>Minta1234 Web</title>
+
+
+
 
 <style>
 html, body {
@@ -30,14 +38,17 @@ html, body {
   font-family: Arial, sans-serif;
   background: #000;
   color: #fff;
-  font-size: clamp(12px, 2vw, 16px); 
 }
 
-canvas {
+/* Background Canvas */
+#bg {
   position: fixed;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
 }
+
+/* Entry Gate */
 #gate {
   position: fixed;
   inset: 0;
@@ -45,22 +56,25 @@ canvas {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 10;
+  z-index: 999; /* Higher than everything else */
 }
+
 #gate button {
   font-size: clamp(18px, 4vw, 22px);
   padding: clamp(12px, 3vw, 18px) clamp(24px, 6vw, 36px);
   background: #D0787C;
   border: none;
-  border-radius: clamp(5px, 1vw, 8px);
+  border-radius: 8px;
   cursor: pointer;
   color: #fff;
   transition: 0.3s ease;
 }
+
 #gate button:hover {
   background: #ff91b8;
   transform: scale(1.05);
 }
+
 #frameWrap {
   position: fixed;
   inset: 0;
@@ -74,109 +88,64 @@ canvas {
   width: clamp(300px, 80%, 450px);
   padding: clamp(20px, 4vw, 35px);
   border: 2px solid rgba(255,255,255,0.25);
-  border-radius: clamp(10px, 2vw, 14px);
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(6px);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.5); /* Slightly darker for readability */
+  backdrop-filter: blur(8px);
   box-shadow: 0 0 30px rgba(0,255,255,0.15);
   pointer-events: none;
   filter: blur(6px);
+  transition: filter 0.5s ease;
 }
 
-h1 {
-  margin: 0 0 8px;
-  font-size: clamp(18px, 4vw, 26px);
-}
-p {
-  margin: 4px 0;
-  font-size: clamp(14px, 3vw, 18px);
-}
+h1 { margin: 0 0 8px; font-size: clamp(18px, 4vw, 26px); }
+p { margin: 4px 0; font-size: clamp(14px, 3vw, 18px); }
+
 button.main {
   margin-top: 15px;
-  padding: clamp(10px, 2vw, 14px) clamp(20px, 4vw, 28px);
-  font-size: clamp(14px, 3vw, 16px);
+  padding: 12px 24px;
   background: #c51414;
   border: none;
-  border-radius: clamp(4px, 1vw, 5px);
+  border-radius: 5px;
   cursor: pointer;
   color: #fff;
-  transition: 0.3s ease;
+  transition: 0.3s;
 }
-button.main:hover {
-  background: #ff5a2a;
-  transform: scale(1.05);
-}
+
 #barWrap {
   width: 100%;
-  height: clamp(8px, 1.5vw, 12px);
+  height: 10px;
   background: #222;
   margin-top: 15px;
-  border-radius: clamp(4px, 1vw, 6px);
+  border-radius: 5px;
   overflow: hidden;
 }
+
 #bar {
   width: 0%;
   height: 100%;
   background: linear-gradient(90deg,#c33010,#ff5a2a);
 }
-#time {
-  margin-top: 15px;
-  font-size: clamp(12px, 2.5vw, 14px);
-  opacity: 0.85;
-  text-align: right;
-}
+
 #downloadPage {
   display: none;
   flex-direction: column;
-  gap: clamp(6px, 1.5vw, 10px);
+  gap: 10px;
   margin-top: 15px;
-  font-size: clamp(12px, 2.5vw, 14px);
 }
+
 .fileRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  padding: 10px;
   background: rgba(0,0,128,0.3);
-  padding: clamp(6px,1.5vw,10px) clamp(10px,3vw,14px);
-  border-radius: clamp(4px, 1vw, 6px);
-  transition: 0.3s ease;
-}
-.fileRow:hover {
-  background: rgba(0,0,128,0.5);
-  transform: scale(1.02);
-}
-
-.fileRow button {
-  padding: clamp(4px,1vw,6px) clamp(8px,2vw,12px);
-  background: #c51414;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  font-size: clamp(12px,2.5vw,14px);
-  border-radius: clamp(3px,1vw,5px);
-  transition: 0.3s ease;
-}
-.fileRow button:hover {
-  background: #ff5a2a;
-  transform: scale(1.05);
-}
-#exitDownload {
-  margin-top: clamp(8px,2vw,12px);
-  padding: clamp(6px,1.5vw,10px) clamp(12px,3vw,16px);
-  background: #444;
-  border: none;
-  color: #fff;
-  cursor: pointer;
-  border-radius: clamp(4px,1vw,6px);
-  font-size: clamp(12px,2.5vw,14px);
-  transition: 0.3s ease;
-}
-#exitDownload:hover {
-  background: #666;
-  transform: scale(1.05);
+  border-radius: 5px;
 }
 </style>
 </head>
 <body>
+
+<canvas id="bg"></canvas>
+
 <div id="gate">
   <button id="enter">Click to Enter</button>
 </div>
@@ -185,8 +154,7 @@ button.main:hover {
   <div id="frame">
     <h1>Hi, привет</h1>
     <p>I'm Minta</p>
-    <p>Я Code Engineer</p>
-    <p>Я программист 👍🧑‍🎓</p>
+    <p>Я Code Engineer 👍🧑‍🎓</p>
 
     <button class="main" id="downloadBtn">Click me</button>
 
@@ -198,8 +166,7 @@ button.main:hover {
       <button id="exitDownload">Exit</button>
     </div>
 
-    
-    <audio id="bgm" src="https://minta1234.github.io/WEb/assets/Black_sult.mp3" loop></audio> 
+    <audio id="bgm" src="https://minta1234.github.io/WEb/assets/Black_sult.mp3" loop></audio>
     <audio id="fx" src="https://minta1234.github.io/WEb/assets/ENO-soam-tan.mp3"></audio>
   </div>
 </div>
@@ -217,27 +184,31 @@ window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
 const frame = document.getElementById("frame");
-function getFrameBox(){ const r = frame.getBoundingClientRect(); return {x:r.left,y:r.top,w:r.width,h:r.height}; }
+function getFrameBox(){ 
+  const r = frame.getBoundingClientRect(); 
+  return {x:r.left, y:r.top, w:r.width, h:r.height}; 
+}
 function inFrame(x,y,box){ return x>box.x && x<box.x+box.w && y>box.y && y<box.y+box.h; }
 
 const dots = [];
 const MAX = 140;
-for(let i=0;i<MAX;i++){
-  let x,y;
-  do { x=Math.random()*canvas.width; y=Math.random()*canvas.height; } while(inFrame(x,y,getFrameBox()));
+for(let i=0; i<MAX; i++){
   dots.push({
-    x, y,
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
     r: Math.random()*2+0.6,
     vx: (Math.random()-.5)*0.4,
     vy: (Math.random()-.5)*0.4,
-    col: Math.random()<0.7?"#061459":"#D0787C"
+    col: Math.random()<0.7 ? "#061459" : "#D0787C"
   });
 }
 
 function draw(){
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  // Background Gradient
   const g = ctx.createLinearGradient(0,0,canvas.width,0);
   g.addColorStop(0,"#41DFFF");
-  g.addColorStop(0.5,"#4FEED8");
   g.addColorStop(1,"#3CFFB6");
   ctx.fillStyle = g;
   ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -247,21 +218,19 @@ function draw(){
     p.x += p.vx;
     p.y += p.vy;
 
-    if(inFrame(p.x,p.y,box)){
+    if(inFrame(p.x, p.y, box)){
       p.vx *= -1;
       p.vy *= -1;
     }
 
-    if(p.x<0)p.x=canvas.width;
-    if(p.x>canvas.width)p.x=0;
-    if(p.y<0)p.y=canvas.height;
-    if(p.y>canvas.height)p.y=0;
+    if(p.x<0) p.x=canvas.width;
+    if(p.x>canvas.width) p.x=0;
+    if(p.y<0) p.y=canvas.height;
+    if(p.y>canvas.height) p.y=0;
 
     ctx.beginPath();
-    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle=p.col;
-    ctx.shadowColor=p.col;
-    ctx.shadowBlur=4;
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = p.col;
     ctx.fill();
   }
   requestAnimationFrame(draw);
@@ -272,111 +241,60 @@ const gate = document.getElementById("gate");
 const enter = document.getElementById("enter");
 const bgm = document.getElementById("bgm");
 const fx = document.getElementById("fx");
-let unlocked = false;
 
-enter.onclick = ()=>{
-  if(unlocked) return;
-  unlocked=true;
-  gate.remove();
-  frame.style.pointerEvents="auto";
-  frame.style.filter="none";
-  bgm.volume = 1;
-  bgm.play().catch(()=>{});
+enter.onclick = () => {
+  gate.style.display = "none";
+  frame.style.pointerEvents = "auto";
+  frame.style.filter = "none";
+  bgm.play().catch(e => console.log("Audio play blocked"));
 };
 
+// Timer logic
 let sec = 0;
 const timeElem = document.getElementById("time");
-setInterval(()=>{
+setInterval(() => {
   sec++;
-  const m = Math.floor(sec/60);
-  const s = sec%60;
-  timeElem.textContent = `Time: ${m}m ${s}s`;
-},1000);
+  timeElem.textContent = `Time: ${Math.floor(sec/60)}m ${sec%60}s`;
+}, 1000);
 
-const bar = document.getElementById("bar");
-fx.ontimeupdate = ()=>{
-  if(!fx.duration) return;
-  bar.style.width = (fx.currentTime/fx.duration*100) + "%";
+// Audio/Bar Logic
+fx.ontimeupdate = () => {
+  if(fx.duration) document.getElementById("bar").style.width = (fx.currentTime/fx.duration*100) + "%";
 };
-fx.onended = ()=>{
-  bar.style.width="0%";
-  bgm.play().catch(()=>{});
-};
-const downloadBtn = document.getElementById("downloadBtn");
-const downloadPage = document.getElementById("downloadPage");
-const exitDownload = document.getElementById("exitDownload");
 
 const GITHUB_USER = "Minta1234";
 const GITHUB_REPO = "WEb";
 const DOWNLOAD_PATH = "Download"; 
 
-downloadBtn.onclick = ()=>{ 
-  if(!unlocked) return;
-  downloadPage.style.display="flex";
-  loadGitHubFiles();
-};
-
-exitDownload.onclick = ()=>{
-  downloadPage.style.display="none";
-};
-
-async function loadGitHubFiles(){
-  try{
-    const api = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DOWNLOAD_PATH}`;
-    const res = await fetch(api);
-    if(!res.ok) throw new Error("GitHub API error");
+document.getElementById("downloadBtn").onclick = async () => {
+  document.getElementById("downloadPage").style.display = "flex";
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${DOWNLOAD_PATH}`);
     const files = await res.json();
-
-    downloadPage.innerHTML = ""; 
-    downloadPage.appendChild(exitDownload);
-
-    files.filter(f=>f.type==="file").forEach(f=>{
-      const row = document.createElement("div");
-      row.className="fileRow";
-
-      const name = document.createElement("span");
-      name.textContent = f.name;
-
-      const btn = document.createElement("button");
-      btn.textContent="Download";
-
-      btn.onclick = async ()=>{
-        fx.currentTime=0; 
-        fx.play().catch(()=>{});
-        bgm.pause();
-
-        if(!f.name.endsWith(".zip")){
-          const fileRes = await fetch(f.download_url);
-          const blob = await fileRes.blob();
-          const zip = new JSZip();
-          zip.file(f.name, blob);
-          const content = await zip.generateAsync({type:"blob"});
-          const a = document.createElement("a");
-          a.href = URL.createObjectURL(content);
-          a.download = f.name.replace(/\..+$/,"")+".zip";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        } else {
-          const a = document.createElement("a");
-          a.href = f.download_url;
-          a.download = "";
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-        }
-      };
-      row.appendChild(name);
-      row.appendChild(btn);
-      downloadPage.insertBefore(row, exitDownload);
+    const container = document.getElementById("downloadPage");
+    container.innerHTML = '<button id="exitDownload">Exit</button>';
+    
+    files.forEach(f => {
+      if(f.type === "file") {
+        const row = document.createElement("div");
+        row.className = "fileRow";
+        row.innerHTML = `<span>${f.name}</span><button onclick="downloadFile('${f.download_url}', '${f.name}')">Get</button>`;
+        container.appendChild(row);
+      }
     });
-  } catch(err){
-    downloadPage.innerHTML = "Failed to load files"; 
-    downloadPage.appendChild(exitDownload);
-    console.error(err);
-  }
+    
+    document.getElementById("exitDownload").onclick = () => container.style.display = "none";
+  } catch (e) { console.error(e); }
+};
+
+async function downloadFile(url, name) {
+  fx.play();
+  bgm.pause();
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
 }
-setInterval(()=>{ if(downloadPage.style.display==="flex") loadGitHubFiles(); },30000);
 </script>
 </body>
 </html>
